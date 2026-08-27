@@ -640,7 +640,7 @@ function renderQrAdmin(){
 }
 function makeQr(text){
   try{
-    var qr=qrcode(0,'M');
+    var qr=qrcode(0,'H');
     qr.addData(text); qr.make();
     var count=qr.getModuleCount();
     var size=300, cell=Math.round(size/count), margin=16;
@@ -668,24 +668,24 @@ function makeQr(text){
       }
     }
     // 中间白色圆角区 + 文字
-    var cw=Math.floor(W*0.40);
+    var cw=Math.floor(W*0.36);
     var cx=(W-cw)/2, cy=(W-cw)/2;
     ctx.fillStyle='#ffffff';
     ctx.beginPath();
-    ctx.moveTo(cx+14,cy);
-    ctx.arcTo(cx+cw,cy,cx+cw,cy+cw,14);
-    ctx.arcTo(cx+cw,cy+cw,cx,cy+cw,14);
-    ctx.arcTo(cx,cy+cw,cx,cy,14);
-    ctx.arcTo(cx,cy,cx+cw,cy,14);
+    ctx.moveTo(cx+12,cy);
+    ctx.arcTo(cx+cw,cy,cx+cw,cy+cw,12);
+    ctx.arcTo(cx+cw,cy+cw,cx,cy+cw,12);
+    ctx.arcTo(cx,cy+cw,cx,cy,12);
+    ctx.arcTo(cx,cy,cx+cw,cy,12);
     ctx.closePath(); ctx.fill();
     ctx.strokeStyle='#66bb6a'; ctx.lineWidth=2; ctx.stroke();
     ctx.textAlign='center'; ctx.textBaseline='middle';
     ctx.fillStyle='#1b5e20';
-    ctx.font='bold 18px "Microsoft YaHei","PingFang SC",sans-serif';
+    ctx.font='bold 16px "Microsoft YaHei","PingFang SC",sans-serif';
     ctx.fillText('榨榨鲜果', W/2, cy+cw*0.30);
     ctx.fillStyle='#43a047';
-    ctx.font='15px "Microsoft YaHei","PingFang SC",sans-serif';
-    ctx.fillText('· 外送点单 ·', W/2, cy+cw*0.66);
+    ctx.font='13px "Microsoft YaHei","PingFang SC",sans-serif';
+    ctx.fillText('· 外送点单 ·', W/2, cy+cw*0.68);
     var dataUrl=canvas.toDataURL('image/png');
     document.getElementById('qrBox').innerHTML='<img src="'+dataUrl+'" style="width:240px;height:240px;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.08)">';
     window._qrDataUrl=dataUrl;
