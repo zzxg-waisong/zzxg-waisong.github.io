@@ -643,7 +643,7 @@ function makeQr(text){
     var qr=qrcode(0,'H');
     qr.addData(text); qr.make();
     var count=qr.getModuleCount();
-    var size=300, cell=Math.round(size/count), margin=16;
+    var size=720, cell=Math.round(size/count), margin=36;
     var W=size+margin*2;
     var canvas=document.createElement('canvas');
     canvas.width=W; canvas.height=W;
