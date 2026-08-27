@@ -33,6 +33,7 @@ body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f6f7f8;c
 .btn.red{background:#e53935}
 .btn.gray{background:#9e9e9e}
 .btn.outline{background:#fff;color:#43a047;border:1px solid #43a047}
+.admin-entry{background:#fff;color:#2e7d32;border:none;border-radius:8px;padding:7px 13px;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 1px 5px rgba(0,0,0,.18);flex:0 0 auto}
 .btn[disabled]{opacity:.5}
 /* 购物车 */
 .cartbar{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid #eee;padding:10px 14px;display:flex;align-items:center;gap:12px;z-index:30;box-shadow:0 -2px 8px rgba(0,0,0,.06)}
@@ -89,7 +90,7 @@ body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f6f7f8;c
 @media print{
   body *{visibility:hidden}
   #printArea,#printArea *{visibility:visible}
-  #printArea{position:absolute;left:0;top:0;width:80mm;font-size:12px}
+  #printArea{position:absolute;left:0;top:0;width:48mm;font-size:11px;line-height:1.5;font-family:"Microsoft YaHei",monospace}
 }
 #printArea{display:none}
 </style>
@@ -99,8 +100,13 @@ body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f6f7f8;c
 <!-- ================= 顾客端 ================= -->
 <div id="customer">
   <div class="topbar">
-    <h1>🍉 榨榨鲜果</h1>
-    <p>新鲜水果 · 现榨果汁 · 0添加 · 更健康 · 免费配送</p>
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+      <div>
+        <h1>🍉 榨榨鲜果</h1>
+        <p>新鲜水果 · 现榨果汁 · 0添加 · 更健康 · 免费配送</p>
+      </div>
+      <button class="admin-entry" onclick="location.hash='#/admin'">🔒 商家后台</button>
+    </div>
   </div>
   <div class="cats" id="cats"></div>
   <div class="list" id="dishList"></div>
@@ -575,11 +581,10 @@ function changePwd(){
 
 function renderPrintAdmin(){
   var html='<div class="panel"><h3>58 热敏打印机</h3><div class="card">'+
-    '<p style="font-size:13px;color:#555;line-height:1.7">支持 USB 接口的 58mm ESC/POS 热敏打印机（佳博/汉印/芯烨等），通过浏览器 Web Serial 直连。请使用 Chrome 或 Edge 浏览器。打印内容为 UTF-8 编码，若部分打印机中文乱码，请改用下方"浏览器打印"（走系统驱动，中文正常）。</p>'+
+    '<p style="font-size:13px;color:#555;line-height:1.7">已检测到你电脑上的 58 打印机（DL-581P(NEW)，USB 连接，驱动正常）。推荐使用<b>“浏览器打印”</b>方式：走 Windows 驱动、中文显示正常。点击下面按钮后，在弹出的打印窗口中选择打印机 <b>DL-581P(NEW)</b> 再点打印即可。若小票纸张显示不全，请在 Windows“打印机首选项”中把纸张设为 58×210mm 左右。</p>'+
     '<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">'+
-    '<button class="btn" onclick="connectAndPrintLatest()">🖨 连接打印机打印最新订单</button>'+
-    '<button class="btn gray" onclick="testPrint()">打印测试小票</button>'+
-    '<button class="btn orange" onclick="browserPrint()">浏览器打印（备用）</button></div></div></div>';
+    '<button class="btn" onclick="browserPrint()">🖨 打印测试小票</button>'+
+    '<button class="btn orange" onclick="testPrint()">USB 直连打印（备用）</button></div></div></div>';
   return html;
 }
 async function connectAndPrintLatest(){
@@ -621,8 +626,11 @@ function printThis(i){
   browserPrint(formatOrderText(o));
 }
 function browserPrint(text){
-  text=text||'🍉 榨榨鲜果\n\n';
-  document.getElementById('printArea').innerHTML='<pre style="font-family:monospace;font-size:11px;white-space:pre-wrap">'+esc(text)+'</pre>';
+  text=text||'';
+  var d=new Date(); function pp(x){return (x<10?'0':'')+x;}
+  var ts=d.getFullYear()+'-'+pp(d.getMonth()+1)+'-'+pp(d.getDate())+' '+pp(d.getHours())+':'+pp(d.getMinutes());
+  var body='🍉 榨榨鲜果\n========================\n'+(text?text+'\n':'')+'----------------------\n'+'时间：'+ts+'\n谢谢惠顾，欢迎再次光临！\n';
+  document.getElementById('printArea').innerHTML='<div style="white-space:pre-wrap">'+esc(body)+'</div>';
   document.getElementById('printArea').style.display='block';
   window.print();
   setTimeout(function(){ document.getElementById('printArea').style.display='none'; },500);
