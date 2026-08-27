@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>榨榨鲜果 · 外卖点餐</title>
+<title>榨榨鲜果 · 外卖点单</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f6f7f8;color:#333}
@@ -196,7 +196,7 @@ body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f6f7f8;c
   <div class="admin-top">
     <h2>商家后台</h2>
     <div>
-      <button class="btn gray" style="font-size:12px;padding:4px 10px" onclick="backToShop()">返回点餐页</button>
+      <button class="btn gray" style="font-size:12px;padding:4px 10px" onclick="backToShop()">返回点单页</button>
       <button class="btn red" style="font-size:12px;padding:4px 10px;margin-left:6px" onclick="adminLogout()">退出</button>
     </div>
   </div>
@@ -427,7 +427,7 @@ function adminLogin(){
 }
 function adminLogout(){ adminOk=false; localStorage.setItem(LS_SESSION,'0'); location.hash='#/'; }
 function renderAdmin(){
-  var tabs=[['orders','📋 订单'],['dishes','🍉 菜品'],['pay','💳 收款码'],['shop','🏠 店铺'],['print','🖨 打印'],['qr','🔗 点餐码'],['set','⚙ 设置']];
+  var tabs=[['orders','📋 订单'],['dishes','🍉 菜品'],['pay','💳 收款码'],['shop','🏠 店铺'],['print','🖨 打印'],['qr','🔗 点单码'],['set','⚙ 设置']];
   var html=''; var cur=adminTab||'orders';
   tabs.forEach(function(t){ html+='<button class="'+(cur===t[0]?'on':'')+'" onclick="adminTab=\''+t[0]+'\';renderAdmin()">'+t[1]+'</button>'; });
   document.getElementById('adminTabs').innerHTML=html;
@@ -613,10 +613,10 @@ function browserPrint(text){
 
 function renderQrAdmin(){
   var url=location.href.split('#')[0];
-  var html='<div class="panel"><h3>点餐二维码</h3><div class="card" style="text-align:center">'+
-    '<p style="font-size:13px;color:#555;margin-bottom:10px">顾客扫码直接进入点餐页（免登录）。把此二维码打印贴在店内即可。</p>'+
+  var html='<div class="panel"><h3>点单二维码</h3><div class="card" style="text-align:center">'+
+    '<p style="font-size:13px;color:#555;margin-bottom:10px">顾客扫码直接进入点单页（免登录）。把此二维码打印贴在店内即可。</p>'+
     '<div id="qrBox"></div>'+
-    '<p style="font-size:12px;color:#888;margin-top:8px">当前点餐链接：<br>'+esc(url)+'</p>'+
+    '<p style="font-size:12px;color:#888;margin-top:8px">当前点单链接：<br>'+esc(url)+'</p>'+
     '<button class="btn" style="margin-top:10px" onclick="downloadQr()">下载二维码图片</button></div></div>';
   document.getElementById('adminPanel').innerHTML=html;
   makeQr(url);
@@ -634,7 +634,7 @@ function downloadQr(){
   var img=document.querySelector('#qrBox img');
   if(!img) return;
   var a=document.createElement('a');
-  a.href=img.src; a.download='点餐二维码.png';
+  a.href=img.src; a.download='点单二维码.png';
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
 }
 
