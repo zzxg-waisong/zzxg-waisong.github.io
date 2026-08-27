@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>榨榨鲜果 · 外卖点餐</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f6f7f8;color:#333}
+.hidden{display:none!important}
+/* 顶部 */
+.topbar{position:sticky;top:0;z-index:20;background:linear-gradient(135deg,#43a047,#66bb6a);color:#fff;padding:14px 16px 10px}
+.topbar h1{font-size:20px;font-weight:700}
+.topbar p{font-size:12px;opacity:.92;margin-top:2px}
+.cats{display:flex;gap:8px;background:#fff;padding:10px 12px;border-bottom:1px solid #eee;position:sticky;top:56px;z-index:15;overflow-x:auto}
+.cat{flex:0 0 auto;padding:7px 18px;border-radius:18px;background:#f0f1f2;font-size:14px;color:#555;cursor:pointer}
+.cat.on{background:#43a047;color:#fff;font-weight:600}
+/* 商品 */
+.list{padding:12px 12px 90px}
+.dish{display:flex;background:#fff;border-radius:12px;padding:12px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.dish .info{flex:1}
+.dish .name{font-size:16px;font-weight:600}
+.dish .unit{font-size:12px;color:#999;margin-top:2px}
+.dish .price{color:#e53935;font-weight:700;font-size:17px;margin-top:6px}
+.dish .price small{font-size:12px;font-weight:400;color:#999}
+.dish .ctrl{display:flex;flex-direction:column;align-items:flex-end;justify-content:center;gap:6px}
+.dish input.note{width:130px;border:1px solid #e0e0e0;border-radius:6px;padding:5px 8px;font-size:12px;color:#555}
+.btn{background:#43a047;color:#fff;border:none;border-radius:20px;padding:6px 16px;font-size:14px;cursor:pointer}
+.btn:active{opacity:.8}
+.btn.orange{background:#fb8c00}
+.btn.red{background:#e53935}
+.btn.gray{background:#9e9e9e}
+.btn.outline{background:#fff;color:#43a047;border:1px solid #43a047}
+.btn[disabled]{opacity:.5}
+/* 购物车 */
+.cartbar{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid #eee;padding:10px 14px;display:flex;align-items:center;gap:12px;z-index:30;box-shadow:0 -2px 8px rgba(0,0,0,.06)}
+.cartbar .total{flex:1;font-size:16px;font-weight:700}
+.cartbar .total small{font-weight:400;color:#999;font-size:12px}
+.drawer{position:fixed;left:0;right:0;bottom:0;top:0;background:rgba(0,0,0,.45);z-index:40;display:none}
+.drawer.show{display:block}
+.drawer .panel{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:16px 16px 0 0;max-height:70vh;overflow:auto;padding:16px}
+.drawer .phead{font-size:16px;font-weight:700;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center}
+.cart-item{display:flex;align-items:center;padding:10px 0;border-bottom:1px solid #f0f0f0;gap:8px}
+.cart-item .n{flex:1;font-size:14px}
+.cart-item .n small{display:block;color:#999;font-size:12px;margin-top:2px}
+.qty{display:flex;align-items:center;gap:8px}
+.qty button{width:26px;height:26px;border-radius:50%;border:1px solid #ccc;background:#fff;font-size:16px;cursor:pointer;line-height:1}
+.qty span{min-width:20px;text-align:center;font-size:15px}
+/* 表单 */
+.form{padding:14px}
+.form label{font-size:13px;color:#666;display:block;margin:10px 0 4px}
+.form input,.form select,.form textarea{width:100%;border:1px solid #ddd;border-radius:8px;padding:10px;font-size:15px;background:#fff}
+.field-row{display:flex;gap:8px}
+.field-row>*{flex:1}
+/* 付款页 */
+.pay{max-width:520px;margin:0 auto;padding:14px}
+.pay .amt{text-align:center;background:linear-gradient(135deg,#43a047,#66bb6a);color:#fff;border-radius:14px;padding:22px;margin-bottom:14px}
+.pay .amt .t{font-size:13px;opacity:.9}
+.pay .amt .n{font-size:34px;font-weight:800;margin-top:4px}
+.qrbox{background:#fff;border-radius:14px;padding:16px;margin-bottom:12px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.qrbox .qt{font-size:15px;font-weight:700;margin-bottom:10px}
+.qrbox img{width:min(78vw,320px);height:auto;border-radius:8px;cursor:zoom-in}
+.qrbox .hint{font-size:12px;color:#888;margin-top:8px;line-height:1.6}
+.qrbox .acts{display:flex;gap:8px;justify-content:center;margin-top:10px;flex-wrap:wrap}
+/* 订单文字 */
+.ordertext{background:#fff;border-radius:14px;padding:14px;margin:12px 0;white-space:pre-wrap;font-size:13px;line-height:1.7;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+/* 商家后台 */
+.admin-top{position:sticky;top:0;z-index:20;background:#263238;color:#fff;padding:12px 14px;display:flex;align-items:center;justify-content:space-between}
+.admin-top h2{font-size:17px}
+.admin-tabs{display:flex;background:#fff;border-bottom:1px solid #eee;overflow-x:auto;position:sticky;top:48px;z-index:15}
+.admin-tabs button{flex:0 0 auto;border:none;background:none;padding:12px 16px;font-size:14px;color:#555;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap}
+.admin-tabs button.on{color:#43a047;border-bottom-color:#43a047;font-weight:600}
+.panel{padding:14px}
+.card{background:#fff;border-radius:12px;padding:12px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.card h3{font-size:15px;margin-bottom:8px}
+.rowline{display:flex;justify-content:space-between;font-size:13px;color:#555;margin:4px 0}
+.badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:10px;background:#e8f5e9;color:#2e7d32}
+.badge.off{background:#eee;color:#999}
+.login-box{max-width:320px;margin:60px auto;text-align:center}
+.login-box input{width:100%;border:1px solid #ddd;border-radius:8px;padding:12px;font-size:16px;margin-bottom:12px;text-align:center}
+/* 模态 */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:60;display:none;align-items:center;justify-content:center;padding:20px}
+.modal.show{display:flex}
+.modal .box{background:#fff;border-radius:14px;padding:18px;width:100%;max-width:420px;max-height:85vh;overflow:auto}
+.modal .box img{width:100%}
+/* 打印样式 */
+@media print{
+  body *{visibility:hidden}
+  #printArea,#printArea *{visibility:visible}
+  #printArea{position:absolute;left:0;top:0;width:80mm;font-size:12px}
+}
+#printArea{display:none}
+</style>
+</head>
+<body>
+
+<!-- ================= 顾客端 ================= -->
+<div id="customer">
+  <div class="topbar">
+    <h1>🍉 榨榨鲜果</h1>
+    <p>新鲜水果 · 现榨果汁 · 免费配送</p>
+  </div>
+  <div class="cats" id="cats"></div>
+  <div class="list" id="dishList"></div>
+
+  <div class="cartbar hidden" id="cartbar">
+    <div class="total"><span id="cartCount">0</span> 件 · <span id="cartTotal">¥0</span></div>
+    <button class="btn" id="btnCart" onclick="openDrawer()">查看购物车</button>
+  </div>
+</div>
+
+<!-- 购物车抽屉 -->
+<div class="drawer" id="drawer" onclick="if(event.target===this)closeDrawer()">
+  <div class="panel">
+    <div class="phead">购物车 <button class="btn gray" style="font-size:12px;padding:4px 12px" onclick="closeDrawer()">关闭</button></div>
+    <div id="cartItems"></div>
+    <div style="margin-top:14px;display:flex;justify-content:space-between;align-items:center">
+      <div style="font-size:15px;font-weight:700">合计：<span style="color:#e53935" id="drawerTotal">¥0</span></div>
+      <button class="btn" onclick="openCheckout()">去结算</button>
+    </div>
+  </div>
+</div>
+
+<!-- 结算表单 -->
+<div class="modal" id="checkoutModal">
+  <div class="box">
+    <h3 style="margin-bottom:6px">填写配送信息</h3>
+    <div class="form" style="padding:0">
+      <label>您的称呼</label><input id="ckName" placeholder="例如：王女士">
+      <label>联系电话</label><input id="ckPhone" type="tel" placeholder="手机号">
+      <label>外卖地址</label><textarea id="ckAddr" rows="2" placeholder="小区/楼栋/门牌号，写详细些方便配送"></textarea>
+      <label>预送时间段</label>
+      <select id="ckTime">
+        <option value="尽快送达">尽快送达</option>
+        <option value="10:00-11:00">10:00 - 11:00</option>
+        <option value="11:00-12:00">11:00 - 12:00</option>
+        <option value="12:00-13:00">12:00 - 13:00</option>
+        <option value="13:00-14:00">13:00 - 14:00</option>
+        <option value="14:00-15:00">14:00 - 15:00</option>
+        <option value="15:00-16:00">15:00 - 16:00</option>
+        <option value="16:00-17:00">16:00 - 17:00</option>
+        <option value="17:00-18:00">17:00 - 18:00</option>
+        <option value="18:00-19:00">18:00 - 19:00</option>
+        <option value="19:00-20:00">19:00 - 20:00</option>
+      </select>
+      <label>备注（可选）</label><input id="ckRemark" placeholder="例如：放门口 / 敲门">
+      <div style="display:flex;gap:8px;margin-top:16px">
+        <button class="btn gray" style="flex:1" onclick="closeCheckout()">返回</button>
+        <button class="btn" style="flex:1" onclick="submitOrder()">提交订单</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 付款页 -->
+<div class="modal" id="payModal">
+  <div class="box" style="max-width:520px">
+    <h3 style="text-align:center;margin-bottom:10px">订单已提交，请扫码付款</h3>
+    <div class="pay" style="padding:0">
+      <div class="amt">
+        <div class="t">应付金额</div>
+        <div class="n" id="payAmt">¥0</div>
+      </div>
+      <div class="qrbox">
+        <div class="qt">请使用微信 / 支付宝扫码付款</div>
+        <img id="payImg" src="收款码.png" onclick="zoomImg(this.src)" alt="收款码">
+        <div class="hint">长按图片可识别二维码 · 也可点下方"保存到相册"，再用微信/支付宝扫一扫→相册选择</div>
+        <div class="acts">
+          <button class="btn" onclick="saveImg('payImg')">保存收款码到相册</button>
+          <button class="btn gray" onclick="zoomImg(document.getElementById('payImg').src)">放大</button>
+        </div>
+      </div>
+      <div class="qrbox">
+        <div class="qt">添加店主微信 / 直接转账</div>
+        <img id="wxImg" src="微信二维码.png" onclick="zoomImg(this.src)" alt="微信">
+        <div class="acts">
+          <button class="btn orange" onclick="saveImg('wxImg')">保存微信码</button>
+        </div>
+      </div>
+      <button class="btn" style="width:100%;padding:13px;font-size:16px" onclick="payDone()">我 已 付 款</button>
+      <p style="text-align:center;font-size:12px;color:#999;margin-top:8px">付款后点击上方按钮，自动整理订单发给店主</p>
+    </div>
+  </div>
+</div>
+
+<!-- 图片放大 -->
+<div class="modal" id="zoomModal">
+  <div class="box" style="max-width:480px;background:#000;padding:8px">
+    <img id="zoomImg" src="" style="width:100%;border-radius:8px">
+    <p style="text-align:center;color:#fff;font-size:12px;margin-top:6px">长按保存 / 识别二维码</p>
+  </div>
+</div>
+
+<!-- ================= 商家后台 ================= -->
+<div id="admin" class="hidden">
+  <div class="admin-top">
+    <h2>商家后台</h2>
+    <div>
+      <button class="btn gray" style="font-size:12px;padding:4px 10px" onclick="backToShop()">返回点餐页</button>
+      <button class="btn red" style="font-size:12px;padding:4px 10px;margin-left:6px" onclick="adminLogout()">退出</button>
+    </div>
+  </div>
+  <div class="admin-tabs" id="adminTabs"></div>
+  <div id="adminPanel"></div>
+</div>
+
+<!-- 登录 -->
+<div class="modal show" id="loginModal">
+  <div class="box">
+    <div class="login-box" style="margin:0 auto">
+      <h2 style="margin-bottom:18px">🔒 商家后台</h2>
+      <input type="password" id="adminPwd" placeholder="请输入密码" style="margin-bottom:16px">
+      <button class="btn" style="width:100%;padding:12px" onclick="adminLogin()">登录</button>
+      <p style="font-size:12px;color:#999;margin-top:14px;line-height:1.7">默认密码 123456，请登录后尽快在"设置"中修改<br>忘记密码：清除浏览器站点数据后恢复默认</p>
+    </div>
+  </div>
+</div>
+
+<!-- 打印内容（隐藏） -->
+<div id="printArea"></div>
+
+<script src="qrcode.js"></script>
+<script>
+/* ==================== 数据层 ==================== */
+var LS_DISHES='fruit_dishes', LS_ORDERS='fruit_orders', LS_PWD='fruit_admin_pwd',
+    LS_PAY='fruit_pay', LS_SHOP='fruit_shop', LS_SESSION='fruit_admin_ok';
+
+function defaultDishes(){
+  return [
+    {id:'d1',name:'麒麟西瓜',price:25,unit:'整颗',cat:'水果',on:true},
+    {id:'d2',name:'红心火龙果',price:18,unit:'斤',cat:'水果',on:true},
+    {id:'d3',name:'海南香蕉',price:5,unit:'斤',cat:'水果',on:true},
+    {id:'d4',name:'巨峰葡萄',price:12,unit:'斤',cat:'水果',on:true},
+    {id:'d5',name:'冰糖橙',price:8,unit:'斤',cat:'水果',on:true},
+    {id:'d6',name:'烟台红富士苹果',price:9,unit:'斤',cat:'水果',on:true},
+    {id:'d7',name:'水仙芒果',price:15,unit:'斤',cat:'水果',on:true},
+    {id:'d8',name:'圣女果',price:8,unit:'斤',cat:'水果',on:true},
+    {id:'j1',name:'鲜榨西瓜汁',price:10,unit:'杯',cat:'果汁',on:true},
+    {id:'j2',name:'鲜榨橙汁',price:12,unit:'杯',cat:'果汁',on:true},
+    {id:'j3',name:'鲜榨芒果汁',price:12,unit:'杯',cat:'果汁',on:true},
+    {id:'j4',name:'鲜榨苹果汁',price:10,unit:'杯',cat:'果汁',on:true},
+    {id:'j5',name:'鲜榨火龙果汁',price:12,unit:'杯',cat:'果汁',on:true}
+  ];
+}
+function load(k, def){ try{ var v=localStorage.getItem(k); return v?JSON.parse(v):def; }catch(e){ return def; } }
+function save(k, v){ localStorage.setItem(k, JSON.stringify(v)); }
+
+var dishes = load(LS_DISHES, null); if(!dishes||!dishes.length) dishes=defaultDishes();
+var orders = load(LS_ORDERS, []);
+var payCfg = load(LS_PAY, {payUrl:'收款码.png', wxUrl:'微信二维码.png'});
+var shopCfg = load(LS_SHOP, {address:''});
+var adminOk = localStorage.getItem(LS_SESSION)==='1';
+var cart = {};   // id -> {qty,note}
+var curCat = '水果';
+var curOrder = null;
+
+/* ==================== 通用 ==================== */
+function money(n){ return '¥'+Number(n).toFixed(2); }
+function nowStr(){ var d=new Date(); function p(x){return (x<10?'0':'')+x;}
+  return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes()); }
+function oid(){ var d=new Date(); return d.getFullYear()+''+p2(d.getMonth()+1)+''+p2(d.getDate())+'-'+String(Math.floor(100+Math.random()*900)); }
+function p2(x){return (x<10?'0':'')+x;}
+
+/* ==================== 路由 ==================== */
+function route(){
+  var h=location.hash||'#/';
+  if(h.indexOf('#/admin')===0){ showAdmin(); }
+  else { showCustomer(); }
+}
+window.addEventListener('hashchange', route);
+
+/* ==================== 顾客端 ==================== */
+function showCustomer(){
+  document.getElementById('admin').classList.add('hidden');
+  document.getElementById('customer').classList.remove('hidden');
+  document.getElementById('loginModal').classList.remove('show');
+  renderCats(); renderDishes(); renderCartbar();
+}
+function cats(){ var c=[]; dishes.forEach(function(d){ if(d.on && c.indexOf(d.cat)<0) c.push(d.cat); }); if(!c.length) c=['水果','果汁']; return c; }
+function renderCats(){
+  var box=document.getElementById('cats'); var html='';
+  cats().forEach(function(c){ html+='<div class="cat'+(c===curCat?' on':'')+'" onclick="setCat(\''+c+'\')">'+c+'</div>'; });
+  box.innerHTML=html;
+}
+function setCat(c){ curCat=c; renderCats(); renderDishes(); }
+function renderDishes(){
+  var box=document.getElementById('dishList'); var html='';
+  dishes.forEach(function(d){
+    if(d.cat!==curCat || !d.on) return;
+    var c=cart[d.id]||{qty:0,note:''};
+    html+='<div class="dish"><div class="info"><div class="name">'+esc(d.name)+'</div>'+
+      '<div class="unit">'+esc(d.unit||'')+'</div>'+
+      '<div class="price">'+money(d.price)+'<small> / '+esc(d.unit||'份')+'</small></div></div>'+
+      '<div class="ctrl"><input class="note" placeholder="口味/备注" value="'+esc(c.note)+'" onchange="setNote(\''+d.id+'\',this.value)">'+
+      '<button class="btn" onclick="addToCart(\''+d.id+'\')">加入购物车</button></div></div>';
+  });
+  box.innerHTML=html || '<div style="text-align:center;color:#999;padding:40px">该分类暂无商品</div>';
+}
+function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function addToCart(id){
+  if(!cart[id]) cart[id]={qty:0,note:''};
+  cart[id].qty++; renderDishes(); renderCartbar();
+}
+function setNote(id,val){ if(!cart[id]) cart[id]={qty:0,note:''}; cart[id].note=val; }
+function changeQty(id,delta){ if(!cart[id]) cart[id]={qty:0,note:''}; cart[id].qty+=delta; if(cart[id].qty<=0) delete cart[id]; renderCartItems(); renderCartbar(); renderDishes(); }
+function cartList(){ var r=[]; for(var id in cart){ if(cart[id].qty>0) r.push({id:id,qty:cart[id].qty,note:cart[id].note}); } return r; }
+function cartTotal(){ var t=0; cartList().forEach(function(c){ var d=byId(c.id); if(d) t+=d.price*c.qty; }); return t; }
+function byId(id){ for(var i=0;i<dishes.length;i++) if(dishes[i].id===id) return dishes[i]; return null; }
+function renderCartbar(){
+  var list=cartList(), n=0; list.forEach(function(c){n+=c.qty;});
+  document.getElementById('cartbar').classList.toggle('hidden', n===0);
+  document.getElementById('cartCount').textContent=n;
+  document.getElementById('cartTotal').textContent=money(cartTotal());
+}
+function openDrawer(){ renderCartItems(); document.getElementById('drawer').classList.add('show'); }
+function closeDrawer(){ document.getElementById('drawer').classList.remove('show'); }
+function renderCartItems(){
+  var box=document.getElementById('cartItems'); var html='';
+  cartList().forEach(function(c){
+    var d=byId(c.id); if(!d) return;
+    html+='<div class="cart-item"><div class="n">'+esc(d.name)+
+      (c.note?'<small>备注：'+esc(c.note)+'</small>':'')+'</div>'+
+      '<div class="qty"><button onclick="changeQty(\''+c.id+'\',-1)">−</button><span>'+c.qty+'</span><button onclick="changeQty(\''+c.id+'\',1)">+</button></div>'+
+      '<div style="min-width:64px;text-align:right;font-weight:600">'+money(d.price*c.qty)+'</div></div>';
+  });
+  box.innerHTML=html||'<div style="text-align:center;color:#999;padding:20px">购物车是空的</div>';
+  document.getElementById('drawerTotal').textContent=money(cartTotal());
+}
+function openCheckout(){
+  if(!cartList().length){ alert('购物车是空的'); return; }
+  closeDrawer(); document.getElementById('checkoutModal').classList.add('show');
+}
+function closeCheckout(){ document.getElementById('checkoutModal').classList.remove('show'); }
+function submitOrder(){
+  var name=document.getElementById('ckName').value.trim();
+  var phone=document.getElementById('ckPhone').value.trim();
+  var addr=document.getElementById('ckAddr').value.trim();
+  var time=document.getElementById('ckTime').value;
+  var remark=document.getElementById('ckRemark').value.trim();
+  if(!name){ alert('请填写称呼'); return; }
+  if(!/^1\d{10}$/.test(phone) && phone.length<7){ alert('请填写正确的联系电话'); return; }
+  if(!addr){ alert('请填写外卖地址'); return; }
+  var list=cartList(); if(!list.length){ alert('购物车为空'); return; }
+  var items=list.map(function(c){ var d=byId(c.id); return {name:d.name,price:d.price,qty:c.qty,note:c.note,unit:d.unit}; });
+  var order={id:oid(), items:items, total:cartTotal(), name:name, phone:phone, addr:addr, time:time, remark:remark, created:nowStr(), status:'待付款'};
+  orders.unshift(order); save(LS_ORDERS, orders);
+  cart={}; renderDishes(); renderCartbar(); closeCheckout();
+  curOrder=order; showPay(order);
+}
+function showPay(order){
+  document.getElementById('payAmt').textContent=money(order.total);
+  document.getElementById('payImg').src=payCfg.payUrl||'收款码.png';
+  document.getElementById('wxImg').src=payCfg.wxUrl||'微信二维码.png';
+  document.getElementById('payModal').classList.add('show');
+}
+function zoomImg(src){ document.getElementById('zoomImg').src=src; document.getElementById('zoomModal').classList.add('show'); }
+document.getElementById('zoomModal').addEventListener('click',function(e){ if(e.target===this||e.target.tagName==='P') this.classList.remove('show'); });
+function saveImg(idName){
+  var img=document.getElementById(idName);
+  var a=document.createElement('a'); a.href=img.src; a.download=img.src.split('/').pop();
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+function payDone(){
+  if(!curOrder) return;
+  var order=curOrder; order.status='已付款'; save(LS_ORDERS, orders);
+  var text=formatOrderText(order);
+  document.getElementById('payModal').classList.remove('show');
+  openResult(text, order);
+}
+function formatOrderText(o){
+  var lines=[];
+  lines.push('🍉 榨榨鲜果 外卖订单');
+  lines.push('——————————————');
+  lines.push('【订单号】'+o.id);
+  lines.push('【下单时间】'+o.created);
+  lines.push('【商品】');
+  o.items.forEach(function(it){
+    lines.push((it.note?('  '+it.name+'（'+it.note+'）'):('  '+it.name))+' ×'+it.qty+'  '+money(it.price*it.qty));
+  });
+  lines.push('——————————————');
+  lines.push('【合计】'+money(o.total));
+  lines.push('【顾客】'+o.name+'  '+o.phone);
+  lines.push('【地址】'+o.addr);
+  lines.push('【预送】'+o.time);
+  if(o.remark) lines.push('【备注】'+o.remark);
+  lines.push('【状态】'+o.status);
+  return lines.join('\n');
+}
+function openResult(text, order){
+  var box=document.createElement('div');
+  box.className='modal show'; box.id='resultModal';
+  box.innerHTML='<div class="box"><h3 style="text-align:center;margin-bottom:10px">✅ 订单已生成，请发给店主</h3>'+
+    '<div class="ordertext">'+esc(text)+'</div>'+
+    '<div style="display:flex;gap:8px"><button class="btn" style="flex:1" onclick="copyText()">复制订单</button>'+
+    '<button class="btn orange" style="flex:1" onclick="sendWechat()">发送给商家微信</button></div>'+
+    '<p style="font-size:12px;color:#888;margin-top:10px;line-height:1.6">提示：纯网页无法直接唤起微信，请先"复制订单"，再打开微信粘贴发送给店主（或识别上面的微信码加好友发送）。</p>'+
+    '<button class="btn gray" style="width:100%;margin-top:10px" onclick="document.getElementById(\'resultModal\').remove();window.location.hash=\'#/\';">完成</button></div>';
+  document.body.appendChild(box);
+  window._lastText=text;
+}
+function copyText(){
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(window._lastText).then(function(){ alert('订单已复制！请打开微信粘贴发送给店主'); }, function(){ fallbackCopy(window._lastText); });
+  } else { fallbackCopy(window._lastText); }
+}
+function fallbackCopy(text){
+  var ta=document.createElement('textarea'); ta.value=text; document.body.appendChild(ta); ta.select();
+  try{ document.execCommand('copy'); alert('订单已复制！请打开微信粘贴发送给店主'); }catch(e){ alert('复制失败，请长按手动复制订单文字'); }
+  document.body.removeChild(ta);
+}
+function sendWechat(){ copyText(); }
+
+/* ==================== 商家后台 ==================== */
+function showAdmin(){
+  document.getElementById('customer').classList.add('hidden');
+  document.getElementById('admin').classList.remove('hidden');
+  if(!adminOk){ document.getElementById('loginModal').classList.add('show'); return; }
+  document.getElementById('loginModal').classList.remove('show');
+  renderAdmin();
+}
+function backToShop(){ location.hash='#/'; }
+function adminLogin(){
+  var pwd=document.getElementById('adminPwd').value;
+  var stored=localStorage.getItem(LS_PWD)||'123456';
+  if(pwd===stored){ adminOk=true; localStorage.setItem(LS_SESSION,'1'); document.getElementById('loginModal').classList.remove('show'); renderAdmin(); }
+  else alert('密码错误');
+}
+function adminLogout(){ adminOk=false; localStorage.setItem(LS_SESSION,'0'); location.hash='#/'; }
+function renderAdmin(){
+  var tabs=[['orders','📋 订单'],['dishes','🍉 菜品'],['pay','💳 收款码'],['shop','🏠 店铺'],['print','🖨 打印'],['qr','🔗 点餐码'],['set','⚙ 设置']];
+  var html=''; var cur=adminTab||'orders';
+  tabs.forEach(function(t){ html+='<button class="'+(cur===t[0]?'on':'')+'" onclick="adminTab=\''+t[0]+'\';renderAdmin()">'+t[1]+'</button>'; });
+  document.getElementById('adminTabs').innerHTML=html;
+  var panel=document.getElementById('adminPanel');
+  if(cur==='orders') panel.innerHTML=renderOrders();
+  else if(cur==='dishes') panel.innerHTML=renderDishesAdmin();
+  else if(cur==='pay') panel.innerHTML=renderPayAdmin();
+  else if(cur==='shop') panel.innerHTML=renderShopAdmin();
+  else if(cur==='print') panel.innerHTML=renderPrintAdmin();
+  else if(cur==='qr') panel.innerHTML=renderQrAdmin();
+  else if(cur==='set') panel.innerHTML=renderSetAdmin();
+}
+var adminTab='orders';
+
+function renderOrders(){
+  var html='<div class="panel"><h3 style="margin-bottom:10px">订单列表（'+orders.length+' 单）</h3>';
+  if(!orders.length) html+='<div style="text-align:center;color:#999;padding:30px">暂无订单</div>';
+  orders.forEach(function(o,i){
+    var st=o.status==='已完成'?'done':(o.status==='已付款'?'paid':'new');
+    html+='<div class="card"><h3>'+o.id+' <span class="badge '+(o.status==='已完成'?'off':'')+'">'+esc(o.status)+'</span></h3>'+
+      '<div class="rowline"><span>顾客</span><span>'+esc(o.name)+' '+esc(o.phone)+'</span></div>'+
+      '<div class="rowline"><span>金额</span><span style="color:#e53935;font-weight:700">'+money(o.total)+'</span></div>'+
+      '<div class="rowline"><span>地址</span><span>'+esc(o.addr)+'</span></div>'+
+      '<div class="rowline"><span>预送</span><span>'+esc(o.time)+' · '+esc(o.created)+'</span></div>'+
+      '<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">'+
+      '<button class="btn" onclick="navTo(\''+i+'\')">高德导航</button>'+
+      '<button class="btn orange" onclick="copyAddr(\''+i+'\')">复制地址</button>'+
+      '<button class="btn outline" onclick="viewOrder(\''+i+'\')">详情</button>'+
+      '<button class="btn gray" onclick="copyOrderText(\''+i+'\')">复制订单</button>'+
+      (o.status!=='已完成'?'<button class="btn" onclick="markDone(\''+i+'\')">标记完成</button>':'')+
+      '<button class="btn red" onclick="delOrder(\''+i+'\')">删除</button></div></div>';
+  });
+  return html+'</div>';
+}
+function navTo(i){
+  var o=orders[i]; if(!o) return;
+  var from=encodeURIComponent(shopCfg.address||'');
+  var to=encodeURIComponent(o.addr);
+  var url='https://uri.amap.com/navigation?from='+from+'&to='+to+'&mode=car&policy=1&src=myapp&coordinate=gaode&callnative=1';
+  window.open(url,'_blank');
+}
+function copyAddr(i){ var o=orders[i]; if(!o)return; fallbackCopy(o.addr); alert('地址已复制'); }
+function copyOrderText(i){ var o=orders[i]; if(!o)return; window._lastText=formatOrderText(o); copyText(); }
+function markDone(i){ orders[i].status='已完成'; save(LS_ORDERS,orders); renderAdmin(); }
+function delOrder(i){ if(confirm('确认删除该订单？')){ orders.splice(i,1); save(LS_ORDERS,orders); renderAdmin(); } }
+function viewOrder(i){
+  var o=orders[i]; if(!o)return;
+  var text=formatOrderText(o);
+  var box=document.createElement('div'); box.className='modal show'; box.id='viewModal';
+  box.innerHTML='<div class="box"><h3>订单详情</h3><div class="ordertext">'+esc(text)+'</div>'+
+    '<div style="display:flex;gap:8px"><button class="btn" style="flex:1" onclick="printThis(\''+i+'\')">🖨 打印小票</button>'+
+    '<button class="btn gray" style="flex:1" onclick="document.getElementById(\'viewModal\').remove()">关闭</button></div></div>';
+  document.body.appendChild(box);
+}
+
+function renderDishesAdmin(){
+  var html='<div class="panel"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><h3>菜品管理</h3>'+
+    '<button class="btn" onclick="editDish()">＋ 新增菜品</button></div>'+
+    '<p style="font-size:12px;color:#888;margin-bottom:10px">注：修改仅保存在本机浏览器；顾客端看到的菜单为网站内置版本，如需更新顾客菜单请联系店主重新发布。</p>';
+  dishes.forEach(function(d){
+    html+='<div class="card"><div style="display:flex;justify-content:space-between;align-items:center">'+
+      '<div><b>'+esc(d.name)+'</b> <span class="badge '+(d.on?'':'off')+'">'+(d.on?'上架':'下架')+'</span>'+
+      '<div style="font-size:12px;color:#888;margin-top:3px">'+esc(d.cat)+' · '+money(d.price)+' / '+esc(d.unit||'份')+'</div></div>'+
+      '<div><button class="btn gray" style="font-size:12px;padding:4px 10px" onclick="editDish(\''+d.id+'\')">编辑</button> '+
+      '<button class="btn red" style="font-size:12px;padding:4px 10px" onclick="delDish(\''+d.id+'\')">删除</button></div></div></div>';
+  });
+  return html+'</div>';
+}
+function editDish(id){
+  var d=id?byId(id):null;
+  var box=document.createElement('div'); box.className='modal show'; box.id='dishModal';
+  box.innerHTML='<div class="box"><h3>'+(d?'编辑菜品':'新增菜品')+'</h3><div class="form" style="padding:0">'+
+    '<label>菜品名称</label><input id="dName" value="'+(d?esc(d.name):'')+'">'+
+    '<label>价格（元）</label><input id="dPrice" type="number" step="0.1" value="'+(d?d.price:'')+'">'+
+    '<label>单位 / 重量（如：斤、整颗、杯）</label><input id="dUnit" value="'+(d?esc(d.unit||'份'):'份')+'">'+
+    '<label>分类</label><select id="dCat"><option value="水果"'+(d&&d.cat==='水果'?' selected':'')+'>水果</option><option value="果汁"'+(d&&d.cat==='果汁'?' selected':'')+'>现榨果汁</option></select>'+
+    '<label><input type="checkbox" id="dOn"'+(d?((d.on?' checked':'')):' checked')+'> 上架（顾客可见）</label>'+
+    '<div style="display:flex;gap:8px;margin-top:14px"><button class="btn gray" style="flex:1" onclick="document.getElementById(\'dishModal\').remove()">取消</button>'+
+    '<button class="btn" style="flex:1" onclick="saveDish(\''+(d?d.id:'')+'\')">保存</button></div></div></div>';
+  document.body.appendChild(box);
+}
+function saveDish(id){
+  var name=document.getElementById('dName').value.trim();
+  var price=parseFloat(document.getElementById('dPrice').value);
+  var unit=document.getElementById('dUnit').value.trim()||'份';
+  var cat=document.getElementById('dCat').value;
+  var on=document.getElementById('dOn').checked;
+  if(!name||isNaN(price)||price<0){ alert('请填写名称和正确的价格'); return; }
+  if(id){ var d=byId(id); d.name=name; d.price=price; d.unit=unit; d.cat=cat; d.on=on; }
+  else { dishes.push({id:'d'+Date.now(),name:name,price:price,unit:unit,cat:cat,on:on}); }
+  save(LS_DISHES,dishes); document.getElementById('dishModal').remove(); renderAdmin(); renderCats(); renderDishes();
+}
+function delDish(id){ if(confirm('确认删除该菜品？')){ dishes=dishes.filter(function(d){return d.id!==id;}); save(LS_DISHES,dishes); renderAdmin(); renderCats(); renderDishes(); } }
+
+function renderPayAdmin(){
+  var html='<div class="panel"><h3>收款码设置</h3>'+
+    '<div class="card"><div class="form" style="padding:0">'+
+    '<label>聚合收款码图片（URL 或相对路径）</label><input id="payUrl" value="'+esc(payCfg.payUrl)+'">'+
+    '<label>微信二维码图片（URL 或相对路径）</label><input id="wxUrl" value="'+esc(payCfg.wxUrl)+'">'+
+    '<div style="margin-top:12px;display:flex;gap:8px"><button class="btn" onclick="savePayCfg()">保存收款码设置</button>'+
+    '<button class="btn gray" onclick="previewPay()">预览</button></div></div></div>'+
+    '<div class="card"><h3>当前效果预览</h3>'+
+    '<div style="display:flex;gap:12px;justify-content:center;margin-top:8px">'+
+    '<div style="text-align:center"><img src="'+esc(payCfg.payUrl)+'" style="width:150px;border:1px solid #eee;border-radius:8px"><div style="font-size:12px;color:#888">收款码</div></div>'+
+    '<div style="text-align:center"><img src="'+esc(payCfg.wxUrl)+'" style="width:150px;border:1px solid #eee;border-radius:8px"><div style="font-size:12px;color:#888">微信码</div></div></div></div></div>';
+  return html;
+}
+function savePayCfg(){
+  payCfg.payUrl=document.getElementById('payUrl').value.trim()||'收款码.png';
+  payCfg.wxUrl=document.getElementById('wxUrl').value.trim()||'微信二维码.png';
+  save(LS_PAY,payCfg); renderAdmin();
+}
+function previewPay(){ savePayCfg(); renderPayAdmin(); }
+
+function renderShopAdmin(){
+  var html='<div class="panel"><h3>店铺设置</h3><div class="card"><div class="form" style="padding:0">'+
+    '<label>店铺地址（导航起点，用于外送导航）</label><input id="shopAddr" value="'+esc(shopCfg.address)+'" placeholder="例如：成都市青羊区XX路XX号">'+
+    '<label>修改后台密码</label><div style="display:flex;gap:8px"><input id="newPwd" placeholder="新密码（留空则不修改）"><button class="btn" onclick="changePwd()">修改密码</button></div>'+
+    '<div style="margin-top:12px"><button class="btn" onclick="saveShop()">保存店铺设置</button></div></div></div></div>';
+  return html;
+}
+function saveShop(){ shopCfg.address=document.getElementById('shopAddr').value.trim(); save(LS_SHOP,shopCfg); renderAdmin(); }
+function changePwd(){
+  var v=document.getElementById('newPwd').value.trim();
+  if(!v){ alert('请输入新密码'); return; }
+  localStorage.setItem(LS_PWD, v); alert('密码已修改，下次登录请用新密码');
+}
+
+function renderPrintAdmin(){
+  var html='<div class="panel"><h3>58 热敏打印机</h3><div class="card">'+
+    '<p style="font-size:13px;color:#555;line-height:1.7">支持 USB 接口的 58mm ESC/POS 热敏打印机（佳博/汉印/芯烨等），通过浏览器 Web Serial 直连。请使用 Chrome 或 Edge 浏览器。打印内容为 UTF-8 编码，若部分打印机中文乱码，请改用下方"浏览器打印"（走系统驱动，中文正常）。</p>'+
+    '<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">'+
+    '<button class="btn" onclick="connectAndPrintLatest()">🖨 连接打印机打印最新订单</button>'+
+    '<button class="btn gray" onclick="testPrint()">打印测试小票</button>'+
+    '<button class="btn orange" onclick="browserPrint()">浏览器打印（备用）</button></div></div></div>';
+  return html;
+}
+async function connectAndPrintLatest(){
+  if(!orders.length){ alert('暂无订单'); return; }
+  if(!navigator.serial){ alert('当前浏览器不支持 Web Serial，请用 Chrome/Edge'); return; }
+  try{
+    var port=await navigator.serial.requestPort();
+    await port.open({baudRate:9600});
+    await writeReceipt(port, formatOrderText(orders[0]));
+    alert('已发送打印，请检查小票');
+  }catch(e){ alert('打印失败：'+e.message); }
+}
+async function testPrint(){
+  if(!navigator.serial){ alert('当前浏览器不支持 Web Serial，请用 Chrome/Edge'); return; }
+  try{
+    var port=await navigator.serial.requestPort();
+    await port.open({baudRate:9600});
+    await writeReceipt(port, '🍉 榨榨鲜果\n\n测试打印\n连接成功！\n\n'+nowStr()+'\n');
+    alert('测试小票已发送');
+  }catch(e){ alert('打印失败：'+e.message); }
+}
+async function writeReceipt(port, text){
+  var writer=port.writable.getWriter();
+  var enc=new TextEncoder();
+  var init=new Uint8Array([0x1B,0x40]);        // 初始化
+  var feed=new Uint8Array([0x1A]);             // 
+  var data=[]; data.push.apply(data,init); 
+  var body=enc.encode(text+'\n');
+  for(var i=0;i<body.length;i++) data.push(body[i]);
+  data.push(0x1B,0x4A,0x20);                    // 进纸
+  var cut=new Uint8Array([0x1D,0x56,0x42,0x00]);// 切纸
+  for(var j=0;j<cut.length;j++) data.push(cut[j]);
+  await writer.write(new Uint8Array(data));
+  writer.releaseLock();
+  port.close();
+}
+function printThis(i){
+  var o=orders[i]; if(!o)return;
+  browserPrint(formatOrderText(o));
+}
+function browserPrint(text){
+  text=text||'🍉 榨榨鲜果\n\n';
+  document.getElementById('printArea').innerHTML='<pre style="font-family:monospace;font-size:11px;white-space:pre-wrap">'+esc(text)+'</pre>';
+  document.getElementById('printArea').style.display='block';
+  window.print();
+  setTimeout(function(){ document.getElementById('printArea').style.display='none'; },500);
+}
+
+function renderQrAdmin(){
+  var url=location.href.split('#')[0];
+  var html='<div class="panel"><h3>点餐二维码</h3><div class="card" style="text-align:center">'+
+    '<p style="font-size:13px;color:#555;margin-bottom:10px">顾客扫码直接进入点餐页（免登录）。把此二维码打印贴在店内即可。</p>'+
+    '<div id="qrBox"></div>'+
+    '<p style="font-size:12px;color:#888;margin-top:8px">当前点餐链接：<br>'+esc(url)+'</p>'+
+    '<button class="btn" style="margin-top:10px" onclick="downloadQr()">下载二维码图片</button></div></div>';
+  document.getElementById('adminPanel').innerHTML=html;
+  makeQr(url);
+}
+function makeQr(text){
+  try{
+    var qr=qrcode(0,'M');
+    qr.addData(text); qr.make();
+    var img=qr.createImgTag(6,10);
+    document.getElementById('qrBox').innerHTML=img;
+    window._qrImg=img;
+  }catch(e){ document.getElementById('qrBox').innerHTML='<p style="color:#e53935">二维码生成失败：'+esc(e.message)+'</p>'; }
+}
+function downloadQr(){
+  var img=document.querySelector('#qrBox img');
+  if(!img) return;
+  var a=document.createElement('a');
+  a.href=img.src; a.download='点餐二维码.png';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+
+function renderSetAdmin(){
+  var html='<div class="panel"><h3>设置</h3><div class="card">'+
+    '<div class="rowline"><span>后台密码</span><span><a href="javascript:adminTab=\'shop\';renderAdmin()">去修改</a></span></div>'+
+    '<div class="rowline"><span>数据存储</span><span>本机浏览器（localStorage）</span></div>'+
+    '<button class="btn red" style="width:100%;margin-top:8px" onclick="resetData()">重置全部数据（恢复默认）</button></div></div>';
+  return html;
+}
+function resetData(){
+  if(confirm('确认清空本机所有数据？顾客端菜单不受影响。')){ localStorage.removeItem(LS_DISHES); localStorage.removeItem(LS_ORDERS); localStorage.removeItem(LS_PAY); localStorage.removeItem(LS_SHOP); location.reload(); }
+}
+
+/* 初始化 */
+route();
+</script>
+</body>
+</html>
