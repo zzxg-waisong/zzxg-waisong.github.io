@@ -230,16 +230,16 @@ var LS_DISHES='fruit_dishes', LS_ORDERS='fruit_orders', LS_PWD='fruit_admin_pwd'
 function defaultDishes(){
   return [
     {id:'d1',name:'无籽麒麟西瓜（10斤左右）',price:40,unit:'个',cat:'水果',on:true,img:'wuzi_qilin_xigua.jpg'},
-    {id:'d2',name:'地雷西瓜（1/4个）',price:12,unit:'个',cat:'水果',on:true,img:'dilei_xigua.jpg'},
+    {id:'d2',name:'地雷西瓜（1/4个）',price:12,unit:'份',cat:'水果',on:true,img:'dilei_xigua.jpg'},
     {id:'d3',name:'老挝香蕉（5根 2.5-3斤）',price:12.5,unit:'份',cat:'水果',on:true,img:'laowo_xiangjiao.jpg'},
     {id:'d4',name:'海南香蕉（9根/半爪 3-3.5斤）',price:10,unit:'份',cat:'水果',on:true,img:'hainan_xiangjiao.jpg'},
     {id:'d5',name:'凉山盐源糖心丑苹果（4个 1.5-2斤）',price:15,unit:'份',cat:'水果',on:true,img:'tangxin_choupingguo.jpg'},
     {id:'d6',name:'陕西红富士苹果（4个 1.5-2斤）',price:12,unit:'份',cat:'水果',on:true,img:'hongfushi_pingguo.jpg'},
     {id:'d7',name:'青苹果（4个 1.8-2斤）',price:10,unit:'份',cat:'水果',on:true,img:'qing_pingguo.jpg'},
     {id:'d8',name:'石榴',price:4,unit:'个',cat:'水果',on:true,img:'shiliu.jpg'},
-    {id:'d9',name:'大石榴',price:5,unit:'个',cat:'水果',on:true,img:'da_shiliu.jpg'},
+    {id:'d9',name:'石榴（大）',price:5,unit:'个',cat:'水果',on:true,img:'da_shiliu.jpg'},
     {id:'d10',name:'花皮石榴',price:3,unit:'个',cat:'水果',on:true,img:'huapi_shiliu.jpg'},
-    {id:'d11',name:'大花皮石榴',price:4,unit:'个',cat:'水果',on:true,img:'dahuapi_shiliu.jpg'},
+    {id:'d11',name:'花皮石榴（大）',price:4,unit:'个',cat:'水果',on:true,img:'dahuapi_shiliu.jpg'},
     {id:'d12',name:'海南红心柚（约3斤）',price:15,unit:'个',cat:'水果',on:true,img:'hongxin_you.jpg'},
     {id:'d13',name:'黄皮哈密瓜',price:20,unit:'个',cat:'水果',on:true,img:'huangpi_hamigua.jpg'},
     {id:'d14',name:'哈密瓜',price:18,unit:'个',cat:'水果',on:true,img:'hamigua.jpg'},
@@ -642,9 +642,53 @@ function makeQr(text){
   try{
     var qr=qrcode(0,'M');
     qr.addData(text); qr.make();
-    var img=qr.createImgTag(6,10);
-    document.getElementById('qrBox').innerHTML=img;
-    window._qrImg=img;
+    var count=qr.getModuleCount();
+    var size=300, cell=Math.round(size/count), margin=16;
+    var W=size+margin*2;
+    var canvas=document.createElement('canvas');
+    canvas.width=W; canvas.height=W;
+    var ctx=canvas.getContext('2d');
+    ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,W,W);
+    var grad=ctx.createLinearGradient(0,0,W,W);
+    grad.addColorStop(0,'#4caf50'); grad.addColorStop(1,'#1b5e20');
+    ctx.fillStyle=grad;
+    var rad=Math.max(2,Math.floor(cell*0.4));
+    for(var r=0;r<count;r++){
+      for(var c=0;c<count;c++){
+        if(qr.isDark(r,c)){
+          var x=margin+c*cell, y=margin+r*cell;
+          ctx.beginPath();
+          ctx.moveTo(x+rad,y);
+          ctx.arcTo(x+cell,y,x+cell,y+cell,rad);
+          ctx.arcTo(x+cell,y+cell,x,y+cell,rad);
+          ctx.arcTo(x,y+cell,x,y,rad);
+          ctx.arcTo(x,y,x+cell,y,rad);
+          ctx.closePath(); ctx.fill();
+        }
+      }
+    }
+    // 中间白色圆角区 + 文字
+    var cw=Math.floor(W*0.40);
+    var cx=(W-cw)/2, cy=(W-cw)/2;
+    ctx.fillStyle='#ffffff';
+    ctx.beginPath();
+    ctx.moveTo(cx+14,cy);
+    ctx.arcTo(cx+cw,cy,cx+cw,cy+cw,14);
+    ctx.arcTo(cx+cw,cy+cw,cx,cy+cw,14);
+    ctx.arcTo(cx,cy+cw,cx,cy,14);
+    ctx.arcTo(cx,cy,cx+cw,cy,14);
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle='#66bb6a'; ctx.lineWidth=2; ctx.stroke();
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillStyle='#1b5e20';
+    ctx.font='bold 18px "Microsoft YaHei","PingFang SC",sans-serif';
+    ctx.fillText('榨榨鲜果', W/2, cy+cw*0.30);
+    ctx.fillStyle='#43a047';
+    ctx.font='15px "Microsoft YaHei","PingFang SC",sans-serif';
+    ctx.fillText('· 外送点单 ·', W/2, cy+cw*0.66);
+    var dataUrl=canvas.toDataURL('image/png');
+    document.getElementById('qrBox').innerHTML='<img src="'+dataUrl+'" style="width:240px;height:240px;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.08)">';
+    window._qrDataUrl=dataUrl;
   }catch(e){ document.getElementById('qrBox').innerHTML='<p style="color:#e53935">二维码生成失败：'+esc(e.message)+'</p>'; }
 }
 function downloadQr(){
