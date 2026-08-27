@@ -227,19 +227,29 @@ var LS_DISHES='fruit_dishes', LS_ORDERS='fruit_orders', LS_PWD='fruit_admin_pwd'
 
 function defaultDishes(){
   return [
-    {id:'d1',name:'麒麟西瓜',price:25,unit:'整颗',cat:'水果',on:true},
-    {id:'d2',name:'红心火龙果',price:18,unit:'斤',cat:'水果',on:true},
-    {id:'d3',name:'海南香蕉',price:5,unit:'斤',cat:'水果',on:true},
-    {id:'d4',name:'巨峰葡萄',price:12,unit:'斤',cat:'水果',on:true},
-    {id:'d5',name:'冰糖橙',price:8,unit:'斤',cat:'水果',on:true},
-    {id:'d6',name:'烟台红富士苹果',price:9,unit:'斤',cat:'水果',on:true},
-    {id:'d7',name:'水仙芒果',price:15,unit:'斤',cat:'水果',on:true},
-    {id:'d8',name:'圣女果',price:8,unit:'斤',cat:'水果',on:true},
-    {id:'j1',name:'鲜榨西瓜汁',price:10,unit:'杯',cat:'果汁',on:true},
-    {id:'j2',name:'鲜榨橙汁',price:12,unit:'杯',cat:'果汁',on:true},
-    {id:'j3',name:'鲜榨芒果汁',price:12,unit:'杯',cat:'果汁',on:true},
-    {id:'j4',name:'鲜榨苹果汁',price:10,unit:'杯',cat:'果汁',on:true},
-    {id:'j5',name:'鲜榨火龙果汁',price:12,unit:'杯',cat:'果汁',on:true}
+    {id:'d1',name:'无籽麒麟西瓜（10斤左右）',price:40,unit:'个',cat:'水果',on:true},
+    {id:'d2',name:'地雷西瓜（1/4个）',price:12,unit:'个',cat:'水果',on:true},
+    {id:'d3',name:'老挝香蕉（5根 2.5-3斤）',price:12.5,unit:'份',cat:'水果',on:true},
+    {id:'d4',name:'海南香蕉（9根/半爪 3-3.5斤）',price:10,unit:'份',cat:'水果',on:true},
+    {id:'d5',name:'凉山盐源糖心丑苹果（4个 1.5-2斤）',price:15,unit:'份',cat:'水果',on:true},
+    {id:'d6',name:'陕西红富士苹果（4个 1.5-2斤）',price:12,unit:'份',cat:'水果',on:true},
+    {id:'d7',name:'青苹果（4个 1.8-2斤）',price:10,unit:'份',cat:'水果',on:true},
+    {id:'d8',name:'石榴',price:4,unit:'个',cat:'水果',on:true},
+    {id:'d9',name:'大石榴',price:5,unit:'个',cat:'水果',on:true},
+    {id:'d10',name:'花皮石榴',price:3,unit:'个',cat:'水果',on:true},
+    {id:'d11',name:'大花皮石榴',price:4,unit:'个',cat:'水果',on:true},
+    {id:'d12',name:'海南红心柚（约3斤）',price:15,unit:'个',cat:'水果',on:true},
+    {id:'d13',name:'黄皮哈密瓜',price:20,unit:'个',cat:'水果',on:true},
+    {id:'d14',name:'哈密瓜',price:18,unit:'个',cat:'水果',on:true},
+    {id:'d15',name:'小番茄（约1斤）',price:8,unit:'盒',cat:'水果',on:true},
+    {id:'d16',name:'小柿子（8颗装）',price:10,unit:'盒',cat:'水果',on:true},
+    {id:'j1',name:'西瓜汁（500ml）',price:8,unit:'杯',cat:'果汁',on:true},
+    {id:'j2',name:'麒麟西瓜汁（500ml）',price:12,unit:'杯',cat:'果汁',on:true},
+    {id:'j3',name:'石榴汁（500ml）',price:15,unit:'杯',cat:'果汁',on:true},
+    {id:'j4',name:'盐源苹果汁（500ml）',price:15,unit:'杯',cat:'果汁',on:true},
+    {id:'j5',name:'青苹果汁（500ml）',price:12,unit:'杯',cat:'果汁',on:true},
+    {id:'j6',name:'哈密瓜汁（500ml）',price:10,unit:'杯',cat:'果汁',on:true},
+    {id:'j7',name:'黄皮哈密瓜汁（500ml）',price:12,unit:'杯',cat:'果汁',on:true}
   ];
 }
 function load(k, def){ try{ var v=localStorage.getItem(k); return v?JSON.parse(v):def; }catch(e){ return def; } }
