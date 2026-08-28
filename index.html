@@ -9,7 +9,8 @@
 body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f6f7f8;color:#333}
 .hidden{display:none!important}
 /* 顶部 */
-.topbar{position:sticky;top:0;z-index:20;background:linear-gradient(135deg,#43a047,#66bb6a);color:#fff;padding:14px 16px 10px}
+.shop-head{position:sticky;top:0;z-index:20;background:#fff}
+.topbar{background:linear-gradient(135deg,#43a047,#66bb6a);color:#fff;padding:14px 16px 10px}
 .topbar h1{font-size:20px;font-weight:700}
 .topbar p{font-size:12px;opacity:.92;margin-top:2px}
 /* 滚动字幕 */
@@ -17,7 +18,7 @@ body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f6f7f8;c
 .ticker .tk{display:inline-block;padding-left:100%;animation:tick 26s linear infinite;white-space:nowrap}
 .ticker .tk span{margin:0 16px}
 @keyframes tick{0%{transform:translateX(0)}100%{transform:translateX(-100%)}}
-.cats{display:flex;gap:8px;background:#fff;padding:10px 12px;border-bottom:1px solid #eee;position:sticky;top:56px;z-index:15;overflow-x:auto}
+.cats{display:flex;gap:8px;background:#fff;padding:10px 12px;border-bottom:1px solid #eee;overflow-x:auto}
 .cat{flex:0 0 auto;padding:7px 18px;border-radius:18px;background:#f0f1f2;font-size:14px;color:#555;cursor:pointer}
 .cat.on{background:#43a047;color:#fff;font-weight:600}
 /* 商品 */
@@ -104,6 +105,7 @@ body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f6f7f8;c
 
 <!-- ================= 顾客端 ================= -->
 <div id="customer">
+  <div class="shop-head">
   <div class="topbar">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
       <div>
@@ -121,6 +123,7 @@ body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f6f7f8;c
     <span>店址：城厢镇朝阳路16号附1号</span>
   </div></div>
   <div class="cats" id="cats"></div>
+  </div>
   <div class="list" id="dishList"></div>
 
   <div class="cartbar hidden" id="cartbar">
