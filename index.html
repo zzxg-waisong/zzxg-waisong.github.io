@@ -715,26 +715,18 @@ function makeQr(text){
     qr.addData(text); qr.make();
     var count=qr.getModuleCount();
     var size=720, cell=Math.round(size/count), margin=36;
-    var W=size+margin*2;
+    var W=size+margin*2, H=W+56;
     var canvas=document.createElement('canvas');
-    canvas.width=W; canvas.height=W;
+    canvas.width=W; canvas.height=H;
     var ctx=canvas.getContext('2d');
-    ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,W,W);
+    ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,W,H);
     var grad=ctx.createLinearGradient(0,0,W,W);
     grad.addColorStop(0,'#4caf50'); grad.addColorStop(1,'#1b5e20');
     ctx.fillStyle=grad;
-    var rad=Math.max(2,Math.floor(cell*0.4));
     for(var r=0;r<count;r++){
       for(var c=0;c<count;c++){
         if(qr.isDark(r,c)){
-          var x=margin+c*cell, y=margin+r*cell;
-          ctx.beginPath();
-          ctx.moveTo(x+rad,y);
-          ctx.arcTo(x+cell,y,x+cell,y+cell,rad);
-          ctx.arcTo(x+cell,y+cell,x,y+cell,rad);
-          ctx.arcTo(x,y+cell,x,y,rad);
-          ctx.arcTo(x,y,x+cell,y,rad);
-          ctx.closePath(); ctx.fill();
+          ctx.fillRect(margin+c*cell, margin+r*cell, cell, cell);
         }
       }
     }
@@ -757,8 +749,12 @@ function makeQr(text){
     ctx.fillStyle='#43a047';
     ctx.font='36px "Microsoft YaHei","PingFang SC",sans-serif';
     ctx.fillText('· 外送点单 ·', W/2, cy+cw*0.68);
+    // 底部版本号（年月日，便于核对）
+    ctx.fillStyle='#888';
+    ctx.font='24px "Microsoft YaHei","PingFang SC",sans-serif';
+    ctx.fillText('V20260828', W/2, W+30);
     var dataUrl=canvas.toDataURL('image/png');
-    document.getElementById('qrBox').innerHTML='<img src="'+dataUrl+'" style="width:240px;height:240px;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.08)">';
+    document.getElementById('qrBox').innerHTML='<img src="'+dataUrl+'" style="width:240px;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.08)">';
     window._qrDataUrl=dataUrl;
   }catch(e){ document.getElementById('qrBox').innerHTML='<p style="color:#e53935">二维码生成失败：'+esc(e.message)+'</p>'; }
 }
