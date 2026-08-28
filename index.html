@@ -116,9 +116,8 @@ body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f6f7f8;c
   <div class="ticker"><div class="tk">
     <span>🔥 加微信好友，进群优惠多多</span>✦
     <span>新人进群，立享5元优惠 或 柿子（8颗装）一盒</span>✦
-    <span>满20元起送</span>✦
-    <span>3公里内免费配送</span>✦
-    <span>5公里内 3元/单</span>✦
+    <span>3公里内 满20元 免配送费</span>✦
+    <span>5公里内 3元/单 满30元 免配送费</span>✦
     <span>店址：城厢镇朝阳路16号附1号</span>
   </div></div>
   <div class="cats" id="cats"></div>
@@ -371,7 +370,7 @@ function distKm(a,b){
   var s=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(a.lat*Math.PI/180)*Math.cos(b.lat*Math.PI/180)*Math.sin(dLng/2)*Math.sin(dLng/2);
   return R*2*Math.atan2(Math.sqrt(s),Math.sqrt(1-s));
 }
-function deliveryFee(dist){ if(dist<=3) return 0; if(dist<=5) return 3; return -1; }
+function deliveryFee(dist, subtotal){ if(dist<=3) return 0; if(dist<=5) return (subtotal>=30?0:3); return -1; }
 function calcDelivery(){
   var addr=document.getElementById('ckAddr').value.trim();
   var box=document.getElementById('deliveryBox');
@@ -385,12 +384,14 @@ function calcDelivery(){
     if(j.status!=='1'||!j.geocodes||!j.geocodes.length){ box.innerHTML='<span style="color:#e53935">地址无法识别，请填写更详细的地址（含镇/街道/小区）</span>'; window._delivery=null; return; }
     var loc=j.geocodes[0].location.split(',');
     var d=distKm({lng:+loc[0],lat:+loc[1]},{lng:+shopCfg.shopLng,lat:+shopCfg.shopLat});
-    var fee=deliveryFee(d);
+    var sub=cartTotal();
+    var fee=deliveryFee(d, sub);
     window._delivery={dist:d,fee:fee};
     var h='📍 配送距离：约 '+d.toFixed(1)+' 公里<br>';
     if(fee<0) h+='<span style="color:#e53935">超出 5 公里配送范围，暂无法配送</span>';
-    else if(fee===0) h+='<span style="color:#2e7d32">✔ 3 公里内，免配送费</span>';
-    else h+='<span style="color:#fb8c00">配送费：'+money(fee)+'（5 公里内）</span>';
+    else if(d<=3) h+='<span style="color:#2e7d32">✔ 3 公里内，满20元免配送费</span>';
+    else if(fee===0) h+='<span style="color:#2e7d32">✔ 满 30 元，免配送费</span>';
+    else h+='<span style="color:#fb8c00">配送费：'+money(fee)+'（5 公里内，满30元免）</span>';
     box.innerHTML=h;
   }).catch(function(){ box.innerHTML='<span style="color:#e53935">配送费计算失败，请稍后再试</span>'; window._delivery=null; });
 }
@@ -410,7 +411,7 @@ function submitOrder(){
   if(subtotal<20){ alert('满 20 元起送，当前还差 '+money(20-subtotal)+'，请再选购一些~'); return; }
   var dlv=window._delivery;
   var fee=0, dist='';
-  if(dlv){ if(dlv.fee<0){ alert('该地址超出 5 公里配送范围，暂无法下单'); return; } fee=dlv.fee; dist=dlv.dist.toFixed(1); }
+  if(dlv){ if(dlv.fee<0 || dlv.dist>5){ alert('该地址超出 5 公里配送范围，暂无法下单'); return; } fee=deliveryFee(dlv.dist, subtotal); dist=dlv.dist.toFixed(1); }
   var total=subtotal+fee;
   var items=list.map(function(c){ var d=byId(c.id); return {name:d.name,price:d.price,qty:c.qty,note:c.note,unit:d.unit}; });
   var order={id:oid(), items:items, subtotal:subtotal, deliveryFee:fee, dist:dist, total:total, name:name, phone:phone, addr:addr, time:time, remark:remark, created:nowStr(), status:'待付款'};
