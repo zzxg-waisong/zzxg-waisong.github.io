@@ -12,6 +12,11 @@ body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f6f7f8;c
 .topbar{position:sticky;top:0;z-index:20;background:linear-gradient(135deg,#43a047,#66bb6a);color:#fff;padding:14px 16px 10px}
 .topbar h1{font-size:20px;font-weight:700}
 .topbar p{font-size:12px;opacity:.92;margin-top:2px}
+/* 滚动字幕 */
+.ticker{background:linear-gradient(90deg,#fff8e1,#ffecb3,#fff8e1);color:#8a6d00;font-size:12px;padding:7px 0;overflow:hidden;white-space:nowrap;border-bottom:1px solid #f0e0b0;position:relative}
+.ticker .tk{display:inline-block;padding-left:100%;animation:tick 26s linear infinite;white-space:nowrap}
+.ticker .tk span{margin:0 16px}
+@keyframes tick{0%{transform:translateX(0)}100%{transform:translateX(-100%)}}
 .cats{display:flex;gap:8px;background:#fff;padding:10px 12px;border-bottom:1px solid #eee;position:sticky;top:56px;z-index:15;overflow-x:auto}
 .cat{flex:0 0 auto;padding:7px 18px;border-radius:18px;background:#f0f1f2;font-size:14px;color:#555;cursor:pointer}
 .cat.on{background:#43a047;color:#fff;font-weight:600}
@@ -108,6 +113,15 @@ body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f6f7f8;c
       <button class="admin-entry" onclick="location.hash='#/admin'">🔒 商家后台</button>
     </div>
   </div>
+  <div class="ticker"><div class="tk">
+    <span>🔥 加微信好友，进群优惠多多</span>✦
+    <span>新人进群，立享5元优惠 或 柿子（8颗装）一盒</span>✦
+    <span>满20元起送</span>✦
+    <span>3公里内免费配送</span>✦
+    <span>5公里内 3元/单</span>✦
+    <span>店址：城厢镇朝阳路16号附1号 榨榨鲜果</span>✦
+    <span>地图自动计算距离，自动算配送费</span>
+  </div></div>
   <div class="cats" id="cats"></div>
   <div class="list" id="dishList"></div>
 
@@ -137,6 +151,7 @@ body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f6f7f8;c
       <label>您的称呼</label><input id="ckName" placeholder="例如：王女士">
       <label>联系电话</label><input id="ckPhone" type="tel" placeholder="手机号">
       <label>外卖地址</label><textarea id="ckAddr" rows="2" placeholder="小区/楼栋/门牌号，写详细些方便配送"></textarea>
+      <div id="deliveryBox" style="background:#f0f7f0;border-radius:8px;padding:10px;margin-top:8px;font-size:13px;line-height:1.8;display:none"></div>
       <label>预送时间段</label>
       <select id="ckTime">
         <option value="尽快送达">尽快送达</option>
@@ -251,13 +266,13 @@ function defaultDishes(){
     {id:'d14',name:'哈密瓜',price:18,unit:'个',cat:'水果',on:true,img:'hamigua.jpg'},
     {id:'d15',name:'小番茄（约1斤）',price:8,unit:'盒',cat:'水果',on:true,img:'xiaofanqie.jpg'},
     {id:'d16',name:'小柿子（8颗装）',price:10,unit:'盒',cat:'水果',on:true,img:'xiaoshizi.jpg'},
-    {id:'j1',name:'西瓜汁（500ml）',price:8,unit:'杯',cat:'果汁',on:true,img:'xiguazhi.jpg'},
-    {id:'j2',name:'麒麟西瓜汁（500ml）',price:12,unit:'杯',cat:'果汁',on:true,img:'qilin_xiguazhi.jpg'},
-    {id:'j3',name:'石榴汁（500ml）',price:15,unit:'杯',cat:'果汁',on:true,img:'shiliuzhi.jpg'},
-    {id:'j4',name:'盐源苹果汁（500ml）',price:15,unit:'杯',cat:'果汁',on:true,img:'pingguozhi.jpg'},
-    {id:'j5',name:'青苹果汁（500ml）',price:12,unit:'杯',cat:'果汁',on:true,img:'qingpingguozhi.jpg'},
-    {id:'j6',name:'哈密瓜汁（500ml）',price:10,unit:'杯',cat:'果汁',on:true,img:'hamiguazhi.jpg'},
-    {id:'j7',name:'黄皮哈密瓜汁（500ml）',price:12,unit:'杯',cat:'果汁',on:true,img:'huangpihamiguazhi.jpg'}
+    {id:'j1',name:'西瓜汁（500ml）',price:10,unit:'杯',cat:'果汁',on:true,img:'xiguazhi.jpg'},
+    {id:'j2',name:'麒麟西瓜汁（500ml）',price:14,unit:'杯',cat:'果汁',on:true,img:'qilin_xiguazhi.jpg'},
+    {id:'j3',name:'石榴汁（500ml）',price:17,unit:'杯',cat:'果汁',on:true,img:'shiliuzhi.jpg'},
+    {id:'j4',name:'盐源苹果汁（500ml）',price:17,unit:'杯',cat:'果汁',on:true,img:'pingguozhi.jpg'},
+    {id:'j5',name:'青苹果汁（500ml）',price:14,unit:'杯',cat:'果汁',on:true,img:'qingpingguozhi.jpg'},
+    {id:'j6',name:'哈密瓜汁（500ml）',price:12,unit:'杯',cat:'果汁',on:true,img:'hamiguazhi.jpg'},
+    {id:'j7',name:'黄皮哈密瓜汁（500ml）',price:14,unit:'杯',cat:'果汁',on:true,img:'huangpihamiguazhi.jpg'}
   ];
 }
 function load(k, def){ try{ var v=localStorage.getItem(k); return v?JSON.parse(v):def; }catch(e){ return def; } }
@@ -266,7 +281,7 @@ function save(k, v){ localStorage.setItem(k, JSON.stringify(v)); }
 var dishes = load(LS_DISHES, null); if(!dishes||!dishes.length) dishes=defaultDishes();
 var orders = load(LS_ORDERS, []);
 var payCfg = load(LS_PAY, {payUrl:'收款码.png', wxUrl:'微信二维码.png'});
-var shopCfg = load(LS_SHOP, {address:''});
+var shopCfg = load(LS_SHOP, {address:'', amapKey:'', shopLat:'30.856634', shopLng:'104.324292'});
 var adminOk = localStorage.getItem(LS_SESSION)==='1';
 var cart = {};   // id -> {qty,note}
 var curCat = '水果';
@@ -350,7 +365,37 @@ function renderCartItems(){
 function openCheckout(){
   if(!cartList().length){ alert('购物车是空的'); return; }
   closeDrawer(); document.getElementById('checkoutModal').classList.add('show');
+  window._delivery=null; document.getElementById('deliveryBox').style.display='none';
 }
+function distKm(a,b){
+  var R=6371, dLat=(b.lat-a.lat)*Math.PI/180, dLng=(b.lng-a.lng)*Math.PI/180;
+  var s=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(a.lat*Math.PI/180)*Math.cos(b.lat*Math.PI/180)*Math.sin(dLng/2)*Math.sin(dLng/2);
+  return R*2*Math.atan2(Math.sqrt(s),Math.sqrt(1-s));
+}
+function deliveryFee(dist){ if(dist<=3) return 0; if(dist<=5) return 3; return -1; }
+function calcDelivery(){
+  var addr=document.getElementById('ckAddr').value.trim();
+  var box=document.getElementById('deliveryBox');
+  if(!addr){ box.style.display='none'; window._delivery=null; return; }
+  box.style.display='block';
+  var key=shopCfg.amapKey;
+  if(!key){ box.innerHTML='<span style="color:#888">高德Key未配置，暂无法自动算配送费（下单后客服会与您确认）</span>'; window._delivery=null; return; }
+  box.innerHTML='<span style="color:#888">正在计算配送距离…</span>';
+  var url='https://restapi.amap.com/v3/geocode/geo?address='+encodeURIComponent(addr)+'&key='+key+'&city=成都';
+  fetch(url).then(function(r){return r.json();}).then(function(j){
+    if(j.status!=='1'||!j.geocodes||!j.geocodes.length){ box.innerHTML='<span style="color:#e53935">地址无法识别，请填写更详细的地址（含镇/街道/小区）</span>'; window._delivery=null; return; }
+    var loc=j.geocodes[0].location.split(',');
+    var d=distKm({lng:+loc[0],lat:+loc[1]},{lng:+shopCfg.shopLng,lat:+shopCfg.shopLat});
+    var fee=deliveryFee(d);
+    window._delivery={dist:d,fee:fee};
+    var h='📍 配送距离：约 '+d.toFixed(1)+' 公里<br>';
+    if(fee<0) h+='<span style="color:#e53935">超出 5 公里配送范围，暂无法配送</span>';
+    else if(fee===0) h+='<span style="color:#2e7d32">✔ 3 公里内，免配送费</span>';
+    else h+='<span style="color:#fb8c00">配送费：'+money(fee)+'（5 公里内）</span>';
+    box.innerHTML=h;
+  }).catch(function(){ box.innerHTML='<span style="color:#e53935">配送费计算失败，请稍后再试</span>'; window._delivery=null; });
+}
+(function(){ var a=document.getElementById('ckAddr'); if(a){ a.addEventListener('blur',calcDelivery); } })();
 function closeCheckout(){ document.getElementById('checkoutModal').classList.remove('show'); }
 function submitOrder(){
   var name=document.getElementById('ckName').value.trim();
@@ -362,8 +407,14 @@ function submitOrder(){
   if(!/^1\d{10}$/.test(phone) && phone.length<7){ alert('请填写正确的联系电话'); return; }
   if(!addr){ alert('请填写外卖地址'); return; }
   var list=cartList(); if(!list.length){ alert('购物车为空'); return; }
+  var subtotal=cartTotal();
+  if(subtotal<20){ alert('满 20 元起送，当前还差 '+money(20-subtotal)+'，请再选购一些~'); return; }
+  var dlv=window._delivery;
+  var fee=0, dist='';
+  if(dlv){ if(dlv.fee<0){ alert('该地址超出 5 公里配送范围，暂无法下单'); return; } fee=dlv.fee; dist=dlv.dist.toFixed(1); }
+  var total=subtotal+fee;
   var items=list.map(function(c){ var d=byId(c.id); return {name:d.name,price:d.price,qty:c.qty,note:c.note,unit:d.unit}; });
-  var order={id:oid(), items:items, total:cartTotal(), name:name, phone:phone, addr:addr, time:time, remark:remark, created:nowStr(), status:'待付款'};
+  var order={id:oid(), items:items, subtotal:subtotal, deliveryFee:fee, dist:dist, total:total, name:name, phone:phone, addr:addr, time:time, remark:remark, created:nowStr(), status:'待付款'};
   orders.unshift(order); save(LS_ORDERS, orders);
   cart={}; renderDishes(); renderCartbar(); closeCheckout();
   curOrder=order; showPay(order);
@@ -399,6 +450,8 @@ function formatOrderText(o){
     lines.push((it.note?('  '+it.name+'（'+it.note+'）'):('  '+it.name))+' ×'+it.qty+'  '+money(it.price*it.qty));
   });
   lines.push('——————————————');
+  if(o.subtotal) lines.push('【商品小计】'+money(o.subtotal));
+  if(o.deliveryFee) lines.push('【配送费】'+money(o.deliveryFee)+(o.dist?'（约'+o.dist+'公里）':''));
   lines.push('【合计】'+money(o.total));
   lines.push('【顾客】'+o.name+'  '+o.phone);
   lines.push('【地址】'+o.addr);
@@ -470,7 +523,8 @@ function renderOrders(){
     var st=o.status==='已完成'?'done':(o.status==='已付款'?'paid':'new');
     html+='<div class="card"><h3>'+o.id+' <span class="badge '+(o.status==='已完成'?'off':'')+'">'+esc(o.status)+'</span></h3>'+
       '<div class="rowline"><span>顾客</span><span>'+esc(o.name)+' '+esc(o.phone)+'</span></div>'+
-      '<div class="rowline"><span>金额</span><span style="color:#e53935;font-weight:700">'+money(o.total)+'</span></div>'+
+      '<div class="rowline"><span>金额(含配送)</span><span style="color:#e53935;font-weight:700">'+money(o.total)+'</span></div>'+
+      (o.deliveryFee?'<div class="rowline"><span>配送费</span><span>'+money(o.deliveryFee)+(o.dist?'（约'+o.dist+'km）':'')+'</span></div>':'')+
       '<div class="rowline"><span>地址</span><span>'+esc(o.addr)+'</span></div>'+
       '<div class="rowline"><span>预送</span><span>'+esc(o.time)+' · '+esc(o.created)+'</span></div>'+
       '<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">'+
@@ -567,12 +621,21 @@ function previewPay(){ savePayCfg(); renderPayAdmin(); }
 
 function renderShopAdmin(){
   var html='<div class="panel"><h3>店铺设置</h3><div class="card"><div class="form" style="padding:0">'+
-    '<label>店铺地址（导航起点，用于外送导航）</label><input id="shopAddr" value="'+esc(shopCfg.address)+'" placeholder="例如：成都市青羊区XX路XX号">'+
+    '<label>店铺地址（导航起点，用于外送导航）</label><input id="shopAddr" value="'+esc(shopCfg.address)+'" placeholder="例如：成都市青白江区城厢镇朝阳路16号附1号">'+
+    '<label>店铺纬度（如 30.856634）</label><input id="shopLat" value="'+esc(shopCfg.shopLat||'')+'" placeholder="30.856634">'+
+    '<label>店铺经度（如 104.324292）</label><input id="shopLng" value="'+esc(shopCfg.shopLng||'')+'" placeholder="104.324292">'+
+    '<label>高德地图 Key（自动计算顾客配送距离用，免费申请）</label><input id="amapKey" value="'+esc(shopCfg.amapKey||'')+'" placeholder="申请：lbs.amap.com → 控制台 → 创建应用 → 添加Key(Web服务)">'+
     '<label>修改后台密码</label><div style="display:flex;gap:8px"><input id="newPwd" placeholder="新密码（留空则不修改）"><button class="btn" onclick="changePwd()">修改密码</button></div>'+
     '<div style="margin-top:12px"><button class="btn" onclick="saveShop()">保存店铺设置</button></div></div></div></div>';
   return html;
 }
-function saveShop(){ shopCfg.address=document.getElementById('shopAddr').value.trim(); save(LS_SHOP,shopCfg); renderAdmin(); }
+function saveShop(){
+  shopCfg.address=document.getElementById('shopAddr').value.trim();
+  shopCfg.shopLat=document.getElementById('shopLat').value.trim();
+  shopCfg.shopLng=document.getElementById('shopLng').value.trim();
+  shopCfg.amapKey=document.getElementById('amapKey').value.trim();
+  save(LS_SHOP,shopCfg); renderAdmin(); alert('店铺设置已保存');
+}
 function changePwd(){
   var v=document.getElementById('newPwd').value.trim();
   if(!v){ alert('请输入新密码'); return; }
