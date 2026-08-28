@@ -280,7 +280,7 @@ function save(k, v){ localStorage.setItem(k, JSON.stringify(v)); }
 var dishes = load(LS_DISHES, null); if(!dishes||!dishes.length) dishes=defaultDishes();
 var orders = load(LS_ORDERS, []);
 var payCfg = load(LS_PAY, {payUrl:'收款码.png', wxUrl:'微信二维码.png'});
-var shopCfg = load(LS_SHOP, {address:'', amapKey:'', shopLat:'30.856634', shopLng:'104.324292'});
+var shopCfg = load(LS_SHOP, {address:'', amapKey:'17e56cae3aca57e9862453d89791043c', shopLat:'30.856438', shopLng:'104.323828'});
 var adminOk = localStorage.getItem(LS_SESSION)==='1';
 var cart = {};   // id -> {qty,note}
 var curCat = '水果';
