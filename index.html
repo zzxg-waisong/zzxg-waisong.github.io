@@ -244,6 +244,7 @@ body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f6f7f8;c
 /* ==================== 数据层 ==================== */
 var LS_DISHES='fruit_dishes', LS_ORDERS='fruit_orders', LS_PWD='fruit_admin_pwd',
     LS_PAY='fruit_pay', LS_SHOP='fruit_shop', LS_SESSION='fruit_admin_ok';
+var IMG_VER='20260828b'; // 图片版本号：更新商品图后递增，用于强制刷新浏览器缓存
 
 function defaultDishes(){
   return [
@@ -320,7 +321,7 @@ function renderDishes(){
     if(d.cat!==curCat || !d.on) return;
     var c=cart[d.id]||{qty:0,note:''};
     var img=(d.img===undefined)?(d.id+'.jpg'):d.img;
-    var imgHtml=img?'<div class="dimg"><img src="'+esc(img)+'" alt="'+esc(d.name)+'" loading="lazy" onclick="zoomImg(this.src)"></div>':'';
+    var imgHtml=img?'<div class="dimg"><img src="'+esc(img)+'?v='+IMG_VER+'" alt="'+esc(d.name)+'" loading="lazy" onclick="zoomImg(this.src)"></div>':'';
     html+='<div class="dish">'+imgHtml+'<div class="info"><div class="name">'+esc(d.name)+'</div>'+
       '<div class="unit">'+esc(d.unit||'')+'</div>'+
       '<div class="price">'+money(d.price)+'<small> / '+esc(d.unit||'份')+'</small></div></div>'+
@@ -563,7 +564,7 @@ function renderDishesAdmin(){
     '<p style="font-size:12px;color:#888;margin-bottom:10px">注：修改仅保存在本机浏览器；顾客端看到的菜单为网站内置版本，如需更新顾客菜单请联系店主重新发布。</p>';
   dishes.forEach(function(d){
     html+='<div class="card"><div style="display:flex;justify-content:space-between;align-items:center">'+
-      '<div>'+(d.img?'<img src="'+esc(d.img)+'" style="width:44px;height:44px;object-fit:cover;border-radius:6px;vertical-align:middle;margin-right:8px">':'')+'<b>'+esc(d.name)+'</b> <span class="badge '+(d.on?'':'off')+'">'+(d.on?'上架':'下架')+'</span>'+
+      '<div>'+(d.img?'<img src="'+esc(d.img)+'?v='+IMG_VER+'" style="width:44px;height:44px;object-fit:cover;border-radius:6px;vertical-align:middle;margin-right:8px">':'')+'<b>'+esc(d.name)+'</b> <span class="badge '+(d.on?'':'off')+'">'+(d.on?'上架':'下架')+'</span>'+
       '<div style="font-size:12px;color:#888;margin-top:3px">'+esc(catLabel(d.cat))+' · '+money(d.price)+' / '+esc(d.unit||'份')+'</div></div>'+
       '<div><button class="btn gray" style="font-size:12px;padding:4px 10px" onclick="editDish(\''+d.id+'\')">编辑</button> '+
       '<button class="btn red" style="font-size:12px;padding:4px 10px" onclick="delDish(\''+d.id+'\')">删除</button></div></div></div>';
