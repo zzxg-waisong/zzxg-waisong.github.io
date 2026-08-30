@@ -373,7 +373,7 @@ function catLabel(c){ return c==='水果'?'新鲜水果':(c==='果汁'?'现榨�
 function syncHalfPrice(){
   dishes = dishes.filter(function(d){ return d.cat!=='半价'; });
   dishes.filter(function(d){ return d.cat==='果汁' && d.on; }).forEach(function(d){
-    dishes.push({id:'h_'+d.id, name:d.name+'（第二杯半价）', price:Math.round(d.price*1.5*10)/10, unit:'2杯', cat:'半价', on:true, img:d.img, per:0, halfOf:d.id});
+    dishes.push({id:'h_'+d.id, name:d.name+'（第二杯半价）', price:Math.round(d.price*0.5*10)/10, unit:'杯', cat:'半价', on:true, img:d.img, per:0, halfOf:d.id});
   });
 }
 function renderCats(){
@@ -394,20 +394,34 @@ function renderDishes(){
     var imgHtml=img?'<div class="dimg"><img src="'+esc(img)+'?v='+IMG_VER+'" alt="'+esc(d.name)+'" loading="lazy" onclick="zoomImg(this.src)"></div>':'';
     html+='<div class="dish">'+imgHtml+'<div class="info"><div class="name">'+esc(d.name)+'</div>'+
       '<div class="unit">'+esc(d.unit||'')+'</div>'+
-      '<div class="price">'+money(d.price)+'<small> / '+esc(d.unit||'份')+'</small></div></div>'+
+      '<div class="price">'+(d.cat==='半价'?'<span style="background:#fb8c00;color:#fff;font-size:10px;padding:1px 5px;border-radius:3px;margin-right:4px;vertical-align:middle">半价</span>':'')+money(d.price)+'<small> / '+esc(d.unit||'份')+'</small></div></div>'+
       '<div class="ctrl">'+(d.cat==='果汁'?'<input class="note" placeholder="口味/甜度/去冰" value="'+esc(c.note)+'" onchange="setNote(\''+d.id+'\',this.value)">':'')+
-      '<button class="btn" onclick="addToCart(\''+d.id+'\')">加入购物车</button></div></div>';
+      (d.cat==='半价'?(canAddHalf()?'<button class="btn" style="background:#fb8c00" onclick="addToCart(\''+d.id+'\')">第二杯半价</button>':'<button class="btn" style="background:#ccc;cursor:not-allowed;color:#999" onclick="alert(\'请先选一杯原价果汁哦~\')">选原价果汁解锁</button>'):'<button class="btn" onclick="addToCart(\''+d.id+'\')">加入购物车</button>')+
+      '</div></div>';
   });
   box.innerHTML=html || '<div style="text-align:center;color:#999;padding:40px">该分类暂无商品</div>';
 }
 function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function addToCart(id){
+  var d=byId(id);
+  if(d&&d.cat==='半价'&&!canAddHalf()){ alert('第二杯半价需先选一杯原价果汁哦~'); return; }
   if(!cart[id]) cart[id]={qty:0,note:''};
   cart[id].qty++; renderDishes(); renderCartbar();
 }
 function setNote(id,val){ if(!cart[id]) cart[id]={qty:0,note:''}; cart[id].note=val; }
-function changeQty(id,delta){ if(!cart[id]) cart[id]={qty:0,note:''}; cart[id].qty+=delta; if(cart[id].qty<=0) delete cart[id]; renderCartItems(); renderCartbar(); renderDishes(); }
+function changeQty(id,delta){ if(!cart[id]) cart[id]={qty:0,note:''}; cart[id].qty+=delta; if(cart[id].qty<=0) delete cart[id]; var d=byId(id); if(d&&d.cat==='果汁'&&delta<0){ fixHalfCart(); } renderCartItems(); renderCartbar(); renderDishes(); }
 function cartList(){ var r=[]; for(var id in cart){ if(cart[id].qty>0) r.push({id:id,qty:cart[id].qty,note:cart[id].note}); } return r; }
+function juiceCount(){ var n=0; cartList().forEach(function(c){ var d=byId(c.id); if(d&&d.cat==='果汁') n+=c.qty; }); return n; }
+function halfCount(){ var n=0; cartList().forEach(function(c){ var d=byId(c.id); if(d&&d.cat==='半价') n+=c.qty; }); return n; }
+function canAddHalf(){ return juiceCount()>halfCount(); }
+function fixHalfCart(){
+  while(halfCount()>juiceCount()){
+    var hi=cartList().filter(function(c){ var d=byId(c.id); return d&&d.cat==='半价'; });
+    if(!hi.length) break;
+    var last=hi[hi.length-1];
+    cart[last.id].qty--; if(cart[last.id].qty<=0) delete cart[last.id];
+  }
+}
 function cartTotal(){ var t=0; cartList().forEach(function(c){ var d=byId(c.id); if(d) t+=d.price*c.qty; }); return t; }
 function byId(id){ for(var i=0;i<dishes.length;i++) if(dishes[i].id===id) return dishes[i]; return null; }
 function renderCartbar(){
@@ -477,6 +491,7 @@ function submitOrder(){
   if(!/^1\d{10}$/.test(phone) && phone.length<7){ alert('请填写正确的联系电话'); return; }
   if(!addr){ alert('请填写外卖地址'); return; }
   var list=cartList(); if(!list.length){ alert('购物车为空'); return; }
+  if(halfCount()>juiceCount()){ alert('第二杯半价商品数量不能超过原价果汁数量，请调整购物车'); return; }
   var subtotal=cartTotal();
   if(subtotal<20){ alert('满 20 元起送，当前还差 '+money(20-subtotal)+'，请再选购一些~'); return; }
   var dlv=window._delivery;
