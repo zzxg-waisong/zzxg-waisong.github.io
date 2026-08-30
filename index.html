@@ -542,10 +542,10 @@ function formatOrderText(o){
   o.items.forEach(function(it){
     var sub=0, extra='';
     if(it.per>0 && o.weights && o.weights[it.id]){
-      var w=o.weights[it.id]; sub=it.per*w*it.qty; extra='（称重'+w+'斤×'+it.per+'元/斤）';
-    } else { sub=it.price*it.qty; }
+      var w=o.weights[it.id]; sub=it.per*w; extra='（称重'+w+'斤×'+it.per+'元/斤）';
+      lines.push('  '+it.name+extra+'  '+money(sub));
+    } else { sub=it.price*it.qty; lines.push('  '+it.name+extra+' ×'+it.qty+'  '+money(sub)); }
     realSub+=sub;
-    lines.push('  '+it.name+extra+' ×'+it.qty+'  '+money(sub));
     if(it.note) lines.push('    （'+it.note+'）');
   });
   lines.push('——————————————');
@@ -701,7 +701,7 @@ function weighChange(i){
 function calcWeightSub(o){
   var s=0;
   o.items.forEach(function(it){
-    if(it.per>0 && o.weights && o.weights[it.id]) s+=it.per*o.weights[it.id]*it.qty;
+    if(it.per>0 && o.weights && o.weights[it.id]) s+=it.per*o.weights[it.id];
     else s+=it.price*it.qty;
   });
   return Math.round(s*100)/100;
@@ -713,7 +713,7 @@ function copyQuote(i){
   o.items.forEach(function(it){
     if(it.per>0){
       var w=(o.weights&&o.weights[it.id])?o.weights[it.id]:0;
-      lines.push('  '+it.name+' ×'+it.qty+'（'+w+'斤×'+it.per+'元/斤 = '+money(it.per*w*it.qty)+'）');
+      lines.push('  '+it.name+'（称重'+w+'斤×'+it.per+'元/斤 = '+money(it.per*w)+'）');
     } else {
       lines.push('  '+it.name+' ×'+it.qty+'  '+money(it.price*it.qty));
     }
