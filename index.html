@@ -347,6 +347,11 @@ var curOrder = null;
 
 /* ==================== 通用 ==================== */
 function money(n){ return '¥'+Number(n).toFixed(2); }
+function roundHalf(x){
+  var f=x-Math.floor(x);
+  if(f<0.5) return Math.floor(x);
+  return Math.floor(x)+0.5;
+}
 function nowStr(){ var d=new Date(); function p(x){return (x<10?'0':'')+x;}
   return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes()); }
 function oid(){ var d=new Date(); return d.getFullYear()+''+p2(d.getMonth()+1)+''+p2(d.getDate())+'-'+String(Math.floor(100+Math.random()*900)); }
@@ -498,9 +503,10 @@ function submitOrder(){
   var dlv=window._delivery;
   var fee=0, dist='';
   if(dlv){ if(dlv.fee<0 || dlv.dist>5){ alert('该地址超出 5 公里配送范围，暂无法下单'); return; } fee=deliveryFee(dlv.dist, subtotal); dist=dlv.dist.toFixed(1); }
-  var total=subtotal+fee;
   var items=list.map(function(c){ var d=byId(c.id); return {id:d.id, name:d.name, price:d.price, qty:c.qty, note:c.note, unit:d.unit, per:(d.per?d.per:0)}; });
   var hasWeight=items.some(function(it){return it.per>0;});
+  var rawTotal=subtotal+fee;
+  var total=hasWeight?rawTotal:roundHalf(rawTotal);
   var order={id:oid(), items:items, hasWeight:hasWeight, weights:{}, subtotal:subtotal, deliveryFee:fee, dist:dist, total:total, estTotal:total, name:name, phone:phone, addr:addr, time:time, remark:remark, created:nowStr(), status:hasWeight?'待称重':'待付款'};
   orders.unshift(order); save(LS_ORDERS, orders);
   cart={}; renderDishes(); renderCartbar(); closeCheckout();
@@ -552,8 +558,13 @@ function formatOrderText(o){
   if(o.hasWeight) lines.push('【商品小计】'+money(realSub)+(o.weightTotal?'':'（预估，以实际称重为准）'));
   else if(o.subtotal) lines.push('【商品小计】'+money(o.subtotal));
   if(o.deliveryFee) lines.push('【配送费】'+money(o.deliveryFee)+(o.dist?'（约'+o.dist+'公里）':''));
-  var total=o.weightTotal?o.weightTotal:(o.subtotal+o.deliveryFee);
-  lines.push('【合计】'+money(total)+(o.hasWeight&&!o.weightTotal?'（预估）':''));
+  var rawTotal=o.weightTotal?o.weightTotal:(o.subtotal+o.deliveryFee);
+  var isEstimate=o.hasWeight&&!o.weightTotal;
+  var finalTotal=isEstimate?rawTotal:roundHalf(rawTotal);
+  var discount=isEstimate?0:Math.round((rawTotal-finalTotal)*100)/100;
+  lines.push('【合计】'+money(rawTotal)+(isEstimate?'（预估）':''));
+  if(discount>0) lines.push('【抹零】-'+money(discount));
+  lines.push('【应付】'+money(finalTotal));
   lines.push('【顾客】'+o.name+'  '+o.phone);
   lines.push('【地址】'+o.addr);
   lines.push('【预送】'+o.time);
@@ -681,7 +692,10 @@ function weighPanelHtml(i){
         '<input id="w_'+it.id+'" type="number" step="0.1" min="0" placeholder="实际重量(斤)" style="width:96px;padding:6px;border:1px solid #ddd;border-radius:6px;text-align:center" value="'+esc(String(w))+'" oninput="weighChange('+i+')">';
     }
   });
-  html+='<div style="margin-top:8px;font-size:13px"><b>称重后合计：</b><span id="weighSum_'+i+'" style="color:#e53935;font-weight:700">'+money(calcWeightSub(o)+o.deliveryFee)+'</span>（含配送费 '+money(o.deliveryFee||0)+'）</div>'+
+  var rawW=calcWeightSub(o)+(o.deliveryFee||0);
+  var finalW=roundHalf(rawW);
+  var discW=Math.round((rawW-finalW)*100)/100;
+  html+='<div style="margin-top:8px;font-size:13px"><b>合计：</b><span id="weighRaw_'+i+'">'+money(rawW)+'</span>'+(discW>0?' <span id="weighDisc_'+i+'" style="color:#999">抹零 -'+money(discW)+'</span>':'<span id="weighDisc_'+i+'" style="display:none"></span>')+' <b>应付：</b><span id="weighSum_'+i+'" style="color:#e53935;font-weight:700">'+money(finalW)+'</span>（含配送费 '+money(o.deliveryFee||0)+'）</div>'+
     '<p style="font-size:11px;color:#999;margin-top:6px">填好重量 → 复制报价发微信 → 顾客付款后点「标记已付款」</p></div>';
   return html;
 }
@@ -695,8 +709,15 @@ function weighChange(i){
     }
   });
   save(LS_ORDERS, orders);
+  var rawW=calcWeightSub(o)+(o.deliveryFee||0);
+  var finalW=roundHalf(rawW);
+  var discW=Math.round((rawW-finalW)*100)/100;
+  var rawEl=document.getElementById('weighRaw_'+i);
+  if(rawEl) rawEl.textContent=money(rawW);
+  var discEl=document.getElementById('weighDisc_'+i);
+  if(discEl){ if(discW>0){ discEl.textContent='抹零 -'+money(discW); discEl.style.display=''; } else discEl.style.display='none'; }
   var sum=document.getElementById('weighSum_'+i);
-  if(sum) sum.textContent=money(calcWeightSub(o)+o.deliveryFee);
+  if(sum) sum.textContent=money(finalW);
 }
 function calcWeightSub(o){
   var s=0;
@@ -719,10 +740,15 @@ function copyQuote(i){
     }
   });
   var sub=calcWeightSub(o);
+  var rawTotal=sub+(o.deliveryFee||0);
+  var finalTotal=roundHalf(rawTotal);
+  var discount=Math.round((rawTotal-finalTotal)*100)/100;
   lines.push('——————————————');
   lines.push('【商品合计】'+money(sub));
   if(o.deliveryFee) lines.push('【配送费】'+money(o.deliveryFee)+(o.dist?'（约'+o.dist+'公里）':''));
-  lines.push('【应收合计】'+money(sub+o.deliveryFee));
+  lines.push('【合计】'+money(rawTotal));
+  if(discount>0) lines.push('【抹零】-'+money(discount));
+  lines.push('【应收合计】'+money(finalTotal));
   lines.push('请核对金额，微信扫码付款后，马上为您配送～');
   lines.push('店址：城厢镇朝阳路16号附1号');
   window._lastText=lines.join('\n');
