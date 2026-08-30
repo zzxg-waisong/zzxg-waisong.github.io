@@ -367,7 +367,7 @@ function showCustomer(){
   renderCats(); renderDishes(); renderCartbar();
   loadCloud();
 }
-function cats(){ var c=[]; dishes.forEach(function(d){ if(d.on && c.indexOf(d.cat)<0) c.push(d.cat); }); if(!c.length) c=['水果','果汁']; return c; }
+function cats(){ var order=['水果','打折','果汁','半价'], c=[]; order.forEach(function(cat){ if(dishes.some(function(d){return d.on && d.cat===cat;})) c.push(cat); }); if(!c.length) c=['水果','果汁']; return c; }
 function catLabel(c){ return c==='水果'?'新鲜水果':(c==='果汁'?'现榨果汁':(c==='打折'?'打折水果':(c==='半价'?'第二杯半价':c))); }
 /* 第二杯半价：从现榨果汁自动同步生成，价格自动×0.5 */
 function syncHalfPrice(){
@@ -379,8 +379,6 @@ function syncHalfPrice(){
 function renderCats(){
   var box=document.getElementById('cats'); var html='';
   cats().forEach(function(c){ html+='<div class="cat'+(c===curCat?' on':'')+'" onclick="setCat(\''+c+'\')">'+catLabel(c)+'</div>'; });
-  var sortLabel = dishSort==='priceAsc'?'价格↑':(dishSort==='priceDesc'?'价格↓':'↕排序');
-  html+='<div class="cat" style="position:sticky;right:0;background:#fff;box-shadow:-4px 0 6px rgba(0,0,0,.06);font-weight:600;color:#2e7d32;flex:0 0 auto" onclick="toggleDishSort()">'+sortLabel+'</div>';
   box.innerHTML=html;
 }
 function setCat(c){ curCat=c; renderCats(); renderDishes(); }
@@ -728,7 +726,7 @@ function sortDishesByPrice(){
   renderAdmin();
 }
 function renderDishesAdmin(){
-  var cats=[['水果','新鲜水果'],['果汁','现榨果汁'],['打折','打折水果'],['半价','第二杯半价']];
+  var cats=[['水果','新鲜水果'],['打折','打折水果'],['果汁','现榨果汁'],['半价','第二杯半价']];
   var isHalf = adminDishCat==='半价';
   var html='<div class="panel"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><h3>菜品管理</h3>'+
     (isHalf?'':'<button class="btn" onclick="editDish()">＋ 新增菜品</button>')+'</div>'+
