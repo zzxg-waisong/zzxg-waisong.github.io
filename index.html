@@ -85,6 +85,8 @@ body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f6f7f8;c
 .rowline{display:flex;justify-content:space-between;font-size:13px;color:#555;margin:4px 0}
 .badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:10px;background:#e8f5e9;color:#2e7d32}
 .badge.off{background:#eee;color:#999}
+.badge.weigh{background:#fff3e0;color:#e65100}
+.badge.paid{background:#e3f2fd;color:#1565c0}
 .login-box{max-width:320px;margin:60px auto;text-align:center}
 .login-box input{width:100%;border:1px solid #ddd;border-radius:8px;padding:12px;font-size:16px;margin-bottom:12px;text-align:center}
 /* 模态 */
@@ -251,21 +253,21 @@ var IMG_VER='20260828b'; // 图片版本号：更新商品图后递增，用于�
 
 function defaultDishes(){
   return [
-    {id:'d1',name:'无籽麒麟西瓜（10斤左右）',price:40,unit:'个',cat:'水果',on:true,img:'wuzi_qilin_xigua.jpg'},
-    {id:'d2',name:'地雷西瓜（1/4个）',price:12,unit:'份',cat:'水果',on:true,img:'dilei_xigua.jpg'},
-    {id:'d3',name:'老挝香蕉（5根 2.5-3斤）',price:12.5,unit:'份',cat:'水果',on:true,img:'laowo_xiangjiao.jpg'},
-    {id:'d4',name:'海南香蕉（9根/半爪 3-3.5斤）',price:10,unit:'份',cat:'水果',on:true,img:'hainan_xiangjiao.jpg'},
-    {id:'d5',name:'凉山盐源糖心丑苹果（4个 1.5-2斤）',price:15,unit:'份',cat:'水果',on:true,img:'tangxin_choupingguo.jpg'},
-    {id:'d6',name:'陕西红富士苹果（4个 1.5-2斤）',price:12,unit:'份',cat:'水果',on:true,img:'hongfushi_pingguo.jpg'},
-    {id:'d7',name:'青苹果（4个 1.8-2斤）',price:10,unit:'份',cat:'水果',on:true,img:'qing_pingguo.jpg'},
-    {id:'d8',name:'石榴',price:4,unit:'个',cat:'水果',on:true,img:'shiliu.jpg'},
-    {id:'d9',name:'石榴（大）',price:5,unit:'个',cat:'水果',on:true,img:'da_shiliu.jpg'},
-    {id:'d10',name:'花皮石榴',price:3,unit:'个',cat:'水果',on:true,img:'huapi_shiliu.jpg'},
-    {id:'d11',name:'花皮石榴（大）',price:4,unit:'个',cat:'水果',on:true,img:'dahuapi_shiliu.jpg'},
-    {id:'d12',name:'海南红心柚（约3斤）',price:15,unit:'个',cat:'水果',on:true,img:'hongxin_you.jpg'},
-    {id:'d13',name:'黄皮哈密瓜',price:20,unit:'个',cat:'水果',on:true,img:'huangpi_hamigua.jpg'},
-    {id:'d14',name:'哈密瓜',price:18,unit:'个',cat:'水果',on:true,img:'hamigua.jpg'},
-    {id:'d15',name:'小番茄（约1斤）',price:8,unit:'盒',cat:'水果',on:true,img:'xiaofanqie.jpg'},
+    {id:'d1',name:'无籽麒麟西瓜（10斤左右）',price:40,unit:'个',cat:'水果',on:true,img:'wuzi_qilin_xigua.jpg',per:4},
+    {id:'d2',name:'地雷西瓜（1/4个）',price:12,unit:'份',cat:'水果',on:true,img:'dilei_xigua.jpg',per:1.5},
+    {id:'d3',name:'老挝香蕉（5根 2.5-3斤）',price:12.5,unit:'份',cat:'水果',on:true,img:'laowo_xiangjiao.jpg',per:5},
+    {id:'d4',name:'海南香蕉（9根/半爪 3-3.5斤）',price:10,unit:'份',cat:'水果',on:true,img:'hainan_xiangjiao.jpg',per:3},
+    {id:'d5',name:'凉山盐源糖心丑苹果（4个 1.5-2斤）',price:15,unit:'份',cat:'水果',on:true,img:'tangxin_choupingguo.jpg',per:8},
+    {id:'d6',name:'陕西红富士苹果（4个 1.5-2斤）',price:12,unit:'份',cat:'水果',on:true,img:'hongfushi_pingguo.jpg',per:6},
+    {id:'d7',name:'青苹果（4个 1.8-2斤）',price:10,unit:'份',cat:'水果',on:true,img:'qing_pingguo.jpg',per:5},
+    {id:'d8',name:'石榴',price:4,unit:'个',cat:'水果',on:true,img:'shiliu.jpg',per:6},
+    {id:'d9',name:'石榴（大）',price:5,unit:'个',cat:'水果',on:true,img:'da_shiliu.jpg',per:6},
+    {id:'d10',name:'花皮石榴',price:3,unit:'个',cat:'水果',on:true,img:'huapi_shiliu.jpg',per:4},
+    {id:'d11',name:'花皮石榴（大）',price:4,unit:'个',cat:'水果',on:true,img:'dahuapi_shiliu.jpg',per:4},
+    {id:'d12',name:'海南红心柚（约3斤）',price:15,unit:'个',cat:'水果',on:true,img:'hongxin_you.jpg',per:5},
+    {id:'d13',name:'黄皮哈密瓜',price:20,unit:'个',cat:'水果',on:true,img:'huangpi_hamigua.jpg',per:4.5},
+    {id:'d14',name:'哈密瓜',price:18,unit:'个',cat:'水果',on:true,img:'hamigua.jpg',per:3.5},
+    {id:'d15',name:'小番茄（约1斤）',price:8,unit:'盒',cat:'水果',on:true,img:'xiaofanqie.jpg',per:8},
     {id:'d16',name:'小柿子（8颗装）',price:10,unit:'盒',cat:'水果',on:true,img:'xiaoshizi.jpg'},
     {id:'j1',name:'西瓜汁（500ml）',price:10,unit:'杯',cat:'果汁',on:true,img:'xiguazhi.jpg'},
     {id:'j2',name:'麒麟西瓜汁（500ml）',price:14,unit:'杯',cat:'果汁',on:true,img:'qilin_xiguazhi.jpg'},
@@ -470,13 +472,19 @@ function submitOrder(){
   var fee=0, dist='';
   if(dlv){ if(dlv.fee<0 || dlv.dist>5){ alert('该地址超出 5 公里配送范围，暂无法下单'); return; } fee=deliveryFee(dlv.dist, subtotal); dist=dlv.dist.toFixed(1); }
   var total=subtotal+fee;
-  var items=list.map(function(c){ var d=byId(c.id); return {name:d.name,price:d.price,qty:c.qty,note:c.note,unit:d.unit}; });
-  var order={id:oid(), items:items, subtotal:subtotal, deliveryFee:fee, dist:dist, total:total, name:name, phone:phone, addr:addr, time:time, remark:remark, created:nowStr(), status:'待付款'};
+  var items=list.map(function(c){ var d=byId(c.id); return {id:d.id, name:d.name, price:d.price, qty:c.qty, note:c.note, unit:d.unit, per:(d.per?d.per:0)}; });
+  var hasWeight=items.some(function(it){return it.per>0;});
+  var order={id:oid(), items:items, hasWeight:hasWeight, weights:{}, subtotal:subtotal, deliveryFee:fee, dist:dist, total:total, estTotal:total, name:name, phone:phone, addr:addr, time:time, remark:remark, created:nowStr(), status:hasWeight?'待称重':'待付款'};
   orders.unshift(order); save(LS_ORDERS, orders);
   cart={}; renderDishes(); renderCartbar(); closeCheckout();
   curOrder=order; showPay(order);
 }
 function showPay(order){
+  if(order.hasWeight){
+    var text=formatOrderText(order);
+    openResult(text, order, true);
+    return;
+  }
   document.getElementById('payAmt').textContent=money(order.total);
   document.getElementById('payImg').src=payCfg.payUrl||'收款码.png';
   document.getElementById('wxImg').src=payCfg.wxUrl||'微信二维码.png';
@@ -503,13 +511,22 @@ function formatOrderText(o){
   lines.push('【订单号】'+o.id);
   lines.push('【下单时间】'+o.created);
   lines.push('【商品】');
+  var realSub=0;
   o.items.forEach(function(it){
-    lines.push((it.note?('  '+it.name+'（'+it.note+'）'):('  '+it.name))+' ×'+it.qty+'  '+money(it.price*it.qty));
+    var sub=0, extra='';
+    if(it.per>0 && o.weights && o.weights[it.id]){
+      var w=o.weights[it.id]; sub=it.per*w*it.qty; extra='（称重'+w+'斤×'+it.per+'元/斤）';
+    } else { sub=it.price*it.qty; }
+    realSub+=sub;
+    lines.push('  '+it.name+extra+' ×'+it.qty+'  '+money(sub));
+    if(it.note) lines.push('    （'+it.note+'）');
   });
   lines.push('——————————————');
-  if(o.subtotal) lines.push('【商品小计】'+money(o.subtotal));
+  if(o.hasWeight) lines.push('【商品小计】'+money(realSub)+(o.weightTotal?'':'（预估，以实际称重为准）'));
+  else if(o.subtotal) lines.push('【商品小计】'+money(o.subtotal));
   if(o.deliveryFee) lines.push('【配送费】'+money(o.deliveryFee)+(o.dist?'（约'+o.dist+'公里）':''));
-  lines.push('【合计】'+money(o.total));
+  var total=o.weightTotal?o.weightTotal:(o.subtotal+o.deliveryFee);
+  lines.push('【合计】'+money(total)+(o.hasWeight&&!o.weightTotal?'（预估）':''));
   lines.push('【顾客】'+o.name+'  '+o.phone);
   lines.push('【地址】'+o.addr);
   lines.push('【预送】'+o.time);
@@ -517,14 +534,17 @@ function formatOrderText(o){
   lines.push('【状态】'+o.status);
   return lines.join('\n');
 }
-function openResult(text, order){
+function openResult(text, order, weighMode){
   var box=document.createElement('div');
   box.className='modal show'; box.id='resultModal';
-  box.innerHTML='<div class="box"><h3 style="text-align:center;margin-bottom:10px">✅ 订单已生成，请发给店主</h3>'+
+  var tip = weighMode
+    ? '<p style="font-size:13px;color:#e65100;margin:10px 0;line-height:1.7;background:#fff8e1;padding:10px;border-radius:8px">⚖️ 本单为<b>称重结算</b>：金额为预估。店主称重后会<b>微信联系您确认实际金额</b>，确认后您再付款，付款后马上配送。</p>'
+    : '<p style="font-size:12px;color:#888;margin-top:10px;line-height:1.6">提示：纯网页无法直接唤起微信，请先"复制订单"，再打开微信粘贴发送给店主（或识别上面的微信码加好友发送）。</p>';
+  box.innerHTML='<div class="box"><h3 style="text-align:center;margin-bottom:10px">'+(weighMode?'📦 订单已提交（待称重）':'✅ 订单已生成，请发给店主')+'</h3>'+
     '<div class="ordertext">'+esc(text)+'</div>'+
     '<div style="display:flex;gap:8px"><button class="btn" style="flex:1" onclick="copyText()">复制订单</button>'+
     '<button class="btn orange" style="flex:1" onclick="sendWechat()">发送给商家微信</button></div>'+
-    '<p style="font-size:12px;color:#888;margin-top:10px;line-height:1.6">提示：纯网页无法直接唤起微信，请先"复制订单"，再打开微信粘贴发送给店主（或识别上面的微信码加好友发送）。</p>'+
+    tip+
     '<button class="btn gray" style="width:100%;margin-top:10px" onclick="document.getElementById(\'resultModal\').remove();window.location.hash=\'#/\';">完成</button></div>';
   document.body.appendChild(box);
   window._lastText=text;
@@ -577,17 +597,17 @@ function renderOrders(){
   var html='<div class="panel"><h3 style="margin-bottom:10px">订单列表（'+orders.length+' 单）</h3>';
   if(!orders.length) html+='<div style="text-align:center;color:#999;padding:30px">暂无订单</div>';
   orders.forEach(function(o,i){
-    var st=o.status==='已完成'?'done':(o.status==='已付款'?'paid':'new');
-    html+='<div class="card"><h3>'+o.id+' <span class="badge '+(o.status==='已完成'?'off':'')+'">'+esc(o.status)+'</span></h3>'+
+    var stCls=o.status==='已完成'?'off':(o.status==='待称重'?'weigh':(o.status==='已付款'?'paid':'new'));
+    html+='<div class="card"><h3>'+o.id+' <span class="badge '+stCls+'">'+esc(o.status)+'</span></h3>'+
       '<div class="rowline"><span>顾客</span><span>'+esc(o.name)+' '+esc(o.phone)+'</span></div>'+
-      '<div class="rowline"><span>金额(含配送)</span><span style="color:#e53935;font-weight:700">'+money(o.total)+'</span></div>'+
+      '<div class="rowline"><span>金额(含配送)</span><span style="color:#e53935;font-weight:700">'+money(o.weightTotal?o.weightTotal:o.total)+(o.hasWeight&&!o.weightTotal?'（预估）':'')+'</span></div>'+
       (o.deliveryFee?'<div class="rowline"><span>配送费</span><span>'+money(o.deliveryFee)+(o.dist?'（约'+o.dist+'km）':'')+'</span></div>':'')+
       '<div class="rowline"><span>地址</span><span>'+esc(o.addr)+'</span></div>'+
       '<div class="rowline"><span>预送</span><span>'+esc(o.time)+' · '+esc(o.created)+'</span></div>'+
       '<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">'+
       '<button class="btn" onclick="navTo(\''+i+'\')">高德导航</button>'+
       '<button class="btn orange" onclick="copyAddr(\''+i+'\')">复制地址</button>'+
-      '<button class="btn outline" onclick="viewOrder(\''+i+'\')">详情</button>'+
+      (o.hasWeight?'<button class="btn" style="background:#fb8c00" onclick="viewOrder(\''+i+'\')">⚖️ 称重结算</button>':'<button class="btn outline" onclick="viewOrder(\''+i+'\')">详情</button>')+
       '<button class="btn gray" onclick="copyOrderText(\''+i+'\')">复制订单</button>'+
       (o.status!=='已完成'?'<button class="btn" onclick="markDone(\''+i+'\')">标记完成</button>':'')+
       '<button class="btn red" onclick="delOrder(\''+i+'\')">删除</button></div></div>';
@@ -609,10 +629,80 @@ function viewOrder(i){
   var o=orders[i]; if(!o)return;
   var text=formatOrderText(o);
   var box=document.createElement('div'); box.className='modal show'; box.id='viewModal';
-  box.innerHTML='<div class="box"><h3>订单详情</h3><div class="ordertext">'+esc(text)+'</div>'+
-    '<div style="display:flex;gap:8px"><button class="btn" style="flex:1" onclick="printThis(\''+i+'\')">🖨 打印小票</button>'+
+  box.innerHTML='<div class="box" style="max-width:520px"><h3>订单详情</h3><div class="ordertext">'+esc(text)+'</div>'+
+    weighPanelHtml(i)+
+    '<div style="display:flex;gap:8px;flex-wrap:wrap">'+
+    '<button class="btn" style="flex:1" onclick="printThis(\''+i+'\')">🖨 打印小票</button>'+
+    (o.hasWeight?'<button class="btn orange" style="flex:1" onclick="copyQuote('+i+')">📋 复制报价发微信</button>':'')+
+    (o.hasWeight&&o.status!=='已付款'?'<button class="btn" style="flex:1" onclick="markPaid('+i+')">✅ 标记已付款</button>':'')+
     '<button class="btn gray" style="flex:1" onclick="document.getElementById(\'viewModal\').remove()">关闭</button></div></div>';
   document.body.appendChild(box);
+}
+function weighPanelHtml(i){
+  var o=orders[i]; if(!o || !o.hasWeight) return '';
+  var html='<div class="card" style="background:#fff8e1;border:1px solid #f0e0b0;margin-top:10px">'+
+    '<div style="font-size:13px;font-weight:700;color:#8a6d00;margin-bottom:6px">⚖️ 称重结算（填实际重量，自动算金额）</div>';
+  o.items.forEach(function(it){
+    if(it.per>0){
+      var w=(o.weights&&o.weights[it.id])?o.weights[it.id]:'';
+      html+='<div style="display:flex;align-items:center;gap:6px;margin:6px 0;font-size:13px">'+
+        '<span style="flex:1">'+esc(it.name)+' ×'+it.qty+'（'+it.per+'元/斤）</span>'+
+        '<input id="w_'+it.id+'" type="number" step="0.1" min="0" placeholder="实际重量(斤)" style="width:96px;padding:6px;border:1px solid #ddd;border-radius:6px;text-align:center" value="'+esc(String(w))+'" oninput="weighChange('+i+')">';
+    }
+  });
+  html+='<div style="margin-top:8px;font-size:13px"><b>称重后合计：</b><span id="weighSum_'+i+'" style="color:#e53935;font-weight:700">'+money(calcWeightSub(o)+o.deliveryFee)+'</span>（含配送费 '+money(o.deliveryFee||0)+'）</div>'+
+    '<p style="font-size:11px;color:#999;margin-top:6px">填好重量 → 复制报价发微信 → 顾客付款后点「标记已付款」</p></div>';
+  return html;
+}
+function weighChange(i){
+  var o=orders[i]; if(!o) return;
+  o.weights=o.weights||{};
+  o.items.forEach(function(it){
+    if(it.per>0){
+      var e=document.getElementById('w_'+it.id);
+      if(e) o.weights[it.id]=parseFloat(e.value)||0;
+    }
+  });
+  save(LS_ORDERS, orders);
+  var sum=document.getElementById('weighSum_'+i);
+  if(sum) sum.textContent=money(calcWeightSub(o)+o.deliveryFee);
+}
+function calcWeightSub(o){
+  var s=0;
+  o.items.forEach(function(it){
+    if(it.per>0 && o.weights && o.weights[it.id]) s+=it.per*o.weights[it.id]*it.qty;
+    else s+=it.price*it.qty;
+  });
+  return Math.round(s*100)/100;
+}
+function copyQuote(i){
+  var o=orders[i]; if(!o) return;
+  var lines=['🍉 榨榨鲜果 称重报价','——————————————','【订单号】'+o.id];
+  lines.push('【商品（按实际重量）】');
+  o.items.forEach(function(it){
+    if(it.per>0){
+      var w=(o.weights&&o.weights[it.id])?o.weights[it.id]:0;
+      lines.push('  '+it.name+' ×'+it.qty+'（'+w+'斤×'+it.per+'元/斤 = '+money(it.per*w*it.qty)+'）');
+    } else {
+      lines.push('  '+it.name+' ×'+it.qty+'  '+money(it.price*it.qty));
+    }
+  });
+  var sub=calcWeightSub(o);
+  lines.push('——————————————');
+  lines.push('【商品合计】'+money(sub));
+  if(o.deliveryFee) lines.push('【配送费】'+money(o.deliveryFee)+(o.dist?'（约'+o.dist+'公里）':''));
+  lines.push('【应收合计】'+money(sub+o.deliveryFee));
+  lines.push('请核对金额，微信扫码付款后，马上为您配送～');
+  lines.push('店址：城厢镇朝阳路16号附1号');
+  window._lastText=lines.join('\n');
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(window._lastText).then(function(){ alert('报价已复制！请打开微信粘贴发给顾客'); }, function(){ fallbackCopy(window._lastText); });
+  } else { fallbackCopy(window._lastText); }
+}
+function markPaid(i){
+  var o=orders[i]; if(!o) return;
+  var total=Math.round((calcWeightSub(o)+o.deliveryFee)*100)/100;
+  if(confirm('确认顾客已付款 '+money(total)+' 元？')){ o.status='已付款'; o.weightTotal=total; o.total=total; save(LS_ORDERS, orders); renderAdmin(); }
 }
 
 function renderDishesAdmin(){
@@ -632,7 +722,7 @@ function renderDishesAdmin(){
   dishes.forEach(function(d){
     html+='<div class="card"><div style="display:flex;justify-content:space-between;align-items:center">'+
       '<div>'+(d.img?'<img src="'+esc(d.img)+'?v='+IMG_VER+'" style="width:44px;height:44px;object-fit:cover;border-radius:6px;vertical-align:middle;margin-right:8px">':'')+'<b>'+esc(d.name)+'</b> <span class="badge '+(d.on?'':'off')+'">'+(d.on?'上架':'下架')+'</span>'+
-      '<div style="font-size:12px;color:#888;margin-top:3px">'+esc(catLabel(d.cat))+' · '+money(d.price)+' / '+esc(d.unit||'份')+'</div></div>'+
+      '<div style="font-size:12px;color:#888;margin-top:3px">'+esc(catLabel(d.cat))+' · '+money(d.price)+' / '+esc(d.unit||'份')+(d.per?' · 称重'+d.per+'元/斤':'')+'</div></div>'+
       '<div><button class="btn gray" style="font-size:12px;padding:4px 10px" onclick="editDish(\''+d.id+'\')">编辑</button> '+
       '<button class="btn red" style="font-size:12px;padding:4px 10px" onclick="delDish(\''+d.id+'\')">删除</button></div></div></div>';
   });
@@ -644,6 +734,7 @@ function editDish(id){
   box.innerHTML='<div class="box"><h3>'+(d?'编辑菜品':'新增菜品')+'</h3><div class="form" style="padding:0">'+
     '<label>菜品名称</label><input id="dName" value="'+(d?esc(d.name):'')+'">'+
     '<label>价格（元）</label><input id="dPrice" type="number" step="0.1" value="'+(d?d.price:'')+'">'+
+    '<label>称重单价（元/斤，水果按斤结算时填；果汁/盒装留空）</label><input id="dPer" type="number" step="0.1" min="0" value="'+(d?(d.per||''):'')+'">'+
     '<label>单位 / 重量（如：斤、整颗、杯）</label><input id="dUnit" value="'+(d?esc(d.unit||'份'):'份')+'">'+
     '<label>图片（images/xxx.jpg 或完整网址，留空则不显示图）</label><input id="dImg" value="'+(d?esc(d.img||''):'')+'">'+
     '<label>分类</label><select id="dCat"><option value="水果"'+(d&&d.cat==='水果'?' selected':'')+'>新鲜水果</option><option value="果汁"'+(d&&d.cat==='果汁'?' selected':'')+'>现榨果汁</option></select>'+
@@ -659,9 +750,11 @@ function saveDish(id){
   var img=document.getElementById('dImg').value.trim();
   var cat=document.getElementById('dCat').value;
   var on=document.getElementById('dOn').checked;
+  var per=parseFloat(document.getElementById('dPer').value);
+  if(isNaN(per)||per<0) per=0;
   if(!name||isNaN(price)||price<0){ alert('请填写名称和正确的价格'); return; }
-  if(id){ var d=byId(id); d.name=name; d.price=price; d.unit=unit; d.img=img; d.cat=cat; d.on=on; }
-  else { dishes.push({id:'d'+Date.now(),name:name,price:price,unit:unit,img:img,cat:cat,on:on}); }
+  if(id){ var d=byId(id); d.name=name; d.price=price; d.unit=unit; d.img=img; d.cat=cat; d.on=on; d.per=per; }
+  else { dishes.push({id:'d'+Date.now(),name:name,price:price,unit:unit,img:img,cat:cat,on:on,per:per}); }
   save(LS_DISHES,dishes); document.getElementById('dishModal').remove(); renderAdmin(); renderCats(); renderDishes();
 }
 function delDish(id){ if(confirm('确认删除该菜品？')){ dishes=dishes.filter(function(d){return d.id!==id;}); save(LS_DISHES,dishes); renderAdmin(); renderCats(); renderDishes(); } }
