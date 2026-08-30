@@ -373,7 +373,7 @@ function catLabel(c){ return c==='水果'?'新鲜水果':(c==='果汁'?'现榨�
 function syncHalfPrice(){
   dishes = dishes.filter(function(d){ return d.cat!=='半价'; });
   dishes.filter(function(d){ return d.cat==='果汁' && d.on; }).forEach(function(d){
-    dishes.push({id:'h_'+d.id, name:d.name+'（第二杯半价）', price:Math.round(d.price*0.5*10)/10, unit:d.unit, cat:'半价', on:true, img:d.img, per:0, halfOf:d.id});
+    dishes.push({id:'h_'+d.id, name:d.name+'（第二杯半价）', price:Math.round(d.price*1.5*10)/10, unit:'2杯', cat:'半价', on:true, img:d.img, per:0, halfOf:d.id});
   });
 }
 function renderCats(){
