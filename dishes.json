@@ -66,7 +66,7 @@
   "id": "d10",
   "name": "石榴（皮干）",
   "price": 2,
-  "unit": "个",
+  "unit": "斤",
   "cat": "打折",
   "on": true,
   "img": "huapi_shiliu.jpg",
@@ -75,8 +75,8 @@
  {
   "id": "d8",
   "name": "石榴",
-  "price": 4,
-  "unit": "个",
+  "price": 6,
+  "unit": "斤",
   "cat": "水果",
   "on": true,
   "img": "shiliu.jpg",
@@ -86,7 +86,7 @@
   "id": "d11",
   "name": "花皮石榴（大）",
   "price": 4,
-  "unit": "个",
+  "unit": "斤",
   "cat": "水果",
   "on": false,
   "img": "dahuapi_shiliu.jpg",
@@ -95,8 +95,8 @@
  {
   "id": "d9",
   "name": "石榴（大）",
-  "price": 5,
-  "unit": "个",
+  "price": 6,
+  "unit": "斤",
   "cat": "水果",
   "on": true,
   "img": "da_shiliu.jpg",
@@ -110,13 +110,13 @@
   "cat": "水果",
   "on": true,
   "img": "xiaofanqie.jpg",
-  "per": 8
+  "per": 0
  },
  {
   "id": "d4",
   "name": "海南香蕉",
-  "price": 10,
-  "unit": "份",
+  "price": 2.5,
+  "unit": "斤",
   "cat": "水果",
   "on": true,
   "img": "hainan_xiangjiao.jpg",
@@ -125,7 +125,7 @@
  {
   "id": "d7",
   "name": "青苹果",
-  "price": 10,
+  "price": 5,
   "unit": "份",
   "cat": "水果",
   "on": true,
@@ -139,13 +139,14 @@
   "unit": "盒",
   "cat": "水果",
   "on": true,
-  "img": "xiaoshizi.jpg"
+  "img": "xiaoshizi.jpg",
+  "per": 0
  },
  {
   "id": "d6",
   "name": "陕西红富士苹果",
-  "price": 10,
-  "unit": "份",
+  "price": 6,
+  "unit": "斤",
   "cat": "水果",
   "on": true,
   "img": "hongfushi_pingguo.jpg",
@@ -154,8 +155,8 @@
  {
   "id": "d3",
   "name": "老挝香蕉",
-  "price": 12,
-  "unit": "份",
+  "price": 5,
+  "unit": "斤",
   "cat": "水果",
   "on": true,
   "img": "laowo_xiangjiao.jpg",
@@ -164,8 +165,8 @@
  {
   "id": "d2",
   "name": "地雷西瓜（1/4个起售）",
-  "price": 13,
-  "unit": "份",
+  "price": 1.5,
+  "unit": "斤",
   "cat": "水果",
   "on": true,
   "img": "dilei_xigua.jpg",
@@ -174,8 +175,8 @@
  {
   "id": "d5",
   "name": "凉山盐源糖心丑苹果",
-  "price": 15,
-  "unit": "份",
+  "price": 8,
+  "unit": "斤",
   "cat": "水果",
   "on": true,
   "img": "tangxin_choupingguo.jpg",
@@ -189,7 +190,7 @@
   "cat": "水果",
   "on": true,
   "img": "hongxin_you.jpg",
-  "per": 5
+  "per": 0
  },
  {
   "id": "d14",
@@ -199,7 +200,7 @@
   "cat": "水果",
   "on": true,
   "img": "hamigua.jpg",
-  "per": 4
+  "per": 0
  },
  {
   "id": "d13",
@@ -209,13 +210,13 @@
   "cat": "水果",
   "on": true,
   "img": "huangpi_hamigua.jpg",
-  "per": 5
+  "per": 0
  },
  {
   "id": "d1788094417454",
   "name": "无籽麒麟西瓜（8斤左右）",
-  "price": 32,
-  "unit": "个",
+  "price": 4,
+  "unit": "斤",
   "img": "wuzi_qilin_xigua.jpg",
   "cat": "水果",
   "on": true,
@@ -224,8 +225,8 @@
  {
   "id": "d1",
   "name": "无籽麒麟西瓜（10斤左右）",
-  "price": 40,
-  "unit": "个",
+  "price": 4,
+  "unit": "斤",
   "cat": "水果",
   "on": true,
   "img": "wuzi_qilin_xigua.jpg",
