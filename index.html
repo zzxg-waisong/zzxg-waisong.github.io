@@ -293,6 +293,7 @@ function loadCloud(){
       if(arr && arr.length){
         dishes=arr;
         try{ localStorage.setItem(LS_DISHES, JSON.stringify(dishes)); }catch(e){}
+        syncHalfPrice();
         renderCats(); renderDishes(); renderCartbar();
       }
     })
@@ -310,7 +311,7 @@ function cloudSync(){
   if(!cloudCfg.token){ alert('请先在下方填写并保存 GitHub 令牌'); return; }
   setCloudStatus('正在同步菜单到云端…');
   var url='https://api.github.com/repos/'+cloudCfg.repo+'/contents/dishes.json';
-  var content=b64utf8(JSON.stringify(dishes, null, 1));
+  var syncDishes=dishes.filter(function(d){return d.cat!=='半价';}); var content=b64utf8(JSON.stringify(syncDishes, null, 1));
   fetch(url, {headers:{Authorization:'Bearer '+cloudCfg.token, Accept:'application/vnd.github+json'}})
     .then(function(r){ if(r.status===404) return null; if(!r.ok) throw new Error('读取线上文件失败('+r.status+')，请检查令牌与仓库'); return r.json(); })
     .then(function(f){
@@ -327,20 +328,20 @@ function cloudPull(){
     .then(function(r){ if(!r.ok) throw new Error('拉取失败('+r.status+')'); return r.json(); })
     .then(function(arr){
       if(!arr || !arr.length) throw new Error('线上菜单为空');
-      dishes=arr; save(LS_DISHES, dishes); renderDishesAdmin(); renderCats(); renderDishes(); renderCartbar();
+      dishes=arr; save(LS_DISHES, dishes); syncHalfPrice(); renderDishesAdmin(); renderCats(); renderDishes(); renderCartbar();
       setCloudStatus('✅ 已拉取线上菜单（'+dishes.length+' 项）载入后台');
     })
     .catch(function(e){ setCloudStatus('❌ '+e.message); });
 }
 
-var dishes = load(LS_DISHES, null); if(!dishes||!dishes.length) dishes=defaultDishes();
+var dishes = load(LS_DISHES, null); if(!dishes||!dishes.length) dishes=defaultDishes(); syncHalfPrice();
 var orders = load(LS_ORDERS, []);
 var payCfg = load(LS_PAY, {payUrl:'收款码.png', wxUrl:'微信二维码.png'});
 var shopCfg = load(LS_SHOP, {address:'', amapKey:'17e56cae3aca57e9862453d89791043c', shopLat:'30.856438', shopLng:'104.323828'});
 var adminOk = localStorage.getItem(LS_SESSION)==='1';
 var cloudCfg = load(LS_CLOUD, {token:'', repo:'zzxg-waisong/zzxg-waisong.github.io'});
 var cart = {};   // id -> {qty,note}
-var curCat = '水果';
+var curCat = '水果'; var adminDishCat = '水果'; var dishSort = 'default';
 var curOrder = null;
 
 /* ==================== 通用 ==================== */
@@ -367,17 +368,29 @@ function showCustomer(){
   loadCloud();
 }
 function cats(){ var c=[]; dishes.forEach(function(d){ if(d.on && c.indexOf(d.cat)<0) c.push(d.cat); }); if(!c.length) c=['水果','果汁']; return c; }
-function catLabel(c){ return c==='水果'?'新鲜水果':(c==='果汁'?'现榨果汁':c); }
+function catLabel(c){ return c==='水果'?'新鲜水果':(c==='果汁'?'现榨果汁':(c==='打折'?'打折水果':(c==='半价'?'第二杯半价':c))); }
+/* 第二杯半价：从现榨果汁自动同步生成，价格自动×0.5 */
+function syncHalfPrice(){
+  dishes = dishes.filter(function(d){ return d.cat!=='半价'; });
+  dishes.filter(function(d){ return d.cat==='果汁' && d.on; }).forEach(function(d){
+    dishes.push({id:'h_'+d.id, name:d.name+'（第二杯半价）', price:Math.round(d.price*0.5*10)/10, unit:d.unit, cat:'半价', on:true, img:d.img, per:0, halfOf:d.id});
+  });
+}
 function renderCats(){
   var box=document.getElementById('cats'); var html='';
   cats().forEach(function(c){ html+='<div class="cat'+(c===curCat?' on':'')+'" onclick="setCat(\''+c+'\')">'+catLabel(c)+'</div>'; });
+  var sortLabel = dishSort==='priceAsc'?'价格↑':(dishSort==='priceDesc'?'价格↓':'↕排序');
+  html+='<div class="cat" style="position:sticky;right:0;background:#fff;box-shadow:-4px 0 6px rgba(0,0,0,.06);font-weight:600;color:#2e7d32;flex:0 0 auto" onclick="toggleDishSort()">'+sortLabel+'</div>';
   box.innerHTML=html;
 }
 function setCat(c){ curCat=c; renderCats(); renderDishes(); }
+function toggleDishSort(){ dishSort = dishSort==='default'?'priceAsc':(dishSort==='priceAsc'?'priceDesc':'default'); renderCats(); renderDishes(); }
 function renderDishes(){
   var box=document.getElementById('dishList'); var html='';
-  dishes.forEach(function(d){
-    if(d.cat!==curCat || !d.on) return;
+  var list = dishes.filter(function(d){ return d.cat===curCat && d.on; });
+  if(dishSort==='priceAsc') list.sort(function(a,b){return a.price-b.price;});
+  else if(dishSort==='priceDesc') list.sort(function(a,b){return b.price-a.price;});
+  list.forEach(function(d){
     var c=cart[d.id]||{qty:0,note:''};
     var img=(d.img===undefined)?(d.id+'.jpg'):d.img;
     var imgHtml=img?'<div class="dimg"><img src="'+esc(img)+'?v='+IMG_VER+'" alt="'+esc(d.name)+'" loading="lazy" onclick="zoomImg(this.src)"></div>':'';
@@ -705,9 +718,24 @@ function markPaid(i){
   if(confirm('确认顾客已付款 '+money(total)+' 元？')){ o.status='已付款'; o.weightTotal=total; o.total=total; save(LS_ORDERS, orders); renderAdmin(); }
 }
 
+function setAdminDishCat(c){ adminDishCat=c; renderAdmin(); }
+function sortDishesByPrice(){
+  var cur = dishes.filter(function(d){return d.cat===adminDishCat;});
+  var others = dishes.filter(function(d){return d.cat!==adminDishCat;});
+  cur.sort(function(a,b){return a.price-b.price;});
+  dishes = others.concat(cur);
+  save(LS_DISHES, dishes);
+  renderAdmin();
+}
 function renderDishesAdmin(){
+  var cats=[['水果','新鲜水果'],['果汁','现榨果汁'],['打折','打折水果'],['半价','第二杯半价']];
+  var isHalf = adminDishCat==='半价';
   var html='<div class="panel"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><h3>菜品管理</h3>'+
-    '<button class="btn" onclick="editDish()">＋ 新增菜品</button></div>'+
+    (isHalf?'':'<button class="btn" onclick="editDish()">＋ 新增菜品</button>')+'</div>'+
+    '<div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;align-items:center">'+
+    cats.map(function(c){return '<button class="btn '+(adminDishCat===c[0]?'':'gray')+'" style="font-size:13px;padding:5px 12px" onclick="setAdminDishCat(\''+c[0]+'\')">'+c[1]+'</button>';}).join('')+
+    (isHalf?'':'<button class="btn outline" style="font-size:13px;padding:5px 12px" onclick="sortDishesByPrice()">↕ 价格排序</button>')+
+    '</div>'+
     '<div class="card" style="background:#eef8ee;border:1px solid #c8e6c9;margin-bottom:12px">'+
     '<div style="font-size:13px;font-weight:700;color:#2e7d32;margin-bottom:6px">☁️ 云端菜单同步（顾客扫码点单即时生效，二维码不变）</div>'+
     '<label>GitHub 令牌 Token（一次性申请，保存后不用再动）</label>'+
@@ -718,30 +746,66 @@ function renderDishesAdmin(){
     '<button class="btn outline" onclick="cloudPull()">拉取线上菜单</button>'+
     '<button class="btn orange" onclick="cloudSync()">☁️ 同步菜单到云端</button></div>'+
     '<div id="cloudStatus" style="font-size:12px;color:#666;margin-top:8px"></div></div>'+
-    '<p style="font-size:12px;color:#888;margin-bottom:10px">改好菜单后点「☁️ 同步菜单到云端」，顾客端即读取最新菜单（本机修改需手动同步才会生效）。</p>';
+    (isHalf?'<p style="font-size:12px;color:#fb8c00;margin-bottom:10px">本分类由「现榨果汁」自动同步生成，价格自动为半价，无需手动编辑。</p>':'<p style="font-size:12px;color:#888;margin-bottom:10px">改好菜单后点「☁️ 同步菜单到云端」，顾客端即读取最新菜单（本机修改需手动同步才会生效）。</p>');
   dishes.forEach(function(d){
+    if(d.cat!==adminDishCat) return;
     html+='<div class="card"><div style="display:flex;justify-content:space-between;align-items:center">'+
       '<div>'+(d.img?'<img src="'+esc(d.img)+'?v='+IMG_VER+'" style="width:44px;height:44px;object-fit:cover;border-radius:6px;vertical-align:middle;margin-right:8px">':'')+'<b>'+esc(d.name)+'</b> <span class="badge '+(d.on?'':'off')+'">'+(d.on?'上架':'下架')+'</span>'+
       '<div style="font-size:12px;color:#888;margin-top:3px">'+esc(catLabel(d.cat))+' · '+money(d.price)+' / '+esc(d.unit||'份')+(d.per?' · 称重'+d.per+'元/斤':'')+'</div></div>'+
+      (isHalf?'<span style="font-size:11px;color:#fb8c00;font-weight:600">自动同步</span>':
       '<div><button class="btn gray" style="font-size:12px;padding:4px 10px" onclick="editDish(\''+d.id+'\')">编辑</button> '+
-      '<button class="btn red" style="font-size:12px;padding:4px 10px" onclick="delDish(\''+d.id+'\')">删除</button></div></div></div>';
+      '<button class="btn red" style="font-size:12px;padding:4px 10px" onclick="delDish(\''+d.id+'\')">删除</button></div>')+
+    '</div></div>';
   });
   return html+'</div>';
 }
 function editDish(id){
   var d=id?byId(id):null;
+  var defCat = d ? d.cat : (adminDishCat==='半价'?'果汁':adminDishCat);
   var box=document.createElement('div'); box.className='modal show'; box.id='dishModal';
-  box.innerHTML='<div class="box"><h3>'+(d?'编辑菜品':'新增菜品')+'</h3><div class="form" style="padding:0">'+
+  box.innerHTML='<div class="box"><h3>'+(d?'编辑菜品':'新增菜品（'+catLabel(defCat)+'）')+'</h3><div class="form" style="padding:0">'+
     '<label>菜品名称</label><input id="dName" value="'+(d?esc(d.name):'')+'">'+
     '<label>价格（元）</label><input id="dPrice" type="number" step="0.1" value="'+(d?d.price:'')+'">'+
     '<label>称重单价（元/斤，水果按斤结算时填；果汁/盒装留空）</label><input id="dPer" type="number" step="0.1" min="0" value="'+(d?(d.per||''):'')+'">'+
     '<label>单位 / 重量（如：斤、整颗、杯）</label><input id="dUnit" value="'+(d?esc(d.unit||'份'):'份')+'">'+
-    '<label>图片（images/xxx.jpg 或完整网址，留空则不显示图）</label><input id="dImg" value="'+(d?esc(d.img||''):'')+'">'+
-    '<label>分类</label><select id="dCat"><option value="水果"'+(d&&d.cat==='水果'?' selected':'')+'>新鲜水果</option><option value="果汁"'+(d&&d.cat==='果汁'?' selected':'')+'>现榨果汁</option></select>'+
+    '<label>菜品图片（点右侧按钮选本地图，自动压缩）</label>'+
+    '<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">'+
+    '<img id="dImgPreview" src="'+(d&&d.img?esc(d.img):'')+'" style="width:60px;height:60px;object-fit:cover;border-radius:6px;border:1px solid #eee;'+(d&&d.img?'':'display:none')+'">'+
+    '<input type="file" id="dImgFile" accept="image/*" style="font-size:12px;flex:1" onchange="onDishImgPick(this)">'+
+    '</div>'+
+    '<label>图片地址（留空则用上方上传的图）</label><input id="dImg" value="'+(d?esc(d.img||''):'')+'">'+
+    '<label>分类</label><select id="dCat">'+
+    '<option value="水果"'+(defCat==='水果'?' selected':'')+'>新鲜水果</option>'+
+    '<option value="果汁"'+(defCat==='果汁'?' selected':'')+'>现榨果汁</option>'+
+    '<option value="打折"'+(defCat==='打折'?' selected':'')+'>打折水果</option>'+
+    '</select>'+
     '<label><input type="checkbox" id="dOn"'+(d?((d.on?' checked':'')):' checked')+'> 上架（顾客可见）</label>'+
     '<div style="display:flex;gap:8px;margin-top:14px"><button class="btn gray" style="flex:1" onclick="document.getElementById(\'dishModal\').remove()">取消</button>'+
     '<button class="btn" style="flex:1" onclick="saveDish(\''+(d?d.id:'')+'\')">保存</button></div></div></div>';
   document.body.appendChild(box);
+}
+function onDishImgPick(input){
+  var file = input.files[0];
+  if(!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e){
+    var img = new Image();
+    img.onload = function(){
+      var canvas = document.createElement('canvas');
+      var size = 400;
+      canvas.width = size; canvas.height = size;
+      var ctx = canvas.getContext('2d');
+      var scale = Math.max(size/img.width, size/img.height);
+      var w = img.width*scale, h = img.height*scale;
+      ctx.drawImage(img, (size-w)/2, (size-h)/2, w, h);
+      var dataUrl = canvas.toDataURL('image/jpeg', 0.75);
+      document.getElementById('dImg').value = dataUrl;
+      var prev = document.getElementById('dImgPreview');
+      if(prev){ prev.src = dataUrl; prev.style.display='block'; }
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
 }
 function saveDish(id){
   var name=document.getElementById('dName').value.trim();
@@ -755,9 +819,9 @@ function saveDish(id){
   if(!name||isNaN(price)||price<0){ alert('请填写名称和正确的价格'); return; }
   if(id){ var d=byId(id); d.name=name; d.price=price; d.unit=unit; d.img=img; d.cat=cat; d.on=on; d.per=per; }
   else { dishes.push({id:'d'+Date.now(),name:name,price:price,unit:unit,img:img,cat:cat,on:on,per:per}); }
-  save(LS_DISHES,dishes); document.getElementById('dishModal').remove(); renderAdmin(); renderCats(); renderDishes();
+  save(LS_DISHES,dishes); syncHalfPrice(); document.getElementById('dishModal').remove(); renderAdmin(); renderCats(); renderDishes();
 }
-function delDish(id){ if(confirm('确认删除该菜品？')){ dishes=dishes.filter(function(d){return d.id!==id;}); save(LS_DISHES,dishes); renderAdmin(); renderCats(); renderDishes(); } }
+function delDish(id){ if(confirm('确认删除该菜品？')){ dishes=dishes.filter(function(d){return d.id!==id;}); save(LS_DISHES,dishes); syncHalfPrice(); renderAdmin(); renderCats(); renderDishes(); } }
 
 function renderPayAdmin(){
   var html='<div class="panel"><h3>收款码设置</h3>'+
