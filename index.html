@@ -246,7 +246,7 @@ body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f6f7f8;c
 <script>
 /* ==================== 数据层 ==================== */
 var LS_DISHES='fruit_dishes', LS_ORDERS='fruit_orders', LS_PWD='fruit_admin_pwd',
-    LS_PAY='fruit_pay', LS_SHOP='fruit_shop', LS_SESSION='fruit_admin_ok';
+    LS_PAY='fruit_pay', LS_SHOP='fruit_shop', LS_SESSION='fruit_admin_ok', LS_CLOUD='fruit_cloud';
 var IMG_VER='20260828b'; // 图片版本号：更新商品图后递增，用于强制刷新浏览器缓存
 
 function defaultDishes(){
@@ -279,11 +279,64 @@ function defaultDishes(){
 function load(k, def){ try{ var v=localStorage.getItem(k); return v?JSON.parse(v):def; }catch(e){ return def; } }
 function save(k, v){ localStorage.setItem(k, JSON.stringify(v)); }
 
+/* ============ 云端菜单同步（GitHub 仓库即云端数据库，点单二维码不变） ============ */
+var _lastLoad=0;
+function loadCloud(){
+  var now=Date.now();
+  if(now-_lastLoad<30000) return;
+  _lastLoad=now;
+  fetch('dishes.json?v='+now, {cache:'no-store'})
+    .then(function(r){ if(!r.ok) throw 0; return r.json(); })
+    .then(function(arr){
+      if(arr && arr.length){
+        dishes=arr;
+        try{ localStorage.setItem(LS_DISHES, JSON.stringify(dishes)); }catch(e){}
+        renderCats(); renderDishes(); renderCartbar();
+      }
+    })
+    .catch(function(){});
+}
+function setCloudStatus(t){ var e=document.getElementById('cloudStatus'); if(e) e.innerHTML=t; }
+function saveCloudCfg(){
+  cloudCfg.token=document.getElementById('cloudToken').value.trim();
+  cloudCfg.repo=document.getElementById('cloudRepo').value.trim()||'zzxg-waisong/zzxg-waisong.github.io';
+  save(LS_CLOUD, cloudCfg);
+  setCloudStatus('✅ 令牌已保存');
+}
+function b64utf8(s){ return btoa(unescape(encodeURIComponent(s))); }
+function cloudSync(){
+  if(!cloudCfg.token){ alert('请先在下方填写并保存 GitHub 令牌'); return; }
+  setCloudStatus('正在同步菜单到云端…');
+  var url='https://api.github.com/repos/'+cloudCfg.repo+'/contents/dishes.json';
+  var content=b64utf8(JSON.stringify(dishes, null, 1));
+  fetch(url, {headers:{Authorization:'Bearer '+cloudCfg.token, Accept:'application/vnd.github+json'}})
+    .then(function(r){ if(r.status===404) return null; if(!r.ok) throw new Error('读取线上文件失败('+r.status+')，请检查令牌与仓库'); return r.json(); })
+    .then(function(f){
+      var body={message:'更新菜单 '+nowStr(), content:content};
+      if(f && f.sha) body.sha=f.sha;
+      return fetch(url, {method:'PUT', headers:{Authorization:'Bearer '+cloudCfg.token, Accept:'application/vnd.github+json','Content-Type':'application/json'}, body:JSON.stringify(body)});
+    })
+    .then(function(r){ if(!r.ok) throw new Error('同步失败('+r.status+')，请检查令牌写权限'); setCloudStatus('✅ 已同步 '+dishes.length+' 项到云端！顾客端稍后刷新即最新（二维码不变）'); })
+    .catch(function(e){ setCloudStatus('❌ '+e.message); });
+}
+function cloudPull(){
+  setCloudStatus('正在拉取线上菜单…');
+  fetch('dishes.json?v='+Date.now(), {cache:'no-store'})
+    .then(function(r){ if(!r.ok) throw new Error('拉取失败('+r.status+')'); return r.json(); })
+    .then(function(arr){
+      if(!arr || !arr.length) throw new Error('线上菜单为空');
+      dishes=arr; save(LS_DISHES, dishes); renderDishesAdmin(); renderCats(); renderDishes(); renderCartbar();
+      setCloudStatus('✅ 已拉取线上菜单（'+dishes.length+' 项）载入后台');
+    })
+    .catch(function(e){ setCloudStatus('❌ '+e.message); });
+}
+
 var dishes = load(LS_DISHES, null); if(!dishes||!dishes.length) dishes=defaultDishes();
 var orders = load(LS_ORDERS, []);
 var payCfg = load(LS_PAY, {payUrl:'收款码.png', wxUrl:'微信二维码.png'});
 var shopCfg = load(LS_SHOP, {address:'', amapKey:'17e56cae3aca57e9862453d89791043c', shopLat:'30.856438', shopLng:'104.323828'});
 var adminOk = localStorage.getItem(LS_SESSION)==='1';
+var cloudCfg = load(LS_CLOUD, {token:'', repo:'zzxg-waisong/zzxg-waisong.github.io'});
 var cart = {};   // id -> {qty,note}
 var curCat = '水果';
 var curOrder = null;
@@ -309,6 +362,7 @@ function showCustomer(){
   document.getElementById('customer').classList.remove('hidden');
   document.getElementById('loginModal').classList.remove('show');
   renderCats(); renderDishes(); renderCartbar();
+  loadCloud();
 }
 function cats(){ var c=[]; dishes.forEach(function(d){ if(d.on && c.indexOf(d.cat)<0) c.push(d.cat); }); if(!c.length) c=['水果','果汁']; return c; }
 function catLabel(c){ return c==='水果'?'新鲜水果':(c==='果汁'?'现榨果汁':c); }
@@ -564,7 +618,17 @@ function viewOrder(i){
 function renderDishesAdmin(){
   var html='<div class="panel"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><h3>菜品管理</h3>'+
     '<button class="btn" onclick="editDish()">＋ 新增菜品</button></div>'+
-    '<p style="font-size:12px;color:#888;margin-bottom:10px">注：修改仅保存在本机浏览器；顾客端看到的菜单为网站内置版本，如需更新顾客菜单请联系店主重新发布。</p>';
+    '<div class="card" style="background:#eef8ee;border:1px solid #c8e6c9;margin-bottom:12px">'+
+    '<div style="font-size:13px;font-weight:700;color:#2e7d32;margin-bottom:6px">☁️ 云端菜单同步（顾客扫码点单即时生效，二维码不变）</div>'+
+    '<label>GitHub 令牌 Token（一次性申请，保存后不用再动）</label>'+
+    '<input id="cloudToken" type="password" value="'+esc(cloudCfg.token)+'" placeholder="ghp_ 开头">'+
+    '<label>仓库（一般不用改）</label><input id="cloudRepo" value="'+esc(cloudCfg.repo)+'">'+
+    '<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">'+
+    '<button class="btn" onclick="saveCloudCfg()">保存令牌</button>'+
+    '<button class="btn outline" onclick="cloudPull()">拉取线上菜单</button>'+
+    '<button class="btn orange" onclick="cloudSync()">☁️ 同步菜单到云端</button></div>'+
+    '<div id="cloudStatus" style="font-size:12px;color:#666;margin-top:8px"></div></div>'+
+    '<p style="font-size:12px;color:#888;margin-bottom:10px">改好菜单后点「☁️ 同步菜单到云端」，顾客端即读取最新菜单（本机修改需手动同步才会生效）。</p>';
   dishes.forEach(function(d){
     html+='<div class="card"><div style="display:flex;justify-content:space-between;align-items:center">'+
       '<div>'+(d.img?'<img src="'+esc(d.img)+'?v='+IMG_VER+'" style="width:44px;height:44px;object-fit:cover;border-radius:6px;vertical-align:middle;margin-right:8px">':'')+'<b>'+esc(d.name)+'</b> <span class="badge '+(d.on?'':'off')+'">'+(d.on?'上架':'下架')+'</span>'+
