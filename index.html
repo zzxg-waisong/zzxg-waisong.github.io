@@ -696,7 +696,7 @@ function formatOrderText(o){
   var discount=isEstimate?0:Math.round((rawTotal-finalTotal)*100)/100;
   lines.push('【合计】'+money(rawTotal)+(isEstimate?'（预估）':''));
   if(discount>0) lines.push('【抹零】-'+money(discount));
-  lines.push('【应付】'+money(finalTotal));
+  lines.push('【应付合计】'+money(finalTotal));
   lines.push('【顾客】'+o.name+'  '+o.phone);
   lines.push('【地址】'+o.addr);
   lines.push('【预送】'+o.time);
@@ -880,7 +880,7 @@ function copyQuote(i){
   if(o.deliveryFee) lines.push('【配送费】'+money(o.deliveryFee)+(o.dist?'（约'+o.dist+'公里）':''));
   lines.push('【合计】'+money(rawTotal));
   if(discount>0) lines.push('【抹零】-'+money(discount));
-  lines.push('【应收合计】'+money(finalTotal));
+  lines.push('【应付合计】'+money(finalTotal));
   lines.push('请核对金额，微信扫码付款后，马上为您配送～');
   lines.push('店址：城厢镇朝阳路16号附1号');
   window._lastText=lines.join('\n');
@@ -1121,8 +1121,14 @@ function browserPrint(text){
   text=text||'';
   var d=new Date(); function pp(x){return (x<10?'0':'')+x;}
   var ts=d.getFullYear()+'-'+pp(d.getMonth()+1)+'-'+pp(d.getDate())+' '+pp(d.getHours())+':'+pp(d.getMinutes());
-  var body='🍉 榨榨鲜果\n========================\n'+(text?text+'\n':'')+'----------------------\n'+'时间：'+ts+'\n谢谢惠顾，欢迎再次光临！\n';
-  document.getElementById('printArea').innerHTML='<div style="white-space:pre-wrap">'+esc(body)+'</div>';
+  var pay='', lines=(text?text.split('\n'):[]), rest=[];
+  lines.forEach(function(ln){ if(ln.indexOf('【应付合计】')===0) pay=ln.replace('【应付合计】',''); else rest.push(esc(ln)); });
+  var body='🍉 榨榨鲜果<br>========================<br>'+rest.join('<br>')+'<br>----------------------<br>';
+  if(pay){
+    body+='<div style="text-align:center;margin:3px 0"><div style="font-size:14px;font-weight:700">应付合计</div><div style="font-size:22px;font-weight:700">'+esc(pay)+'</div></div>';
+  }
+  body+='----------------------<br>时间：'+ts+'<br>谢谢惠顾，欢迎再次光临！';
+  document.getElementById('printArea').innerHTML='<div style="white-space:pre-wrap">'+body+'</div>';
   document.getElementById('printArea').style.display='block';
   window.print();
   setTimeout(function(){ document.getElementById('printArea').style.display='none'; },500);
