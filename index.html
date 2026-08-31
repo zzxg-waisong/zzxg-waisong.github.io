@@ -687,11 +687,13 @@ function formatOrderText(o){
     if(it.note) lines.push('    （'+it.note+'）');
   });
   lines.push('——————————————');
-  if(o.hasWeight) lines.push('【商品小计】'+money(realSub)+(o.weightTotal?'':'（预估，以实际称重为准）'));
+  var anyW=hasAnyWeight(o);
+  if(o.hasWeight) lines.push('【商品小计】'+money(realSub)+((o.weightTotal||anyW)?'':'（预估，以实际称重为准）'));
   else if(o.subtotal) lines.push('【商品小计】'+money(o.subtotal));
   if(o.deliveryFee) lines.push('【配送费】'+money(o.deliveryFee)+(o.dist?'（约'+o.dist+'公里）':''));
-  var rawTotal=o.weightTotal?o.weightTotal:(o.subtotal+o.deliveryFee);
-  var isEstimate=o.hasWeight&&!o.weightTotal;
+  var subTotal=o.weightTotal?calcWeightSub(o):realSub;
+  var rawTotal=o.weightTotal?o.weightTotal:(subTotal+(o.deliveryFee||0));
+  var isEstimate=o.hasWeight&&!o.weightTotal&&!anyW;
   var finalTotal=isEstimate?rawTotal:roundHalf(rawTotal);
   var discount=isEstimate?0:Math.round((rawTotal-finalTotal)*100)/100;
   lines.push('【合计】'+money(rawTotal)+(isEstimate?'（预估）':''));
@@ -858,6 +860,11 @@ function calcWeightSub(o){
     else s+=it.price*it.qty;
   });
   return Math.round(s*100)/100;
+}
+function hasAnyWeight(o){
+  if(!o || !o.weights) return false;
+  for(var k in o.weights){ if(o.weights[k]) return true; }
+  return false;
 }
 function copyQuote(i){
   var o=orders[i]; if(!o) return;
