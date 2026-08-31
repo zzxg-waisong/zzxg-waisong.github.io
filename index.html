@@ -1134,7 +1134,13 @@ function browserPrint(text){
   if(pay){
     body+='<div style="text-align:center;margin:3px 0"><div style="font-size:14px;font-weight:700">应付合计</div><div style="font-size:22px;font-weight:700">'+esc(pay)+'</div></div>';
   }
+  body+='<div style="text-align:center;margin:4px 0;font-size:13px;font-weight:700">加好友 · 扫码付款</div>';
+  body+='<div style="display:flex;justify-content:center;gap:4px">';
+  body+='<div style="text-align:center"><img src="'+esc(payCfg.wxUrl||'微信二维码.png')+'" style="width:21mm;height:21mm;display:block"><div style="font-size:10px;margin-top:1px">微信好友</div></div>';
+  body+='<div style="text-align:center"><img src="'+esc(payCfg.payUrl||'收款码.png')+'" style="width:21mm;height:21mm;display:block"><div style="font-size:10px;margin-top:1px">扫码付款</div></div>';
+  body+='</div>';
   body+='----------------------<br>时间：'+ts+'<br>谢谢惠顾，欢迎再次光临！';
+  body+='<div style="height:10mm"></div>';
   document.getElementById('printArea').innerHTML='<div style="white-space:pre-wrap">'+body+'</div>';
   document.getElementById('printArea').style.display='block';
   window.print();
