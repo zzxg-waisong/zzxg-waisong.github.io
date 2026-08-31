@@ -569,7 +569,7 @@ var _mapPick = {lng:'', lat:'', addr:''};
 function loadAmap(key, code, cb){
   if(window.AMap){ cb(); return; }
   var s=document.createElement('script');
-  s.src='https://webapi.amap.com/maps?v=2.0&key='+key+'&securityJsCode='+code+'&plugin=AMap.Geocoder';
+  s.src='https://webapi.amap.com/maps?v=2.0&key='+key+'&securityJsCode='+code;
   s.onload=cb; s.onerror=function(){ alert('高德地图加载失败，请检查 JS API Key / 安全密钥是否填写正确'); };
   document.head.appendChild(s);
 }
@@ -579,7 +579,7 @@ function openMapPick(){
   document.getElementById('mapModal').classList.add('show');
   document.getElementById('mapAddr').textContent='地图加载中…';
   loadAmap(jskey, jscode, function(){
-    if(window._map){ window._map.resize(); return; }
+    if(window._map){ window._map.resize(); document.getElementById('mapAddr').textContent='点击地图上的位置，选择收货地址'; return; }
     window._map = new AMap.Map('mapContainer', {
       zoom: 15,
       center: [+shopCfg.shopLng, +shopCfg.shopLat],
@@ -592,15 +592,18 @@ function openMapPick(){
       var lng=p.getLng(), lat=p.getLat();
       window._marker.setPosition([lng,lat]);
       _mapPick.lng=lng.toFixed(6); _mapPick.lat=lat.toFixed(6);
-      var gc=new AMap.Geocoder({city:'成都'});
-      gc.getAddress([lng,lat], function(status,result){
-        if(status==='complete' && result && result.regeocode){
-          _mapPick.addr=result.regeocode.formattedAddress;
-        } else {
-          _mapPick.addr=lng.toFixed(6)+','+lat.toFixed(6);
-        }
-        document.getElementById('mapAddr').textContent='已选：'+_mapPick.addr+'　点「确认此地址」完成';
-      });
+      document.getElementById('mapAddr').textContent='正在识别地址…';
+      var key2=shopCfg.amapKey||'';
+      if(!key2){ _mapPick.addr=_mapPick.lng+','+_mapPick.lat; document.getElementById('mapAddr').textContent='已选坐标：'+_mapPick.addr+'　点「确认此地址」完成'; return; }
+      fetch('https://restapi.amap.com/v3/geocode/regeo?location='+_mapPick.lng+','+_mapPick.lat+'&key='+key2+'&radius=200&extensions=base')
+        .then(function(r){return r.json();}).then(function(j){
+          if(j.status==='1' && j.regeocode && j.regeocode.formatted_address){
+            _mapPick.addr=j.regeocode.formatted_address;
+          } else {
+            _mapPick.addr=_mapPick.lng+','+_mapPick.lat;
+          }
+          document.getElementById('mapAddr').textContent='已选：'+_mapPick.addr+'　点「确认此地址」完成';
+        }).catch(function(){ _mapPick.addr=_mapPick.lng+','+_mapPick.lat; document.getElementById('mapAddr').textContent='已选坐标：'+_mapPick.addr+'　点「确认此地址」完成'; });
     });
     setTimeout(function(){ if(window._map) window._map.resize(); }, 300);
   });
