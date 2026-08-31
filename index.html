@@ -610,7 +610,7 @@ function showAdmin(){
 function backToShop(){ location.hash='#/'; }
 function adminLogin(){
   var pwd=document.getElementById('adminPwd').value;
-  var stored=localStorage.getItem(LS_PWD)||'123456';
+  var stored=localStorage.getItem(LS_PWD)||'1986shenhu';
   if(pwd===stored){ adminOk=true; localStorage.setItem(LS_SESSION,'1'); document.getElementById('loginModal').classList.remove('show'); renderAdmin(); }
   else alert('密码错误');
 }
@@ -791,8 +791,8 @@ function renderDishesAdmin(){
     '<button class="btn orange" onclick="cloudSync()">☁️ 同步菜单到云端</button></div>'+
     '<div id="cloudStatus" style="font-size:12px;color:#666;margin-top:8px"></div></div>'+
     (isHalf?'<p style="font-size:12px;color:#fb8c00;margin-bottom:10px">本分类由「现榨果汁」自动同步生成，价格自动为半价，无需手动编辑。</p>':'<p style="font-size:12px;color:#888;margin-bottom:10px">改好菜单后点「☁️ 同步菜单到云端」，顾客端即读取最新菜单（本机修改需手动同步才会生效）。</p>');
-  dishes.forEach(function(d){
-    if(d.cat!==adminDishCat) return;
+  var sortedDishes = dishes.filter(function(d){ return d.cat===adminDishCat; }).slice().sort(function(a,b){ return a.price-b.price; });
+  sortedDishes.forEach(function(d){
     html+='<div class="card"><div style="display:flex;justify-content:space-between;align-items:center">'+
       '<div>'+(d.img?'<img src="'+esc(d.img)+'?v='+IMG_VER+'" style="width:44px;height:44px;object-fit:cover;border-radius:6px;vertical-align:middle;margin-right:8px">':'')+'<b>'+esc(d.name)+'</b> <span class="badge '+(d.on?'':'off')+'">'+(d.on?'上架':'下架')+'</span>'+
       '<div style="font-size:12px;color:#888;margin-top:3px">'+esc(catLabel(d.cat))+' · '+money(d.price)+' / '+esc(d.unit||'份')+(d.per?' · 称重'+d.per+'元/斤':'')+'</div></div>'+
