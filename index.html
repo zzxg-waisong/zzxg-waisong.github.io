@@ -159,7 +159,7 @@ body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f6f7f8;c
     <div class="form" style="padding:0">
       <label>您的称呼</label><input id="ckName" placeholder="例如：王女士">
       <label>联系电话</label><input id="ckPhone" type="tel" placeholder="手机号">
-      <label>外卖地址（输入关键词，从下方候选中点选可精确定位）</label><div class="wrap"><textarea id="ckAddr" rows="2" placeholder="输入小区/道路名，从候选点选"></textarea><div id="addrTips" style="display:none"></div></div>
+      <label>外卖地址（输入关键词，从下方候选中点选可精确定位）</label><div class="wrap"><textarea id="ckAddr" rows="2" placeholder="输入小区/道路名，从候选点选"></textarea><div id="addrTips" style="display:none"></div><button class="btn" style="margin-top:6px;font-size:13px;padding:6px 10px" onclick="openMapPick()">📍 地图选点（点地图选位置）</button></div>
       <div id="deliveryBox" style="background:#f0f7f0;border-radius:8px;padding:10px;margin-top:8px;font-size:13px;line-height:1.8;display:none"></div>
       <label>预送时间段</label>
       <select id="ckTime">
@@ -180,6 +180,19 @@ body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f6f7f8;c
         <button class="btn gray" style="flex:1" onclick="closeCheckout()">返回</button>
         <button class="btn" style="flex:1" onclick="submitOrder()">提交订单</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- 地图选点 -->
+<div class="modal" id="mapModal">
+  <div class="box" style="max-width:520px">
+    <h3 style="margin-bottom:8px">📍 地图选点（点击地图选择收货位置）</h3>
+    <div id="mapContainer" style="height:320px;border-radius:10px;overflow:hidden;border:1px solid #eee"></div>
+    <div id="mapAddr" style="font-size:13px;color:#555;margin-top:10px;min-height:18px">点击地图上的位置，选择收货地址</div>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button class="btn gray" style="flex:1" onclick="closeMapPick()">取消</button>
+      <button class="btn" style="flex:1" onclick="confirmMapPick()">确认此地址</button>
     </div>
   </div>
 </div>
@@ -344,7 +357,7 @@ function cloudPull(){
 var dishes = load(LS_DISHES, null); if(!dishes||!dishes.length) dishes=defaultDishes(); syncHalfPrice();
 var orders = load(LS_ORDERS, []);
 var payCfg = load(LS_PAY, {payUrl:'收款码.png', wxUrl:'微信二维码.png'});
-var shopCfg = load(LS_SHOP, {address:'', amapKey:'17e56cae3aca57e9862453d89791043c', shopLat:'30.856438', shopLng:'104.323828'});
+var shopCfg = load(LS_SHOP, {address:'', amapKey:'17e56cae3aca57e9862453d89791043c', shopLat:'30.856438', shopLng:'104.323828', jskey:'', jscode:''});
 var adminOk = localStorage.getItem(LS_SESSION)==='1';
 var cloudCfg = load(LS_CLOUD, {token:'', repo:'zzxg-waisong/zzxg-waisong.github.io'});
 var cart = {};   // id -> {qty,note}
@@ -549,6 +562,57 @@ function pickAddr(loc, text){
   document.getElementById('addrTips').style.display='none';
   document.getElementById('addrTips').innerHTML='';
   window._pickedLoc=loc;
+  calcDelivery();
+}
+/* ============ 地图选点（高德 JS API） ============ */
+var _mapPick = {lng:'', lat:'', addr:''};
+function loadAmap(key, code, cb){
+  if(window.AMap){ cb(); return; }
+  var s=document.createElement('script');
+  s.src='https://webapi.amap.com/maps?v=2.0&key='+key+'&securityJsCode='+code+'&plugin=AMap.Geocoder';
+  s.onload=cb; s.onerror=function(){ alert('高德地图加载失败，请检查 JS API Key / 安全密钥是否填写正确'); };
+  document.head.appendChild(s);
+}
+function openMapPick(){
+  var jskey=shopCfg.jskey, jscode=shopCfg.jscode;
+  if(!jskey||!jscode){ alert('请先在后台「店铺设置」中填写「高德 JS API Key」和「安全密钥」，才能使用地图选点'); return; }
+  document.getElementById('mapModal').classList.add('show');
+  document.getElementById('mapAddr').textContent='地图加载中…';
+  loadAmap(jskey, jscode, function(){
+    if(window._map){ window._map.resize(); return; }
+    window._map = new AMap.Map('mapContainer', {
+      zoom: 15,
+      center: [+shopCfg.shopLng, +shopCfg.shopLat],
+      resizeEnable: true
+    });
+    window._marker = new AMap.Marker({position:[+shopCfg.shopLng, +shopCfg.shopLat]});
+    window._map.add(window._marker);
+    window._map.on('click', function(e){
+      var p=e.lnglat;
+      var lng=p.getLng(), lat=p.getLat();
+      window._marker.setPosition([lng,lat]);
+      _mapPick.lng=lng.toFixed(6); _mapPick.lat=lat.toFixed(6);
+      var gc=new AMap.Geocoder({city:'成都'});
+      gc.getAddress([lng,lat], function(status,result){
+        if(status==='complete' && result && result.regeocode){
+          _mapPick.addr=result.regeocode.formattedAddress;
+        } else {
+          _mapPick.addr=lng.toFixed(6)+','+lat.toFixed(6);
+        }
+        document.getElementById('mapAddr').textContent='已选：'+_mapPick.addr+'　点「确认此地址」完成';
+      });
+    });
+    setTimeout(function(){ if(window._map) window._map.resize(); }, 300);
+  });
+}
+function closeMapPick(){ document.getElementById('mapModal').classList.remove('show'); }
+function confirmMapPick(){
+  if(!_mapPick.addr){ alert('请先在地图上点击选择收货位置'); return; }
+  document.getElementById('ckAddr').value=_mapPick.addr;
+  document.getElementById('addrTips').style.display='none';
+  document.getElementById('addrTips').innerHTML='';
+  closeMapPick();
+  window._pickedLoc=_mapPick.lng+','+_mapPick.lat;
   calcDelivery();
 }
 function closeCheckout(){ document.getElementById('checkoutModal').classList.remove('show'); }
@@ -958,6 +1022,8 @@ function renderShopAdmin(){
     '<label>店铺纬度（如 30.856634）</label><input id="shopLat" value="'+esc(shopCfg.shopLat||'')+'" placeholder="30.856634">'+
     '<label>店铺经度（如 104.324292）</label><input id="shopLng" value="'+esc(shopCfg.shopLng||'')+'" placeholder="104.324292">'+
     '<label>高德地图 Key（自动计算顾客配送距离用，免费申请）</label><input id="amapKey" value="'+esc(shopCfg.amapKey||'')+'" placeholder="申请：lbs.amap.com → 控制台 → 创建应用 → 添加Key(Web服务)">'+
+    '<label>高德 JS API Key（地图选点用）</label><input id="jsKey" value="'+esc(shopCfg.jskey||'')+'" placeholder="控制台 → 创建应用 → 添加Key → 服务平台选【Web端(JS API)】">'+
+    '<label>安全密钥 securityJsCode（与 JS API Key 配套）</label><input id="jsCode" value="'+esc(shopCfg.jscode||'')+'" placeholder="添加Key时系统生成的安全密钥">'+
     '<label>修改后台密码</label><div style="display:flex;gap:8px"><input id="newPwd" placeholder="新密码（留空则不修改）"><button class="btn" onclick="changePwd()">修改密码</button></div>'+
     '<div style="margin-top:12px"><button class="btn" onclick="saveShop()">保存店铺设置</button></div></div></div></div>';
   return html;
@@ -967,6 +1033,8 @@ function saveShop(){
   shopCfg.shopLat=document.getElementById('shopLat').value.trim();
   shopCfg.shopLng=document.getElementById('shopLng').value.trim();
   shopCfg.amapKey=document.getElementById('amapKey').value.trim();
+  shopCfg.jskey=document.getElementById('jsKey').value.trim();
+  shopCfg.jscode=document.getElementById('jsCode').value.trim();
   save(LS_SHOP,shopCfg); renderAdmin(); alert('店铺设置已保存');
 }
 function changePwd(){
