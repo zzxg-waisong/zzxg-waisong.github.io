@@ -885,8 +885,26 @@ function copyQuote(i){
   lines.push('店址：城厢镇朝阳路16号附1号');
   window._lastText=lines.join('\n');
   if(navigator.clipboard && navigator.clipboard.writeText){
-    navigator.clipboard.writeText(window._lastText).then(function(){ alert('报价已复制！请打开微信粘贴发给顾客'); }, function(){ fallbackCopy(window._lastText); });
-  } else { fallbackCopy(window._lastText); }
+    navigator.clipboard.writeText(window._lastText).then(function(){ showQuotePay(); }, function(){ fallbackCopyQuote(); });
+  } else { fallbackCopyQuote(); }
+}
+function fallbackCopyQuote(){
+  var ta=document.createElement('textarea'); ta.value=window._lastText; document.body.appendChild(ta); ta.select();
+  try{ document.execCommand('copy'); showQuotePay(); }catch(e){ alert('复制失败，请长按手动复制报价文字'); }
+  document.body.removeChild(ta);
+}
+function showQuotePay(){
+  var box=document.createElement('div'); box.className='modal show'; box.id='quotePayModal';
+  box.innerHTML='<div class="box" style="max-width:430px">'+
+    '<h3 style="text-align:center;margin-bottom:8px">✅ 报价已复制，请发给顾客</h3>'+
+    '<div class="ordertext" style="max-height:150px;overflow:auto;margin-bottom:10px">'+esc(window._lastText)+'</div>'+
+    '<button class="btn" style="width:100%;margin-bottom:10px" onclick="copyText()">📋 再次复制报价</button>'+
+    '<div style="text-align:center;margin:8px 0;position:relative">'+
+      '<img src="'+esc(payCfg.payUrl)+'" alt="收款码" style="width:210px;background:#fff;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,.12);-webkit-user-drag:element" ondragstart="return true">'+
+    '</div>'+
+    '<p style="font-size:13px;color:#e65100;text-align:center;margin:8px 0;line-height:1.7">👇 长按上方<b>收款码图片</b> → 发送给顾客<br>顾客扫码付款后，回来点「标记已付款」</p>'+
+    '<button class="btn gray" style="width:100%" onclick="document.getElementById(\'quotePayModal\').remove()">完成</button></div>';
+  document.body.appendChild(box);
 }
 function markPaid(i){
   var o=orders[i]; if(!o) return;
