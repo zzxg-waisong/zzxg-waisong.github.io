@@ -1121,7 +1121,115 @@ async function writeReceipt(port, text){
 }
 function printThis(i){
   var o=orders[i]; if(!o)return;
-  browserPrint(formatOrderText(o));
+  var text=formatOrderText(o), amt='';
+  try{
+    var l=(text.split('\n').filter(function(x){return x.indexOf('【应付合计】')===0})[0]||'');
+    amt=l.replace('【应付合计】','').trim();
+  }catch(e){}
+  printViaSerialWithFallback(text, amt);
+}
+function loadImg(src){
+  return new Promise(function(res,rej){ var im=new Image(); im.onload=function(){res(im)}; im.onerror=function(){rej(new Error('图片加载失败'))}; im.src=src; });
+}
+function renderReceiptBitmap(text, amt, cb){
+  Promise.all([loadImg(payCfg.wxUrl||'微信二维码.png'), loadImg(payCfg.payUrl||'收款码.png')]).then(function(imgs){
+    var W=384, x=12, y=10, lineH=24, bodyFont=16;
+    var rows=(text||'').split('\n');
+    var estH=120 + rows.length*lineH + (amt?80:0) + 50 + 230 + 110;
+    var cv=document.createElement('canvas'); cv.width=W; cv.height=Math.max(estH,260);
+    var ctx=cv.getContext('2d');
+    ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,cv.height);
+    ctx.fillStyle='#000'; ctx.textBaseline='top';
+    ctx.font='bold 32px "Microsoft YaHei",sans-serif'; ctx.textAlign='center';
+    ctx.fillText('🍉 榨榨鲜果', W/2, y); y+=52;
+    ctx.font='14px "Microsoft YaHei"'; ctx.fillText('════════════', W/2, y); y+=28;
+    ctx.textAlign='left';
+    rows.forEach(function(ln){
+      var f=bodyFont, t=ln;
+      ctx.font='normal '+f+'px "Microsoft YaHei",monospace';
+      while(ctx.measureText(t).width>W-24 && f>11){ f--; ctx.font='normal '+f+'px "Microsoft YaHei",monospace'; }
+      if(ctx.measureText(t).width>W-24){ while(ctx.measureText(t+'…').width>W-24) t=t.slice(0,-1); t+='…'; }
+      ctx.fillText(t, x, y); y+=lineH;
+    });
+    y+=6;
+    if(amt){
+      ctx.textAlign='center';
+      ctx.font='bold 16px "Microsoft YaHei"'; ctx.fillText('应付合计', W/2, y); y+=26;
+      ctx.font='bold 36px "Microsoft YaHei"';
+      var a=(String(amt).indexOf('¥')===0)?amt:('¥'+amt);
+      ctx.fillText(a, W/2, y); y+=56;
+    }
+    ctx.font='bold 20px "Microsoft YaHei"'; ctx.fillText('加好友 · 扫码付款', W/2, y); y+=10;
+    var qw=150, gap=(W-qw*2-24)/2;
+    ctx.drawImage(imgs[0], 12+gap, y+4, qw, qw);
+    ctx.drawImage(imgs[1], 12+gap+qw+8, y+4, qw, qw);
+    ctx.font='14px "Microsoft YaHei"';
+    ctx.fillText('微信好友', 12+gap+qw/2, y+qw+8);
+    ctx.fillText('扫码付款', 12+gap+qw+8+qw/2, y+qw+8);
+    y+=qw+44;
+    ctx.textAlign='center';
+    ctx.font='14px "Microsoft YaHei"'; ctx.fillText('--------------------', W/2, y); y+=24;
+    ctx.fillText(nowStr(), W/2, y); y+=24;
+    ctx.fillText('谢谢惠顾，欢迎再次光临！', W/2, y); y+=30;
+    var actual=y+80;
+    var out=document.createElement('canvas'); out.width=W; out.height=Math.min(actual, 4096);
+    out.getContext('2d').drawImage(cv,0,0);
+    cb(out);
+  }).catch(function(e){ alert('二维码图片加载失败：'+e.message); });
+}
+function canvasToEscpos(canvas){
+  var sw=384, sh=Math.max(8, canvas.height), c=canvas;
+  if(canvas.width!==sw){ c=document.createElement('canvas'); c.width=sw; c.height=sh; c.getContext('2d').drawImage(canvas,0,0,sw,sh); }
+  var img=c.getContext('2d').getImageData(0,0,sw,sh).data;
+  var bytesPerLine=Math.ceil(sw/8);
+  var out=[0x1B,0x40];
+  out.push(0x1D,0x76,0x30,0x00);
+  out.push(bytesPerLine&0xFF,(bytesPerLine>>8)&0xFF);
+  out.push(sh&0xFF,(sh>>8)&0xFF);
+  for(var y=0;y<sh;y++){
+    for(var bx=0;bx<bytesPerLine;bx++){
+      var byte=0;
+      for(var bit=0;bit<8;bit++){
+        var px=bx*8+bit; if(px>=sw) break;
+        var idx=(y*sw+px)*4;
+        var lum=img[idx]*0.299+img[idx+1]*0.587+img[idx+2]*0.114;
+        if(lum<128) byte|=(0x80>>bit);
+      }
+      out.push(byte);
+    }
+  }
+  out.push(0x1B,0x64,0x04);
+  out.push(0x1D,0x56,0x01,0x00);
+  return new Uint8Array(out);
+}
+function printViaSerialWithFallback(text, amt){
+  if(!navigator.serial){
+    if(confirm('当前浏览器不支持 USB 直连打印（需电脑端 Edge/Chrome）。是否改用浏览器打印？')) browserPrint(text);
+    return;
+  }
+  renderReceiptBitmap(text, amt, function(canvas){
+    (async function(){
+      var port=null;
+      try{
+        port=await navigator.serial.requestPort();
+        var opened=false, err='';
+        for(var br of [115200,9600]){
+          try{ await port.open({baudRate:br}); opened=true; break; }
+          catch(e){ err=e.message; }
+        }
+        if(!opened) throw new Error('打开打印机失败：'+(err||''));
+        var bytes=canvasToEscpos(canvas);
+        var writer=port.writable.getWriter();
+        await writer.write(bytes);
+        try{ writer.releaseLock(); }catch(e){}
+        try{ await port.close(); }catch(e){}
+        alert('已发送打印，请查看小票');
+      }catch(e){
+        try{ if(port){ await port.close(); } }catch(e2){}
+        if(confirm('USB 直连打印失败：'+e.message+'。是否改用浏览器打印？')) browserPrint(text);
+      }
+    })();
+  });
 }
 function browserPrint(text){
   text=text||'';
