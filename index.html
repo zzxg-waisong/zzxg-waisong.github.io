@@ -894,6 +894,7 @@ function fallbackCopyQuote(){
   document.body.removeChild(ta);
 }
 function showQuotePay(){
+  var oldQ=document.getElementById('quotePayModal'); if(oldQ) oldQ.remove();
   var box=document.createElement('div'); box.className='modal show'; box.id='quotePayModal';
   box.innerHTML='<div class="box" style="max-width:430px">'+
     '<h3 style="text-align:center;margin-bottom:8px">✅ 报价已复制，请发给顾客</h3>'+
