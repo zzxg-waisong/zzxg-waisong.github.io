@@ -915,7 +915,7 @@ function showQuotePay(){
 }
 function markPaid(i){
   var o=orders[i]; if(!o) return;
-  var total=Math.round((calcWeightSub(o)+o.deliveryFee)*100)/100;
+  var total=roundHalf(calcWeightSub(o)+(o.deliveryFee||0));
   if(confirm('确认顾客已付款 '+money(total)+' 元？')){ o.status='已付款'; o.weightTotal=total; o.total=total; save(LS_ORDERS, orders); renderAdmin(); }
 }
 
