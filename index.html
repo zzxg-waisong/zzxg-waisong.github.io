@@ -884,9 +884,15 @@ function copyQuote(i){
   lines.push('请核对金额，微信扫码付款后，马上为您配送～');
   lines.push('店址：城厢镇朝阳路16号附1号');
   window._lastText=lines.join('\n');
+  showQuotePay();
   if(navigator.clipboard && navigator.clipboard.writeText){
-    navigator.clipboard.writeText(window._lastText).then(function(){ showQuotePay(); }, function(){ fallbackCopyQuote(); });
-  } else { fallbackCopyQuote(); }
+    navigator.clipboard.writeText(window._lastText)['catch'](function(){ tryExecCopy(); });
+  } else { tryExecCopy(); }
+}
+function tryExecCopy(){
+  var ta=document.createElement('textarea'); ta.value=window._lastText; document.body.appendChild(ta); ta.select();
+  try{ document.execCommand('copy'); }catch(e){}
+  document.body.removeChild(ta);
 }
 function fallbackCopyQuote(){
   var ta=document.createElement('textarea'); ta.value=window._lastText; document.body.appendChild(ta); ta.select();
