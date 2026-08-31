@@ -101,6 +101,12 @@ body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f6f7f8;c
   #printArea{position:absolute;left:0;top:0;width:48mm;font-size:11px;line-height:1.5;font-family:"Microsoft YaHei",monospace}
 }
 #printArea{display:none}
+#addrTips{position:absolute;left:10px;right:10px;top:100%;z-index:99;background:#fff;border:1px solid #ddd;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.12);max-height:220px;overflow:auto;margin-top:2px}
+.addr-tip{padding:9px 12px;font-size:13px;border-bottom:1px solid #f2f2f2;cursor:pointer}
+.addr-tip:last-child{border-bottom:none}
+.addr-tip:active{background:#eef7ee}
+.addr-tip small{display:block;color:#999;font-size:11px;margin-top:2px}
+.wrap{position:relative}
 </style>
 </head>
 <body>
@@ -153,7 +159,7 @@ body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f6f7f8;c
     <div class="form" style="padding:0">
       <label>您的称呼</label><input id="ckName" placeholder="例如：王女士">
       <label>联系电话</label><input id="ckPhone" type="tel" placeholder="手机号">
-      <label>外卖地址</label><textarea id="ckAddr" rows="2" placeholder="小区/楼栋/门牌号，写详细些方便配送"></textarea>
+      <label>外卖地址（输入关键词，从下方候选中点选可精确定位）</label><div class="wrap"><textarea id="ckAddr" rows="2" placeholder="输入小区/道路名，从候选点选"></textarea><div id="addrTips" style="display:none"></div></div>
       <div id="deliveryBox" style="background:#f0f7f0;border-radius:8px;padding:10px;margin-top:8px;font-size:13px;line-height:1.8;display:none"></div>
       <label>预送时间段</label>
       <select id="ckTime">
@@ -484,23 +490,67 @@ function calcDelivery(){
   var key=shopCfg.amapKey;
   if(!key){ box.innerHTML='<span style="color:#888">高德Key未配置，暂无法自动算配送费（下单后客服会与您确认）</span>'; window._delivery=null; return; }
   box.innerHTML='<span style="color:#888">正在计算配送距离…</span>';
-  var url='https://restapi.amap.com/v3/geocode/geo?address='+encodeURIComponent(addr)+'&key='+key+'&city=成都';
-  fetch(url).then(function(r){return r.json();}).then(function(j){
-    if(j.status!=='1'||!j.geocodes||!j.geocodes.length){ box.innerHTML='<span style="color:#e53935">地址无法识别，请填写更详细的地址（含镇/街道/小区）</span>'; window._delivery=null; return; }
-    var loc=j.geocodes[0].location.split(',');
-    var d=distKm({lng:+loc[0],lat:+loc[1]},{lng:+shopCfg.shopLng,lat:+shopCfg.shopLat});
+  function done(d){
     var sub=cartTotal();
     var fee=deliveryFee(d, sub);
     window._delivery={dist:d,fee:fee};
-    var h='📍 配送距离：约 '+d.toFixed(1)+' 公里<br>';
+    var h='🚴 骑行距离：约 '+d.toFixed(1)+' 公里<br>';
     if(fee<0) h+='<span style="color:#e53935">超出 5 公里配送范围，暂无法配送</span>';
     else if(d<=3) h+='<span style="color:#2e7d32">✔ 3 公里内，满20元免配送费</span>';
     else if(fee===0) h+='<span style="color:#2e7d32">✔ 满 30 元，免配送费</span>';
     else h+='<span style="color:#fb8c00">配送费：'+money(fee)+'（5 公里内，满30元免）</span>';
     box.innerHTML=h;
-  }).catch(function(){ box.innerHTML='<span style="color:#e53935">配送费计算失败，请稍后再试</span>'; window._delivery=null; });
+  }
+  function fallback(loc){
+    var d=distKm({lng:+loc[0],lat:+loc[1]},{lng:+shopCfg.shopLng,lat:+shopCfg.shopLat});
+    done(d);
+  }
+  function getDest(){
+    if(window._pickedLoc){ var t=window._pickedLoc; window._pickedLoc=null; return Promise.resolve(t.split(',')); }
+    return fetch('https://restapi.amap.com/v3/geocode/geo?address='+encodeURIComponent(addr)+'&key='+key+'&city=成都').then(function(r){return r.json();}).then(function(j){
+      if(j.status!=='1'||!j.geocodes||!j.geocodes.length){ box.innerHTML='<span style="color:#e53935">地址无法识别，请用下方候选点选或填写更详细的地址</span>'; window._delivery=null; throw new Error('geo fail'); }
+      return j.geocodes[0].location.split(',');
+    });
+  }
+  getDest().then(function(loc){
+    var dest=loc[0]+','+loc[1];
+    var origin=shopCfg.shopLng+','+shopCfg.shopLat;
+    return fetch('https://restapi.amap.com/v4/direction/bicycling?origin='+origin+'&destination='+dest+'&key='+key).then(function(r){return r.json();}).then(function(j2){
+      if(j2.errcode===0 && j2.data && j2.data.paths && j2.data.paths.length){
+        done(j2.data.paths[0].distance/1000);
+      } else {
+        fallback(loc);
+      }
+    }).catch(function(){ fallback(loc); });
+  }).catch(function(){});
 }
-(function(){ var a=document.getElementById('ckAddr'); if(a){ a.addEventListener('blur',calcDelivery); } })();
+(function(){ var a=document.getElementById('ckAddr'); if(a){ a.addEventListener('blur',function(){ setTimeout(calcDelivery,150); }); a.addEventListener('input',addrInput); } })();
+function addrInput(){
+  var a=document.getElementById('ckAddr'); var box=document.getElementById('addrTips');
+  var kw=a.value.trim();
+  if(kw.length<2){ box.style.display='none'; box.innerHTML=''; return; }
+  var key=shopCfg.amapKey;
+  if(!key){ box.style.display='none'; return; }
+  fetch('https://restapi.amap.com/v3/assistant/inputtips?keywords='+encodeURIComponent(kw)+'&key='+key+'&city=成都&datatype=all')
+    .then(function(r){return r.json();}).then(function(j){
+      if(j.status!=='1'||!j.tips||!j.tips.length){ box.style.display='none'; box.innerHTML=''; return; }
+      var html='';
+      j.tips.slice(0,6).forEach(function(t){
+        if(!t.location) return;
+        var label=t.name+((t.district)?' '+t.district:'')+((t.address)?' '+t.address:'');
+        var l2=label.replace(/'/g,'').replace(/\r|\n/g,'');
+        html+='<div class="addr-tip" onclick="pickAddr(\''+t.location+'\',\''+l2+'\')">'+esc(t.name)+'<small>'+esc((t.district||'')+(t.address?' '+t.address:''))+'</small></div>';
+      });
+      box.innerHTML=html; box.style.display='block';
+    }).catch(function(){ box.style.display='none'; });
+}
+function pickAddr(loc, text){
+  document.getElementById('ckAddr').value=text;
+  document.getElementById('addrTips').style.display='none';
+  document.getElementById('addrTips').innerHTML='';
+  window._pickedLoc=loc;
+  calcDelivery();
+}
 function closeCheckout(){ document.getElementById('checkoutModal').classList.remove('show'); }
 function submitOrder(){
   var name=document.getElementById('ckName').value.trim();
