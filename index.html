@@ -98,7 +98,7 @@ body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f6f7f8;c
 @page{size:58mm auto;margin:0}
 @media print{
   body > *:not(#printArea){display:none !important}
-  #printArea{display:block !important;width:48mm;margin:0 auto;font-size:16px;line-height:1.7;font-family:"Microsoft YaHei",monospace;word-break:break-all;font-weight:700}
+  #printArea{display:block !important;width:48mm;margin:0 auto;font-size:16px;line-height:1.7;font-family:SimHei,"Microsoft YaHei",sans-serif;word-break:break-all;font-weight:900}
 }
 #printArea{display:none}
 #addrTips{position:absolute;left:10px;right:10px;top:100%;z-index:99;background:#fff;border:1px solid #ddd;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.12);max-height:220px;overflow:auto;margin-top:2px}
@@ -1287,14 +1287,14 @@ function browserPrint(text, seqNo){
   lines.forEach(function(ln){ if(ln.indexOf('【应付合计】')===0) pay=ln.replace('【应付合计】',''); else rest.push(esc(ln)); });
   var body='';
   body+='<div style="text-align:left;font-size:30px;font-weight:800;letter-spacing:3px">'+(seqNo||1)+'#</div>';
-  body+='<div style="text-align:center;font-size:20px;font-weight:700;margin:2px 0">🍉 榨榨鲜果</div>';
+  body+='<div style="text-align:center;font-size:20px;font-weight:900;margin:2px 0">🍉 榨榨鲜果</div>';
   body+='<div style="text-align:center;font-size:15px">========================</div>';
   body+=rest.join('<br>');
   body+='<br><div style="text-align:center;font-size:15px">----------------------</div>';
   if(pay){
     body+='<div style="text-align:center;margin:3px 0"><div style="font-size:18px;font-weight:700">应付合计</div><div style="font-size:30px;font-weight:800">'+esc(pay)+'</div></div>';
   }
-  body+='<div style="text-align:center;margin:4px 0;font-size:15px;font-weight:700">加好友 · 扫码付款</div>';
+  body+='<div style="text-align:center;margin:4px 0;font-size:15px;font-weight:900">加好友 · 扫码付款</div>';
   body+='<div style="text-align:center">';
   body+='<div style="text-align:center;margin:2px 0"><img src="'+esc(payCfg.wxUrl||'微信二维码.png')+'" style="width:42mm;height:42mm;display:block;margin:0 auto"><div style="font-size:12px;font-weight:700;margin-top:2px">微信好友</div></div>';
   body+='<div style="text-align:center;margin:2px 0"><img src="'+esc(payCfg.payUrl||'收款码.png')+'" style="width:42mm;height:42mm;display:block;margin:0 auto"><div style="font-size:12px;font-weight:700;margin-top:2px">扫码付款</div></div>';
