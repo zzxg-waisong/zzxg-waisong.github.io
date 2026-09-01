@@ -701,7 +701,10 @@ function formatOrderText(o){
   lines.push('【顾客】'+o.name+'  '+o.phone);
   lines.push('【地址】'+o.addr);
   lines.push('【预送】'+o.time);
-  if(o.remark) lines.push('【备注】'+o.remark);
+  if(o.remark){
+    var rm=String(o.remark).trim();
+    if(rm && !/^https?:\/\/|\.github\.io|\.edgeone\.dev|uri\.amap\.com/i.test(rm)) lines.push('【备注】'+rm);
+  }
   lines.push('【状态】'+o.status);
   return lines.join('\n');
 }
@@ -823,15 +826,40 @@ function weighPanelHtml(i){
       var w=(o.weights&&o.weights[it.id])?o.weights[it.id]:'';
       html+='<div style="display:flex;align-items:center;gap:6px;margin:6px 0;font-size:13px">'+
         '<span style="flex:1">'+esc(it.name)+' ×'+it.qty+'（'+it.per+'元/斤）</span>'+
-        '<input id="w_'+it.id+'" type="number" step="0.1" min="0" placeholder="实际重量(斤)" style="width:96px;padding:6px;border:1px solid #ddd;border-radius:6px;text-align:center" value="'+esc(String(w))+'" oninput="weighChange('+i+')">';
+        '<input id="w_'+it.id+'" type="number" step="0.1" min="0" placeholder="实际重量(斤)" style="width:96px;padding:6px;border:1px solid #ddd;border-radius:6px;text-align:center'+(o.status==='已称重'?';background:#f0f0f0':'')+'" value="'+esc(String(w))+'"'+(o.status==='已称重'?' readonly':'')+' oninput="weighChange('+i+')">';
     }
   });
   var rawW=calcWeightSub(o)+(o.deliveryFee||0);
   var finalW=roundHalf(rawW);
   var discW=Math.round((rawW-finalW)*100)/100;
   html+='<div style="margin-top:8px;font-size:13px"><b>合计：</b><span id="weighRaw_'+i+'">'+money(rawW)+'</span>'+(discW>0?' <span id="weighDisc_'+i+'" style="color:#999">抹零 -'+money(discW)+'</span>':'<span id="weighDisc_'+i+'" style="display:none"></span>')+' <b>应付：</b><span id="weighSum_'+i+'" style="color:#e53935;font-weight:700">'+money(finalW)+'</span>（含配送费 '+money(o.deliveryFee||0)+'）</div>'+
-    '<p style="font-size:11px;color:#999;margin-top:6px">填好重量 → 复制报价发微信 → 顾客付款后点「标记已付款」</p></div>';
+    (o.status==='已称重'
+    ?'<div style="margin-top:8px;font-size:13px;color:#2e7d32;font-weight:700">✅ 已确定称重：应付 '+money(finalW)+' 元，重量已锁定</div>'
+    :'<div style="margin-top:8px"><button class="btn" style="width:100%;background:#2e7d32;color:#fff" onclick="confirmWeight('+i+')">✅ 确定称重（锁定金额）</button></div>')+
+    '<p style="font-size:11px;color:#999;margin-top:6px">'+(o.status==='已称重'?'称重已完成，可复制报价发微信 / 打印小票':'填好全部重量 → 点「确定称重」锁定 → 复制报价发微信 → 顾客付款后点「标记已付款」')+'</p></div>';
   return html;
+}
+function confirmWeight(i){
+  var o=orders[i]; if(!o) return;
+  var need=0, filled=0;
+  o.items.forEach(function(it){
+    if(it.per>0){
+      need++;
+      var e=document.getElementById('w_'+it.id);
+      if(e && parseFloat(e.value)>0) filled++;
+    }
+  });
+  if(need>0 && filled<need){ alert('请先填完全部称重商品的重量'); return; }
+  o.weights=o.weights||{};
+  o.items.forEach(function(it){
+    if(it.per>0){ var e=document.getElementById('w_'+it.id); if(e) o.weights[it.id]=Math.round((parseFloat(e.value)||0)*10)/10; }
+  });
+  o.status='已称重';
+  o.weightTotal=calcWeightSub(o);
+  save(LS_ORDERS, orders);
+  var old=document.getElementById('viewModal'); if(old) old.remove();
+  viewOrder(i);
+  renderAdmin();
 }
 function weighChange(i){
   var o=orders[i]; if(!o) return;
