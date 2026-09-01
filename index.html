@@ -267,6 +267,8 @@ body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f6f7f8;c
 /* ==================== 数据层 ==================== */
 var LS_DISHES='fruit_dishes', LS_ORDERS='fruit_orders', LS_PWD='fruit_admin_pwd',
     LS_PAY='fruit_pay', LS_SHOP='fruit_shop', LS_SESSION='fruit_admin_ok', LS_CLOUD='fruit_cloud';
+var SB_URL='https://aenrwtwhhuqzmbxsjump.supabase.co', SB_KEY='sb_publishable_TYMADeCoaKMsnJ7INuHnfQ_n9yKIHkl', LS_CLOUDPWD='fruit_cloud_pwd';
+var cloudOrders=[]; // 顾客手机下单的云端订单
 var IMG_VER='20260828b'; // 图片版本号：更新商品图后递增，用于强制刷新浏览器缓存
 
 function defaultDishes(){
@@ -639,6 +641,7 @@ function submitOrder(){
   var total=hasWeight?rawTotal:roundHalf(rawTotal);
   var order={id:oid(), items:items, hasWeight:hasWeight, weights:{}, subtotal:subtotal, deliveryFee:fee, dist:dist, total:total, estTotal:total, name:name, phone:phone, addr:addr, time:time, remark:remark, created:nowStr(), status:hasWeight?'待称重':'待付款'};
   orders.unshift(order); save(LS_ORDERS, orders);
+  try{ placeCloudOrder(order); }catch(e){}
   cart={}; renderDishes(); renderCartbar(); closeCheckout();
   curOrder=order; showPay(order);
 }
@@ -771,8 +774,58 @@ function renderAdmin(){
 }
 var adminTab='orders';
 
+function placeCloudOrder(o){
+  if(!window.SB_URL) return;
+  try{
+    fetch(SB_URL+'/rest/v1/rpc/place_order',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({payload:{id:o.id,items:o.items,hasWeight:o.hasWeight,weights:o.weights||{},subtotal:o.subtotal,deliveryFee:o.deliveryFee,dist:o.dist,total:o.total,estTotal:o.estTotal,name:o.name,phone:o.phone,addr:o.addr,time:o.time,remark:o.remark,created:o.created,status:o.status,weightTotal:o.weightTotal||0}})})
+      .then(function(r){ if(!r.ok) throw 0; }).catch(function(){});
+  }catch(e){}
+}
+function fetchCloudOrders(){
+  var pwd=localStorage.getItem(LS_CLOUDPWD)||'1986shenhu';
+  try{
+    fetch(SB_URL+'/rest/v1/rpc/get_orders',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({admin_pwd:pwd})})
+      .then(function(r){ return r.json(); })
+      .then(function(j){ if(!Array.isArray(j)){ alert('云端订单拉取失败（密码错误或网络问题）'); return; } cloudOrders=j; renderAdmin(); })
+      .catch(function(){ alert('云端订单拉取失败，请检查网络'); });
+  }catch(e){}
+}
+function updateCloudStatus(id,status){
+  var pwd=localStorage.getItem(LS_CLOUDPWD)||'1986shenhu';
+  try{
+    fetch(SB_URL+'/rest/v1/rpc/update_order_status',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({admin_pwd:pwd,order_id:id,status:status})})
+      .then(function(r){ return r.json(); })
+      .then(function(j){ if(j && j.ok){ fetchCloudOrders(); } })
+      .catch(function(){ alert('状态更新失败'); });
+  }catch(e){}
+}
+function renderCloudOrder(c){
+  var p=c.payload||{};
+  var items=p.items||[];
+  var lines=items.map(function(it){ return esc((it.name||''))+(it.qty!=null?' x'+it.qty:'')+((it.per>0&&p.weights&&p.weights[it.id])?'（称重'+p.weights[it.id]+'斤）':''); }).join('<br>')||'（无商品）';
+  var stCls=c.status==='已完成'?'off':(c.status==='已付款'?'paid':(c.status==='已称重'?'weigh':'new'));
+  var stTxt=(c.status==='new')?'待处理':c.status;
+  var amt=(p.weightTotal!=null&&p.weightTotal?p.weightTotal:(p.total!=null?p.total:''));
+  var created=(c.created_at||'').replace('T',' ').slice(0,19);
+  return '<div class="card" style="background:#fff"><h3>云端#'+c.id+' <span class="badge '+stCls+'">'+esc(stTxt)+'</span></h3>'+
+    '<div class="rowline"><span>下单时间</span><span>'+esc(created)+'</span></div>'+
+    '<div class="rowline"><span>顾客</span><span>'+esc((p.name||'')+' '+(p.phone||''))+'</span></div>'+
+    (p.addr?'<div class="rowline"><span>地址</span><span>'+esc(p.addr)+'</span></div>':'')+
+    '<div class="rowline"><span>商品</span><span>'+lines+'</span></div>'+
+    (amt!==''?'<div class="rowline"><span>金额</span><span style="color:#e53935;font-weight:700">'+money(amt)+(p.hasWeight&&!p.weightTotal?'（预估）':'')+'</span></div>':'')+
+    '<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">'+
+    (c.status!=='已付款'?'<button class="btn" style="background:#2e7d32;color:#fff" onclick="updateCloudStatus('+c.id+',\'已付款\')">✅ 标记已付款</button>':'')+
+    (c.status!=='已完成'?'<button class="btn" onclick="updateCloudStatus('+c.id+',\'已完成\')">标记完成</button>':'')+
+    '</div></div>';
+}
 function renderOrders(){
-  var html='<div class="panel"><h3 style="margin-bottom:10px">订单列表（'+orders.length+' 单）</h3>';
+  var html='<div class="panel"><h3>订单列表（'+orders.length+' 单）</h3>';
+  html+='<div class="card" style="background:#e8f0fe;border:1px solid #c5d5f2;margin-bottom:12px">'+
+    '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><b>📱 顾客手机下的单（云端）</b>'+
+    '<button class="btn" style="background:#1a73e8;color:#fff" onclick="fetchCloudOrders()">🔄 刷新云端订单</button></div>'+
+    (cloudOrders.length?'<div style="font-size:12px;color:#555;margin:8px 0">共 '+cloudOrders.length+' 单（顾客微信扫码下单后，点「刷新云端订单」即可看到）</div>':'<div style="font-size:12px;color:#888;margin:8px 0">云端未拉取（点击刷新查看顾客手机下的单）</div>')+
+    cloudOrders.map(renderCloudOrder).join('')+
+    '</div>';
   if(!orders.length) html+='<div style="text-align:center;color:#999;padding:30px">暂无订单</div>';
   orders.forEach(function(o,i){
     var stCls=o.status==='已完成'?'off':(o.status==='待称重'?'weigh':(o.status==='已付款'?'paid':'new'));
