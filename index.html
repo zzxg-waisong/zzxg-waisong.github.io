@@ -269,7 +269,7 @@ var LS_DISHES='fruit_dishes', LS_ORDERS='fruit_orders', LS_PWD='fruit_admin_pwd'
     LS_PAY='fruit_pay', LS_SHOP='fruit_shop', LS_SESSION='fruit_admin_ok', LS_CLOUD='fruit_cloud';
 var SB_URL='https://aenrwtwhhuqzmbxsjump.supabase.co', SB_KEY='sb_publishable_TYMADeCoaKMsnJ7INuHnfQ_n9yKIHkl', LS_CLOUDPWD='fruit_cloud_pwd';
 var cloudOrders=[]; // 顾客手机下单的云端订单
-var cloudTimer=null, cloudSeen={}, autoAlarm=(localStorage.getItem('zz_auto_alarm')!=='0'), alarmTimer=null, alarmOrder=null;
+var cloudTimer=null, cloudSeen={}, autoAlarm=(localStorage.getItem('zz_auto_alarm')!=='0'), alarmTimer=null, alarmOrder=null, cloudWorker=null;
 var IMG_VER='20260828b'; // 图片版本号：更新商品图后递增，用于强制刷新浏览器缓存
 
 function defaultDishes(){
@@ -828,12 +828,22 @@ function setVoiceVol(v){
 }
 function startCloudTimer(){
   if(!window.SB_URL) return;
-  if(cloudTimer) clearInterval(cloudTimer);
+  if(cloudTimer){ clearInterval(cloudTimer); cloudTimer=null; }
+  stopCloudWorker();
   fetchCloudOrders(true);
-  cloudTimer=setInterval(function(){ fetchCloudOrders(true); }, 10000);
+  var code="var i=setInterval(function(){postMessage('tick');},5000);";
+  try{
+    var blob=new Blob([code],{type:'application/javascript'});
+    cloudWorker=new Worker(URL.createObjectURL(blob));
+    cloudWorker.onmessage=function(){ fetchCloudOrders(true); };
+  }catch(e){ cloudTimer=setInterval(function(){ fetchCloudOrders(true); }, 5000); }
 }
 function stopCloudTimer(){
   if(cloudTimer){ clearInterval(cloudTimer); cloudTimer=null; }
+  stopCloudWorker();
+}
+function stopCloudWorker(){
+  if(cloudWorker){ try{ cloudWorker.terminate(); }catch(e){} cloudWorker=null; }
 }
 function toggleAlarm(){
   autoAlarm=!autoAlarm;
