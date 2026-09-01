@@ -1156,7 +1156,10 @@ function printViaAgent(i, paid){
   var lines=itemsPart.split('\n').filter(function(l){return l.trim().length>0;});
   var note='';
   if(o.remark){ var rm=String(o.remark).trim(); if(rm && !/^https?:\/\/|\.github\.io|\.edgeone\.dev|uri\.amap\.com/i.test(rm)) note=rm; }
-  var body={ seqNo:String(i+1), title:'榨榨鲜果', lines:lines, note:note, round:pick('【抹零】'), amount:pick('【应付合计】'), time:nowStr(), paid:!!paid };
+  function pickV(k){ return pick(k).split('（')[0].trim(); }
+  var body={ seqNo:String(i+1), title:'榨榨鲜果', lines:lines, note:note, round:pickV('【抹零】'), amount:pickV('【应付合计】'), time:nowStr(), paid:!!paid,
+    orderNo:o.id, created:o.created, subtotal:pickV('【商品小计】'), total:pickV('【合计】'),
+    customer:(o.name||'')+' '+(o.phone||''), addr:o.addr||'', deliveryTime:o.time||'', status:o.status||'' };
   fetch('http://localhost:8899/print',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
     .then(function(r){ return r.json(); })
     .then(function(j){ if(!j || !j.ok){ throw new Error('agent print fail'); } })
