@@ -98,7 +98,7 @@ body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f6f7f8;c
 @page{size:58mm auto;margin:0}
 @media print{
   body > *:not(#printArea){display:none !important}
-  #printArea{display:block !important;width:48mm;margin:0 auto;font-size:16px;line-height:1.7;font-family:"Microsoft YaHei",monospace;word-break:break-all}
+  #printArea{display:block !important;width:48mm;margin:0 auto;font-size:16px;line-height:1.7;font-family:"Microsoft YaHei",monospace;word-break:break-all;font-weight:700}
 }
 #printArea{display:none}
 #addrTips{position:absolute;left:10px;right:10px;top:100%;z-index:99;background:#fff;border:1px solid #ddd;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.12);max-height:220px;overflow:auto;margin-top:2px}
@@ -1295,9 +1295,9 @@ function browserPrint(text, seqNo){
     body+='<div style="text-align:center;margin:3px 0"><div style="font-size:18px;font-weight:700">应付合计</div><div style="font-size:30px;font-weight:800">'+esc(pay)+'</div></div>';
   }
   body+='<div style="text-align:center;margin:4px 0;font-size:15px;font-weight:700">加好友 · 扫码付款</div>';
-  body+='<div style="display:flex;justify-content:center;gap:4px">';
-  body+='<div style="text-align:center"><img src="'+esc(payCfg.wxUrl||'微信二维码.png')+'" style="width:20mm;height:20mm;display:block"><div style="font-size:11px;margin-top:1px">微信好友</div></div>';
-  body+='<div style="text-align:center"><img src="'+esc(payCfg.payUrl||'收款码.png')+'" style="width:20mm;height:20mm;display:block"><div style="font-size:11px;margin-top:1px">扫码付款</div></div>';
+  body+='<div style="text-align:center">';
+  body+='<div style="text-align:center;margin:2px 0"><img src="'+esc(payCfg.wxUrl||'微信二维码.png')+'" style="width:42mm;height:42mm;display:block;margin:0 auto"><div style="font-size:12px;font-weight:700;margin-top:2px">微信好友</div></div>';
+  body+='<div style="text-align:center;margin:2px 0"><img src="'+esc(payCfg.payUrl||'收款码.png')+'" style="width:42mm;height:42mm;display:block;margin:0 auto"><div style="font-size:12px;font-weight:700;margin-top:2px">扫码付款</div></div>';
   body+='</div>';
   body+='<div style="text-align:center;font-size:15px">----------------------</div>';
   body+='时间：'+ts+'<br>谢谢惠顾，欢迎再次光临！';
