@@ -780,6 +780,7 @@ function renderOrders(){
       '<div class="rowline"><span>地址</span><span>'+esc(o.addr)+'</span></div>'+
       '<div class="rowline"><span>预送</span><span>'+esc(o.time)+' · '+esc(o.created)+'</span></div>'+
       '<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">'+
+      '<button class="btn" style="background:#2e7d32;color:#fff" onclick="printThis(\''+i+'\')">🖨 打印</button>'+
       '<button class="btn" onclick="navTo(\''+i+'\')">高德导航</button>'+
       '<button class="btn orange" onclick="copyAddr(\''+i+'\')">复制地址</button>'+
       (o.hasWeight?'<button class="btn" style="background:#fb8c00" onclick="viewOrder(\''+i+'\')">⚖️ 称重结算</button>':'<button class="btn outline" onclick="viewOrder(\''+i+'\')">详情</button>')+
