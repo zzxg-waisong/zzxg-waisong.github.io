@@ -358,7 +358,7 @@ function cloudPull(){
 var dishes = load(LS_DISHES, null); if(!dishes||!dishes.length) dishes=defaultDishes(); syncHalfPrice();
 var orders = load(LS_ORDERS, []);
 var payCfg = load(LS_PAY, {payUrl:'收款码.png', wxUrl:'微信二维码.png'});
-var shopCfg = load(LS_SHOP, {address:'', amapKey:'17e56cae3aca57e9862453d89791043c', shopLat:'30.856438', shopLng:'104.323828', jskey:'', jscode:''});
+var shopCfg = load(LS_SHOP, {address:'', amapKey:'17e56cae3aca57e9862453d89791043c', shopLat:'30.856438', shopLng:'104.323828', jskey:'0d47ebe194506326a62c092365563bf4', jscode:'edf199ba7acbb15a4b446f525976876c'});
 var adminOk = localStorage.getItem(LS_SESSION)==='1';
 var cloudCfg = load(LS_CLOUD, {token:'', repo:'zzxg-waisong/zzxg-waisong.github.io'});
 var cart = {};   // id -> {qty,note}
@@ -807,9 +807,13 @@ function speakNewOrder(n){
   try{
     if(!window.speechSynthesis) return;
     var u=new SpeechSynthesisUtterance((n>1?('叮咚，您有 '+n+' 个新的外卖订单'):'叮咚，您有新的外卖订单'));
-    u.lang='zh-CN'; u.rate=1.05;
+    u.lang='zh-CN'; u.rate=1.05; u.volume=Math.max(0,Math.min(2,parseInt(localStorage.getItem('zz_voice_vol')||'100',10)/100));
     speechSynthesis.cancel(); speechSynthesis.speak(u);
   }catch(e){}
+}
+function setVoiceVol(v){
+  localStorage.setItem('zz_voice_vol', v);
+  var e=document.getElementById('vv'); if(e) e.textContent=v;
 }
 function startCloudTimer(){
   if(!window.SB_URL) return;
@@ -1568,6 +1572,8 @@ function renderSetAdmin(){
     '<div class="rowline"><span>后台密码</span><span><a href="javascript:adminTab=\'shop\';renderAdmin()">去修改</a></span></div>'+
     '<div class="rowline"><span>数据存储</span><span>本机浏览器（localStorage）</span></div>'+
     '<div class="rowline"><span>新订单自动刷新+语音提醒</span><span><button class="btn '+(autoAlarm?'':'gray')+'" onclick="toggleAlarm()">'+(autoAlarm?'✅ 开':'❌ 关')+'</button></span></div>'+
+    '<div class="rowline"><span>语音音量</span><span><input type="range" min="0" max="200" step="10" value="'+(parseInt(localStorage.getItem('zz_voice_vol')||'100',10))+'" oninput="setVoiceVol(this.value)" style="width:110px;vertical-align:middle"> <b id="vv">'+(parseInt(localStorage.getItem('zz_voice_vol')||'100',10))+'</b></span></div>'+
+    '<div class="rowline"><span>试听语音</span><span><button class="btn" onclick="speakNewOrder(1)">🔊 试听</button></span></div>'+
     '<button class="btn red" style="width:100%;margin-top:8px" onclick="resetData()">重置全部数据（恢复默认）</button></div></div>';
   return html;
 }
