@@ -198,31 +198,33 @@ body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f6f7f8;c
 
 <!-- 付款页 -->
 <div class="modal" id="payModal">
-  <div class="box" style="max-width:520px">
-    <h3 style="text-align:center;margin-bottom:10px">订单已提交，请扫码付款</h3>
+  <div class="box" style="max-width:520px;position:relative">
+    <button title="关闭" style="position:absolute;top:10px;right:10px;width:32px;height:32px;border:none;background:#f0f0f0;border-radius:50%;font-size:16px;color:#888;cursor:pointer;z-index:5;line-height:1" onclick="closePay()">✕</button>
+    <h3 style="text-align:center;margin:8px 0 8px;font-size:17px">订单已提交，请扫码付款</h3>
     <div class="pay" style="padding:0">
-      <div class="amt">
+      <div class="amt" style="padding:12px;margin-bottom:10px">
         <div class="t">应付金额</div>
-        <div class="n" id="payAmt">¥0</div>
+        <div class="n" id="payAmt" style="font-size:26px">¥0</div>
       </div>
-      <div class="qrbox">
-        <div class="qt">请使用微信 / 支付宝扫码付款</div>
-        <img id="payImg" src="收款码.png" onclick="zoomImg(this.src)" alt="收款码">
-        <div class="hint">长按图片可识别二维码 · 也可点下方"保存到相册"，再用微信/支付宝扫一扫→相册选择</div>
-        <div class="acts">
-          <button class="btn" onclick="saveImg('payImg')">保存收款码到相册</button>
-          <button class="btn gray" onclick="zoomImg(document.getElementById('payImg').src)">放大</button>
+      <div style="display:flex;gap:8px;justify-content:center;align-items:stretch">
+        <div class="qrbox" style="flex:1;padding:8px;margin:0">
+          <div class="qt" style="font-size:13px;margin-bottom:6px">微信/支付宝扫码付款</div>
+          <img id="payImg" src="收款码.png" onclick="zoomImg(this.src)" alt="收款码" style="width:100%;max-width:150px;border-radius:8px">
+          <div class="acts" style="margin-top:6px">
+            <button class="btn" style="font-size:11px;padding:4px 10px" onclick="saveImg('payImg')">保存</button>
+          </div>
+        </div>
+        <div class="qrbox" style="flex:1;padding:8px;margin:0">
+          <div class="qt" style="font-size:13px;margin-bottom:6px">加店主微信/转账</div>
+          <img id="wxImg" src="微信二维码.png" onclick="zoomImg(this.src)" alt="微信" style="width:100%;max-width:150px;border-radius:8px">
+          <div class="acts" style="margin-top:6px">
+            <button class="btn orange" style="font-size:11px;padding:4px 10px" onclick="saveImg('wxImg')">保存</button>
+          </div>
         </div>
       </div>
-      <div class="qrbox">
-        <div class="qt">添加店主微信 / 直接转账</div>
-        <img id="wxImg" src="微信二维码.png" onclick="zoomImg(this.src)" alt="微信">
-        <div class="acts">
-          <button class="btn orange" onclick="saveImg('wxImg')">保存微信码</button>
-        </div>
-      </div>
-      <button class="btn" style="width:100%;padding:13px;font-size:16px" onclick="payDone()">我 已 付 款</button>
-      <p style="text-align:center;font-size:12px;color:#999;margin-top:8px">付款后点击上方按钮，自动整理订单发给店主</p>
+      <p style="text-align:center;font-size:12px;color:#999;margin:8px 0 0">长按图片可识别 · 也可点"保存"后到相册用扫一扫</p>
+      <button class="btn" style="width:100%;padding:12px;font-size:16px;margin-top:10px" onclick="payDone()">我 已 付 款</button>
+      <p style="text-align:center;font-size:12px;color:#999;margin-top:6px">付款后点击上方按钮，自动整理订单发给店主</p>
     </div>
   </div>
 </div>
@@ -661,6 +663,7 @@ function saveImg(idName){
   var a=document.createElement('a'); a.href=img.src; a.download=img.src.split('/').pop();
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
 }
+function closePay(){ var m=document.getElementById('payModal'); if(m) m.classList.remove('show'); }
 function payDone(){
   if(!curOrder) return;
   var order=curOrder; order.status='已付款'; save(LS_ORDERS, orders);
