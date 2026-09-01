@@ -269,7 +269,7 @@ var LS_DISHES='fruit_dishes', LS_ORDERS='fruit_orders', LS_PWD='fruit_admin_pwd'
     LS_PAY='fruit_pay', LS_SHOP='fruit_shop', LS_SESSION='fruit_admin_ok', LS_CLOUD='fruit_cloud';
 var SB_URL='https://aenrwtwhhuqzmbxsjump.supabase.co', SB_KEY='sb_publishable_TYMADeCoaKMsnJ7INuHnfQ_n9yKIHkl', LS_CLOUDPWD='fruit_cloud_pwd';
 var cloudOrders=[]; // 顾客手机下单的云端订单
-var cloudTimer=null, cloudSeen={}, autoAlarm=(localStorage.getItem('zz_auto_alarm')!=='0');
+var cloudTimer=null, cloudSeen={}, autoAlarm=(localStorage.getItem('zz_auto_alarm')!=='0'), alarmTimer=null, alarmOrder=null;
 var IMG_VER='20260828b'; // 图片版本号：更新商品图后递增，用于强制刷新浏览器缓存
 
 function defaultDishes(){
@@ -792,22 +792,34 @@ function fetchCloudOrders(silent){
         if(!Array.isArray(j)){ if(!silent) alert('云端订单拉取失败（密码错误或网络问题）'); return; }
         var fresh=[];
         if(Object.keys(cloudSeen).length>0){
-          j.forEach(function(c){ if(!cloudSeen[c.id]) fresh.push(c.id); });
+          j.forEach(function(c){ if(!cloudSeen[c.id] && c.status==='new') fresh.push(c.id); });
         }
         j.forEach(function(c){ cloudSeen[c.id]=1; });
         cloudOrders=j;
         if(silent && fresh.length===0) return;
-        if(fresh.length>0 && autoAlarm) speakNewOrder(fresh.length);
+        if(fresh.length>0 && autoAlarm) speakNewOrder(fresh[0]);
         renderAdmin();
       })
       .catch(function(){ if(!silent) alert('云端订单拉取失败，请检查网络'); });
   }catch(e){}
 }
-function speakNewOrder(n){
+function speakNewOrder(id){
   try{
-    var a=new Audio('https://zzxg-waisong.github.io/voice_new_order.wav');
-    a.volume=Math.max(0,Math.min(1,parseInt(localStorage.getItem('zz_voice_vol')||'100',10)/100));
-    a.play().catch(function(){});
+    if(alarmTimer){ clearInterval(alarmTimer); alarmTimer=null; }
+    alarmOrder=(id==null?0:id);
+    var times=0;
+    var play=function(){
+      if(alarmOrder!==(id==null?0:id)) return;
+      var a=new Audio('https://zzxg-waisong.github.io/voice_new_order.wav');
+      a.volume=Math.max(0,Math.min(1,parseInt(localStorage.getItem('zz_voice_vol')||'100',10)/100));
+      a.play().catch(function(){});
+    };
+    play();
+    alarmTimer=setInterval(function(){
+      times++;
+      if(alarmOrder!==(id==null?0:id) || times>=2){ clearInterval(alarmTimer); alarmTimer=null; return; }
+      play();
+    },15000);
   }catch(e){}
 }
 function setVoiceVol(v){
@@ -838,11 +850,16 @@ function updateCloudStatus(id,status){
       .catch(function(){ alert('状态更新失败'); });
   }catch(e){}
 }
+function acceptCloudOrder(id){
+  alarmOrder=null;
+  if(alarmTimer){ clearInterval(alarmTimer); alarmTimer=null; }
+  updateCloudStatus(id,'已接单');
+}
 function renderCloudOrder(c){
   var p=c.payload||{};
   var items=p.items||[];
   var lines=items.map(function(it){ return esc((it.name||''))+(it.qty!=null?' x'+it.qty:'')+((it.per>0&&p.weights&&p.weights[it.id])?'（称重'+p.weights[it.id]+'斤）':''); }).join('<br>')||'（无商品）';
-  var stCls=c.status==='已完成'?'off':(c.status==='已付款'?'paid':(c.status==='已称重'?'weigh':'new'));
+  var stCls=c.status==='已完成'?'off':(c.status==='已付款'?'paid':(c.status==='已称重'?'weigh':(c.status==='已接单'?'paid':'new')));
   var stTxt=(c.status==='new')?'待处理':c.status;
   var amt=(p.weightTotal!=null&&p.weightTotal?p.weightTotal:(p.total!=null?p.total:''));
   var created=(c.created_at||'').replace('T',' ').slice(0,19);
@@ -854,6 +871,7 @@ function renderCloudOrder(c){
     '<div class="rowline"><span>商品</span><span>'+lines+'</span></div>'+
     (amt!==''?'<div class="rowline"><span>金额</span><span style="color:#e53935;font-weight:700">'+money(amt)+(p.hasWeight&&!p.weightTotal?'（预估）':'')+'</span></div>':'')+
     '<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">'+
+    (c.status==='new'?'<button class="btn" style="background:#1565c0;color:#fff" onclick="acceptCloudOrder('+c.id+')">✅ 接单</button>':'')+
     '<button class="btn" style="background:#2e7d32;color:#fff" onclick="printCloudOrder('+c.id+')">🖨 打印</button>'+
     '<button class="btn" onclick="navCloud('+c.id+')">高德导航</button>'+
     '<button class="btn orange" onclick="copyCloudAddr('+c.id+')">复制地址</button>'+
