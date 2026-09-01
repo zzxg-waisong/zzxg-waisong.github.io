@@ -269,6 +269,7 @@ var LS_DISHES='fruit_dishes', LS_ORDERS='fruit_orders', LS_PWD='fruit_admin_pwd'
     LS_PAY='fruit_pay', LS_SHOP='fruit_shop', LS_SESSION='fruit_admin_ok', LS_CLOUD='fruit_cloud';
 var SB_URL='https://aenrwtwhhuqzmbxsjump.supabase.co', SB_KEY='sb_publishable_TYMADeCoaKMsnJ7INuHnfQ_n9yKIHkl', LS_CLOUDPWD='fruit_cloud_pwd';
 var cloudOrders=[]; // 顾客手机下单的云端订单
+var cloudTimer=null, cloudSeen={}, autoAlarm=(localStorage.getItem('zz_auto_alarm')!=='0');
 var IMG_VER='20260828b'; // 图片版本号：更新商品图后递增，用于强制刷新浏览器缓存
 
 function defaultDishes(){
@@ -380,7 +381,7 @@ function p2(x){return (x<10?'0':'')+x;}
 function route(){
   var h=location.hash||'#/';
   if(h.indexOf('#/admin')===0){ showAdmin(); }
-  else { showCustomer(); }
+  else { stopCloudTimer(); showCustomer(); }
 }
 window.addEventListener('hashchange', route);
 
@@ -745,15 +746,16 @@ function showAdmin(){
   if(!adminOk){ document.getElementById('loginModal').classList.add('show'); return; }
   document.getElementById('loginModal').classList.remove('show');
   renderAdmin();
+  startCloudTimer();
 }
 function backToShop(){ location.hash='#/'; }
 function adminLogin(){
   var pwd=document.getElementById('adminPwd').value;
   var stored=localStorage.getItem(LS_PWD)||'1986shenhu';
-  if(pwd===stored){ adminOk=true; localStorage.setItem(LS_SESSION,'1'); document.getElementById('loginModal').classList.remove('show'); renderAdmin(); }
+  if(pwd===stored){ adminOk=true; localStorage.setItem(LS_SESSION,'1'); document.getElementById('loginModal').classList.remove('show'); renderAdmin(); startCloudTimer(); }
   else alert('密码错误');
 }
-function adminLogout(){ adminOk=false; localStorage.setItem(LS_SESSION,'0'); location.hash='#/'; }
+function adminLogout(){ adminOk=false; localStorage.setItem(LS_SESSION,'0'); stopCloudTimer(); location.hash='#/'; }
 function adminRefresh(){
   if(!cloudCfg.token){ alert('请先在「菜品」页填写 GitHub 令牌，才能同步云端菜单'); return; }
   cloudPull();
@@ -781,14 +783,48 @@ function placeCloudOrder(o){
       .then(function(r){ if(!r.ok) throw 0; }).catch(function(){});
   }catch(e){}
 }
-function fetchCloudOrders(){
+function fetchCloudOrders(silent){
   var pwd=localStorage.getItem(LS_CLOUDPWD)||'1986shenhu';
   try{
     fetch(SB_URL+'/rest/v1/rpc/get_orders',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({admin_pwd:pwd})})
       .then(function(r){ return r.json(); })
-      .then(function(j){ if(!Array.isArray(j)){ alert('云端订单拉取失败（密码错误或网络问题）'); return; } cloudOrders=j; renderAdmin(); })
-      .catch(function(){ alert('云端订单拉取失败，请检查网络'); });
+      .then(function(j){
+        if(!Array.isArray(j)){ if(!silent) alert('云端订单拉取失败（密码错误或网络问题）'); return; }
+        var fresh=[];
+        if(Object.keys(cloudSeen).length>0){
+          j.forEach(function(c){ if(!cloudSeen[c.id]) fresh.push(c.id); });
+        }
+        j.forEach(function(c){ cloudSeen[c.id]=1; });
+        cloudOrders=j;
+        if(silent && fresh.length===0) return;
+        if(fresh.length>0 && autoAlarm) speakNewOrder(fresh.length);
+        renderAdmin();
+      })
+      .catch(function(){ if(!silent) alert('云端订单拉取失败，请检查网络'); });
   }catch(e){}
+}
+function speakNewOrder(n){
+  try{
+    if(!window.speechSynthesis) return;
+    var u=new SpeechSynthesisUtterance((n>1?('叮咚，您有 '+n+' 个新的外卖订单'):'叮咚，您有新的外卖订单'));
+    u.lang='zh-CN'; u.rate=1.05;
+    speechSynthesis.cancel(); speechSynthesis.speak(u);
+  }catch(e){}
+}
+function startCloudTimer(){
+  if(!window.SB_URL) return;
+  if(cloudTimer) clearInterval(cloudTimer);
+  fetchCloudOrders(true);
+  cloudTimer=setInterval(function(){ fetchCloudOrders(true); }, 10000);
+}
+function stopCloudTimer(){
+  if(cloudTimer){ clearInterval(cloudTimer); cloudTimer=null; }
+}
+function toggleAlarm(){
+  autoAlarm=!autoAlarm;
+  localStorage.setItem('zz_auto_alarm', autoAlarm?'1':'0');
+  if(autoAlarm && location.hash.indexOf('#/admin')===0 && adminOk) startCloudTimer();
+  renderAdmin();
 }
 function updateCloudStatus(id,status){
   var pwd=localStorage.getItem(LS_CLOUDPWD)||'1986shenhu';
@@ -1531,6 +1567,7 @@ function renderSetAdmin(){
   var html='<div class="panel"><h3>设置</h3><div class="card">'+
     '<div class="rowline"><span>后台密码</span><span><a href="javascript:adminTab=\'shop\';renderAdmin()">去修改</a></span></div>'+
     '<div class="rowline"><span>数据存储</span><span>本机浏览器（localStorage）</span></div>'+
+    '<div class="rowline"><span>新订单自动刷新+语音提醒</span><span><button class="btn '+(autoAlarm?'':'gray')+'" onclick="toggleAlarm()">'+(autoAlarm?'✅ 开':'❌ 关')+'</button></span></div>'+
     '<button class="btn red" style="width:100%;margin-top:8px" onclick="resetData()">重置全部数据（恢复默认）</button></div></div>';
   return html;
 }
