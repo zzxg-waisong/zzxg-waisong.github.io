@@ -95,9 +95,10 @@ body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f6f7f8;c
 .modal .box{background:#fff;border-radius:14px;padding:18px;width:100%;max-width:420px;max-height:85vh;overflow:auto}
 .modal .box img{width:100%}
 /* 打印样式 */
+@page{size:58mm auto;margin:0}
 @media print{
   body > *:not(#printArea){display:none !important}
-  #printArea{display:block !important;width:48mm;font-size:15px;line-height:1.6;font-family:"Microsoft YaHei",monospace}
+  #printArea{display:block !important;width:48mm;margin:0 auto;font-size:16px;line-height:1.7;font-family:"Microsoft YaHei",monospace;word-break:break-all}
 }
 #printArea{display:none}
 #addrTips{position:absolute;left:10px;right:10px;top:100%;z-index:99;background:#fff;border:1px solid #ddd;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.12);max-height:220px;overflow:auto;margin-top:2px}
