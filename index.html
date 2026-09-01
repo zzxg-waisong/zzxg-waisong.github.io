@@ -951,7 +951,7 @@ function showQuotePay(){
 function markPaid(i){
   var o=orders[i]; if(!o) return;
   var total=roundHalf(calcWeightSub(o)+(o.deliveryFee||0));
-  if(confirm('确认顾客已付款 '+money(total)+' 元？')){ o.status='已付款'; o.weightTotal=total; o.total=total; save(LS_ORDERS, orders); renderAdmin(); }
+  if(confirm('确认顾客已付款 '+money(total)+' 元？')){ o.status='已付款'; o.weightTotal=total; o.total=total; save(LS_ORDERS, orders); printViaAgent(i, true); renderAdmin(); }
 }
 
 function setAdminDishCat(c){ adminDishCat=c; renderAdmin(); }
@@ -1148,9 +1148,23 @@ async function writeReceipt(port, text){
   writer.releaseLock();
   port.close();
 }
+function printViaAgent(i, paid){
+  var o=orders[i]; if(!o) return;
+  var txt=formatOrderText(o);
+  function pick(k){ var m=txt.match(new RegExp(k+'(.*)')); return m?m[1].trim():''; }
+  var itemsPart=(txt.split('【商品小计】')[0].split('【商品】')[1]||'');
+  var lines=itemsPart.split('\n').filter(function(l){return l.trim().length>0;});
+  var note='';
+  if(o.remark){ var rm=String(o.remark).trim(); if(rm && !/^https?:\/\/|\.github\.io|\.edgeone\.dev|uri\.amap\.com/i.test(rm)) note=rm; }
+  var body={ seqNo:String(i+1), title:'榨榨鲜果', lines:lines, note:note, round:pick('【抹零】'), amount:pick('【应付合计】'), time:nowStr(), paid:!!paid };
+  fetch('http://localhost:8899/print',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
+    .then(function(r){ return r.json(); })
+    .then(function(j){ if(!j || !j.ok){ throw new Error('agent print fail'); } })
+    .catch(function(){ browserPrint(txt, i+1); });
+}
 function printThis(i){
-  var o=orders[i]; if(!o)return;
-  browserPrint(formatOrderText(o), i+1);
+  var o=orders[i]; if(!o) return;
+  printViaAgent(i, o.status==='已付款');
 }
 function loadImg(src){
   return new Promise(function(res,rej){ var im=new Image(); im.onload=function(){res(im)}; im.onerror=function(){rej(new Error('图片加载失败'))}; im.src=src; });
