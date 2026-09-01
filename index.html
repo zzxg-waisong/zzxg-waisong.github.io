@@ -805,10 +805,9 @@ function fetchCloudOrders(silent){
 }
 function speakNewOrder(n){
   try{
-    if(!window.speechSynthesis) return;
-    var u=new SpeechSynthesisUtterance((n>1?('叮咚，您有 '+n+' 个新的外卖订单'):'叮咚，您有新的外卖订单'));
-    u.lang='zh-CN'; u.rate=1.05; u.volume=Math.max(0,Math.min(2,parseInt(localStorage.getItem('zz_voice_vol')||'100',10)/100));
-    speechSynthesis.cancel(); speechSynthesis.speak(u);
+    var a=new Audio('https://zzxg-waisong.github.io/voice_new_order.wav');
+    a.volume=Math.max(0,Math.min(1,parseInt(localStorage.getItem('zz_voice_vol')||'100',10)/100));
+    a.play().catch(function(){});
   }catch(e){}
 }
 function setVoiceVol(v){
