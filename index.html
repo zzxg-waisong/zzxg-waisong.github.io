@@ -210,19 +210,15 @@ body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f6f7f8;c
         <div class="qrbox" style="flex:1;padding:8px;margin:0">
           <div class="qt" style="font-size:13px;margin-bottom:6px">微信/支付宝扫码付款</div>
           <img id="payImg" src="收款码.png" onclick="zoomImg(this.src)" alt="收款码" style="width:100%;max-width:150px;border-radius:8px">
-          <div class="acts" style="margin-top:6px">
-            <button class="btn" style="font-size:11px;padding:4px 10px" onclick="saveImg('payImg')">保存</button>
-          </div>
+          
         </div>
         <div class="qrbox" style="flex:1;padding:8px;margin:0">
-          <div class="qt" style="font-size:13px;margin-bottom:6px">加店主微信/转账</div>
+          <div class="qt" style="font-size:13px;margin-bottom:6px">加店主好友享优惠</div>
           <img id="wxImg" src="微信二维码.png" onclick="zoomImg(this.src)" alt="微信" style="width:100%;max-width:150px;border-radius:8px">
-          <div class="acts" style="margin-top:6px">
-            <button class="btn orange" style="font-size:11px;padding:4px 10px" onclick="saveImg('wxImg')">保存</button>
-          </div>
+          
         </div>
       </div>
-      <p style="text-align:center;font-size:12px;color:#999;margin:8px 0 0">长按图片可识别 · 也可点"保存"后到相册用扫一扫</p>
+      <p style="text-align:center;font-size:12px;color:#999;margin:8px 0 0">长按图片可识别二维码</p>
       <button class="btn" style="width:100%;padding:12px;font-size:16px;margin-top:10px" onclick="payDone()">我 已 付 款</button>
       <p style="text-align:center;font-size:12px;color:#999;margin-top:6px">付款后点击上方按钮，自动整理订单发给店主</p>
     </div>
