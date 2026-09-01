@@ -809,14 +809,96 @@ function renderCloudOrder(c){
   var created=(c.created_at||'').replace('T',' ').slice(0,19);
   return '<div class="card" style="background:#fff"><h3>云端#'+c.id+' <span class="badge '+stCls+'">'+esc(stTxt)+'</span></h3>'+
     '<div class="rowline"><span>下单时间</span><span>'+esc(created)+'</span></div>'+
-    '<div class="rowline"><span>顾客</span><span>'+esc((p.name||'')+' '+(p.phone||''))+'</span></div>'+
+    '<div class="rowline"><span>顾客</span><span>'+esc(p.name||'')+' <b style="color:#c62828">'+esc(p.phone||'')+'</b></span></div>'+
     (p.addr?'<div class="rowline"><span>地址</span><span>'+esc(p.addr)+'</span></div>':'')+
+    (p.time?'<div class="rowline"><span>预送</span><span>'+esc(p.time)+'</span></div>':'')+
     '<div class="rowline"><span>商品</span><span>'+lines+'</span></div>'+
     (amt!==''?'<div class="rowline"><span>金额</span><span style="color:#e53935;font-weight:700">'+money(amt)+(p.hasWeight&&!p.weightTotal?'（预估）':'')+'</span></div>':'')+
     '<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">'+
+    '<button class="btn" style="background:#2e7d32;color:#fff" onclick="printCloudOrder('+c.id+')">🖨 打印</button>'+
+    '<button class="btn" onclick="navCloud('+c.id+')">高德导航</button>'+
+    '<button class="btn orange" onclick="copyCloudAddr('+c.id+')">复制地址</button>'+
+    '<button class="btn gray" onclick="copyCloudOrderText('+c.id+')">复制订单</button>'+
+    (p.hasWeight?'<button class="btn" style="background:#fb8c00" onclick="weighCloudModal('+c.id+')">⚖️ 称重结算</button>':'')+
     (c.status!=='已付款'?'<button class="btn" style="background:#2e7d32;color:#fff" onclick="updateCloudStatus('+c.id+',\'已付款\')">✅ 标记已付款</button>':'')+
     (c.status!=='已完成'?'<button class="btn" onclick="updateCloudStatus('+c.id+',\'已完成\')">标记完成</button>':'')+
-    '</div></div>';
+    '<button class="btn red" onclick="deleteCloudOrder('+c.id+')">删除</button>'+
+    '</div>';
+}
+function printCloudOrder(id){
+  var c=cloudOrders.find(function(x){return x.id===id;}); if(!c) return;
+  var p=c.payload||{};
+  var lines=(p.items||[]).map(function(it){
+    var sub=0, extra='';
+    if(it.per>0 && p.weights && p.weights[it.id]){ var w=p.weights[it.id]; sub=it.per*w; extra='（称重'+w+'斤×'+it.per+'元/斤）'; }
+    else sub=it.price*it.qty;
+    return (it.name||'')+extra+' x'+(it.qty!=null?it.qty:'')+' ¥'+sub.toFixed(2);
+  });
+  var note='';
+  if(p.remark){ var rm=String(p.remark).trim(); if(rm && !/^https?:\/\/|\.github\.io|\.edgeone\.dev|uri\.amap\.com/i.test(rm)) note=rm; }
+  var amt=(p.weightTotal?p.weightTotal:(p.total||0));
+  var paid=(c.status==='已付款');
+  var body={ seqNo:String(c.id), title:'榨榨鲜果', lines:lines, note:note, round:'', amount:'¥'+Number(amt).toFixed(2), time:nowStr(), paid:paid,
+    orderNo:(p.id||('云端#'+c.id)), created:(p.created||''), subtotal:'', total:'', customer:(p.name||'')+' '+(p.phone||''), addr:(p.addr||''), deliveryTime:(p.time||''), status:(c.status==='new'?'待处理':c.status) };
+  fetch('http://localhost:8899/print',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
+    .then(function(r){ return r.json(); }).then(function(j){ if(!j||!j.ok){ throw 0; } }).catch(function(){ alert('打印失败：请确认本机打印代理已启动（桌面「榨榨鲜果外送」）'); });
+}
+function navCloud(id){
+  var c=cloudOrders.find(function(x){return x.id===id;}); if(!c) return;
+  var p=c.payload||{};
+  var from=encodeURIComponent(shopCfg.address||'');
+  var to=encodeURIComponent(p.addr||'');
+  window.open('https://uri.amap.com/navigation?from='+from+'&to='+to+'&mode=car&policy=1&src=myapp&coordinate=gaode&callnative=1','_blank');
+}
+function copyCloudAddr(id){ var c=cloudOrders.find(function(x){return x.id===id;}); if(!c)return; fallbackCopy((c.payload||{}).addr||''); alert('地址已复制'); }
+function copyCloudOrderText(id){
+  var c=cloudOrders.find(function(x){return x.id===id;}); if(!c) return;
+  var p=c.payload||{};
+  var t='🍉 榨榨鲜果 外卖订单\n——————————————\n【订单号】'+(p.id||('云端#'+c.id))+'\n【下单时间】'+(p.created||'')+'\n【商品】\n'+
+    (p.items||[]).map(function(it){ var amt2=(it.per>0&&p.weights&&p.weights[it.id])?(it.per*p.weights[it.id]):(it.price*it.qty); return '  '+it.name+((it.per>0&&p.weights&&p.weights[it.id])?('（称重'+p.weights[it.id]+'斤×'+it.per+'元/斤）'):(' ×'+it.qty))+'  '+money(amt2); }).join('\n')+
+    '\n——————————————\n【应付合计】'+money(p.weightTotal?p.weightTotal:(p.total||0))+'\n【顾客】'+(p.name||'')+' '+(p.phone||'')+'\n【地址】'+(p.addr||'')+'\n【预送】'+(p.time||'')+'\n【状态】'+(c.status==='new'?'待处理':c.status);
+  window._lastText=t; copyText();
+}
+function weighCloudModal(id){
+  var c=cloudOrders.find(function(x){return x.id===id;}); if(!c) return;
+  var p=c.payload||{};
+  var box=document.createElement('div'); box.className='modal show'; box.id='cloudWeighModal';
+  var inner='<div class="box" style="max-width:420px"><h3>云端订单 #'+id+' 称重结算</h3>';
+  (p.items||[]).forEach(function(it){
+    if(it.per>0){
+      var w=(p.weights&&p.weights[it.id])?p.weights[it.id]:'';
+      inner+='<div style="display:flex;align-items:center;gap:6px;margin:6px 0;font-size:13px"><span style="flex:1">'+esc(it.name)+' ×'+it.qty+'（'+it.per+'元/斤）</span>'+
+        '<input id="cw_'+it.id+'" type="number" step="0.1" min="0" placeholder="实际重量(斤)" style="width:100px;padding:6px;border:1px solid #ddd;border-radius:6px;text-align:center" value="'+esc(String(w))+'"></div>';
+    }
+  });
+  inner+='<div style="display:flex;gap:8px;margin-top:10px">'+
+    '<button class="btn" style="flex:1;background:#2e7d32;color:#fff" onclick="confirmCloudWeight('+id+')">✅ 确定称重</button>'+
+    '<button class="btn gray" style="flex:1" onclick="document.getElementById(\'cloudWeighModal\').remove()">取消</button></div></div>';
+  box.innerHTML=inner; document.body.appendChild(box);
+}
+function confirmCloudWeight(id){
+  var c=cloudOrders.find(function(x){return x.id===id;}); if(!c) return;
+  var p=c.payload||{}; var weights=p.weights||{}; var need=0, filled=0;
+  (p.items||[]).forEach(function(it){
+    if(it.per>0){
+      need++;
+      var e=document.getElementById('cw_'+it.id);
+      if(e && parseFloat(e.value)>0){ weights[it.id]=Math.round(parseFloat(e.value)*10)/10; filled++; }
+    }
+  });
+  if(need>0 && filled<need){ alert('请先填完全部称重商品的重量'); return; }
+  var o2=JSON.parse(JSON.stringify(p)); o2.weights=weights; o2.weightTotal=calcWeightSub(o2); o2.status='已称重';
+  var pwd=localStorage.getItem(LS_CLOUDPWD)||'1986shenhu';
+  fetch(SB_URL+'/rest/v1/rpc/update_order_weights',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({admin_pwd:pwd,order_id:id,weights:weights,weight_total:o2.weightTotal})})
+    .then(function(r){ return r.json(); })
+    .then(function(j){ var old=document.getElementById('cloudWeighModal'); if(old) old.remove(); if(j&&j.ok){ fetchCloudOrders(); } else { alert('称重保存失败'); } })
+    .catch(function(){ alert('称重保存失败，请检查网络'); });
+}
+function deleteCloudOrder(id){
+  if(!confirm('确认删除云端订单 #'+id+'？')) return;
+  var pwd=localStorage.getItem(LS_CLOUDPWD)||'1986shenhu';
+  fetch(SB_URL+'/rest/v1/rpc/delete_order',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({admin_pwd:pwd,order_id:id})})
+    .then(function(r){ return r.json(); }).then(function(j){ if(j&&j.ok){ fetchCloudOrders(); } else { alert('删除失败'); } }).catch(function(){ alert('删除失败'); });
 }
 function renderOrders(){
   var html='<div class="panel"><h3>订单列表（'+orders.length+' 单）</h3>';
