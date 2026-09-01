@@ -97,7 +97,7 @@ body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f6f7f8;c
 /* 打印样式 */
 @media print{
   body > *:not(#printArea){display:none !important}
-  #printArea{display:block !important;width:48mm;font-size:11px;line-height:1.5;font-family:"Microsoft YaHei",monospace}
+  #printArea{display:block !important;width:48mm;font-size:15px;line-height:1.6;font-family:"Microsoft YaHei",monospace}
 }
 #printArea{display:none}
 #addrTips{position:absolute;left:10px;right:10px;top:100%;z-index:99;background:#fff;border:1px solid #ddd;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.12);max-height:220px;overflow:auto;margin-top:2px}
@@ -1121,12 +1121,7 @@ async function writeReceipt(port, text){
 }
 function printThis(i){
   var o=orders[i]; if(!o)return;
-  var text=formatOrderText(o), amt='';
-  try{
-    var l=(text.split('\n').filter(function(x){return x.indexOf('【应付合计】')===0})[0]||'');
-    amt=l.replace('【应付合计】','').trim();
-  }catch(e){}
-  printViaSerialWithFallback(text, amt, i+1);
+  browserPrint(formatOrderText(o), i+1);
 }
 function loadImg(src){
   return new Promise(function(res,rej){ var im=new Image(); im.onload=function(){res(im)}; im.onerror=function(){rej(new Error('图片加载失败'))}; im.src=src; });
@@ -1228,7 +1223,7 @@ function canvasToEscpos(canvas){
 }
 function printViaSerialWithFallback(text, amt, seqNo){
   if(!navigator.serial){
-    if(confirm('当前浏览器不支持 USB 直连打印（需电脑端 Edge/Chrome）。是否改用浏览器打印？')) browserPrint(text);
+    if(confirm('当前浏览器不支持 USB 直连打印（需电脑端 Edge/Chrome）。是否改用浏览器打印？')) browserPrint(text, seqNo||1);
     return;
   }
   renderReceiptBitmap(text, amt, seqNo||1, function(canvas){
@@ -1250,28 +1245,34 @@ function printViaSerialWithFallback(text, amt, seqNo){
         alert('已发送打印，请查看小票');
       }catch(e){
         try{ if(port){ await port.close(); } }catch(e2){}
-        if(confirm('USB 直连打印失败：'+e.message+'。是否改用浏览器打印？')) browserPrint(text);
+        if(confirm('USB 直连打印失败：'+e.message+'。是否改用浏览器打印？')) browserPrint(text, seqNo||1);
       }
     })();
   });
 }
-function browserPrint(text){
+function browserPrint(text, seqNo){
   text=text||'';
   var d=new Date(); function pp(x){return (x<10?'0':'')+x;}
   var ts=d.getFullYear()+'-'+pp(d.getMonth()+1)+'-'+pp(d.getDate())+' '+pp(d.getHours())+':'+pp(d.getMinutes());
   var pay='', lines=(text?text.split('\n'):[]), rest=[];
   lines.forEach(function(ln){ if(ln.indexOf('【应付合计】')===0) pay=ln.replace('【应付合计】',''); else rest.push(esc(ln)); });
-  var body='🍉 榨榨鲜果<br>========================<br>'+rest.join('<br>')+'<br>----------------------<br>';
+  var body='';
+  body+='<div style="text-align:left;font-size:30px;font-weight:800;letter-spacing:3px">'+(seqNo||1)+'#</div>';
+  body+='<div style="text-align:center;font-size:20px;font-weight:700;margin:2px 0">🍉 榨榨鲜果</div>';
+  body+='<div style="text-align:center;font-size:15px">========================</div>';
+  body+=rest.join('<br>');
+  body+='<br><div style="text-align:center;font-size:15px">----------------------</div>';
   if(pay){
-    body+='<div style="text-align:center;margin:3px 0"><div style="font-size:14px;font-weight:700">应付合计</div><div style="font-size:22px;font-weight:700">'+esc(pay)+'</div></div>';
+    body+='<div style="text-align:center;margin:3px 0"><div style="font-size:18px;font-weight:700">应付合计</div><div style="font-size:30px;font-weight:800">'+esc(pay)+'</div></div>';
   }
-  body+='<div style="text-align:center;margin:4px 0;font-size:13px;font-weight:700">加好友 · 扫码付款</div>';
+  body+='<div style="text-align:center;margin:4px 0;font-size:15px;font-weight:700">加好友 · 扫码付款</div>';
   body+='<div style="display:flex;justify-content:center;gap:4px">';
-  body+='<div style="text-align:center"><img src="'+esc(payCfg.wxUrl||'微信二维码.png')+'" style="width:21mm;height:21mm;display:block"><div style="font-size:10px;margin-top:1px">微信好友</div></div>';
-  body+='<div style="text-align:center"><img src="'+esc(payCfg.payUrl||'收款码.png')+'" style="width:21mm;height:21mm;display:block"><div style="font-size:10px;margin-top:1px">扫码付款</div></div>';
+  body+='<div style="text-align:center"><img src="'+esc(payCfg.wxUrl||'微信二维码.png')+'" style="width:20mm;height:20mm;display:block"><div style="font-size:11px;margin-top:1px">微信好友</div></div>';
+  body+='<div style="text-align:center"><img src="'+esc(payCfg.payUrl||'收款码.png')+'" style="width:20mm;height:20mm;display:block"><div style="font-size:11px;margin-top:1px">扫码付款</div></div>';
   body+='</div>';
-  body+='----------------------<br>时间：'+ts+'<br>谢谢惠顾，欢迎再次光临！';
-  body+='<div style="height:10mm"></div>';
+  body+='<div style="text-align:center;font-size:15px">----------------------</div>';
+  body+='时间：'+ts+'<br>谢谢惠顾，欢迎再次光临！';
+  body+='<div style="height:5mm"></div>';
   document.getElementById('printArea').innerHTML='<div style="white-space:pre-wrap">'+body+'</div>';
   document.getElementById('printArea').style.display='block';
   window.print();
