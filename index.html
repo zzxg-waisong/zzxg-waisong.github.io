@@ -130,7 +130,9 @@ body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f6f7f8;c
     <span>🔥 加微信好友，进群优惠多多</span>✦
     <span>新人进群，立享5元优惠</span>✦
     <span>3公里内 满20元 免配送费</span>✦
-    <span>5公里内 3元/单 满30元 免配送费</span>✦
+    <span>3-5公里 3元/单 满30元 免配送费</span>✦
+    <span>5-10公里 每超1公里加2元</span>✦
+    <span>超10公里 建议到店自取</span>✦
     <span>店址：城厢镇朝阳路16号附1号</span>
   </div></div>
   <div class="cats" id="cats"></div>
@@ -238,8 +240,9 @@ body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f6f7f8;c
       <div>① <b style="color:#e65100">新客首单立享 5 元优惠</b>（每个手机号一次）</div>
       <div>② 满 <b>20</b> 元起送</div>
       <div>③ <b>3 公里内</b>满 20 元 <b>免配送费</b></div>
-      <div>④ <b>5 公里内</b> 3 元/单，满 30 元 <b>免配送费</b></div>
-      <div>⑤ 超过 5 公里暂不配送</div>
+      <div>④ <b>3-5 公里</b> 3 元/单，满 30 元 <b>免配送费</b></div>
+      <div>⑤ <b>5-10 公里</b> 配送费 3 元 + 每超 1 公里加 2 元（不足 1 公里按 1 公里）</div>
+      <div>⑥ 超过 <b>10 公里</b> 暂不配送，建议到店自取</div>
       <div>⑥ 金额自动<b>抹零</b>：0.5 元以下抹到整数，1 元以下抹到 0.5 元</div>
     </div>
     <div style="margin:14px 0 8px;font-size:14px;color:#555">查询我的优惠余额：</div>
@@ -522,7 +525,7 @@ function distKm(a,b){
   var s=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(a.lat*Math.PI/180)*Math.cos(b.lat*Math.PI/180)*Math.sin(dLng/2)*Math.sin(dLng/2);
   return R*2*Math.atan2(Math.sqrt(s),Math.sqrt(1-s));
 }
-function deliveryFee(dist, subtotal){ if(dist<=3) return 0; if(dist<=5) return (subtotal>=30?0:3); return -1; }
+function deliveryFee(dist, subtotal){ if(dist<=3) return 0; if(dist<=5) return (subtotal>=30?0:3); if(dist<=10) return 3+Math.ceil((dist-5))*2; return -1; }
 function calcDelivery(){
   var addr=document.getElementById('ckAddr').value.trim();
   var box=document.getElementById('deliveryBox');
@@ -536,10 +539,10 @@ function calcDelivery(){
     var fee=deliveryFee(d, sub);
     window._delivery={dist:d,fee:fee};
     var h='🚴 骑行距离：约 '+d.toFixed(1)+' 公里<br>';
-    if(fee<0) h+='<span style="color:#e53935">超出 5 公里配送范围，暂无法配送</span>';
+    if(fee<0) h+='<span style="color:#e53935">超出 10 公里配送范围，暂无法配送（建议到店自取）</span>';
     else if(d<=3) h+='<span style="color:#2e7d32">✔ 3 公里内，满20元免配送费</span>';
     else if(fee===0) h+='<span style="color:#2e7d32">✔ 满 30 元，免配送费</span>';
-    else h+='<span style="color:#fb8c00">配送费：'+money(fee)+'（5 公里内，满30元免）</span>';
+    else if(d<=5) h+='<span style="color:#fb8c00">配送费：'+money(fee)+'（3-5 公里，满30元免）</span>'; else h+='<span style="color:#fb8c00">配送费：'+money(fee)+'（3元+超5公里每1公里加2元）</span>';
     box.innerHTML=h;
   }
   function fallback(loc){
@@ -662,7 +665,7 @@ function submitOrder(){
   if(subtotal<20){ alert('满 20 元起送，当前还差 '+money(20-subtotal)+'，请再选购一些~'); return; }
   var dlv=window._delivery;
   var fee=0, dist='';
-  if(dlv){ if(dlv.fee<0 || dlv.dist>5){ alert('该地址超出 5 公里配送范围，暂无法下单'); return; } fee=deliveryFee(dlv.dist, subtotal); dist=dlv.dist.toFixed(1); }
+  if(dlv){ if(dlv.fee<0 || dlv.dist>10){ alert('该地址超出 10 公里配送范围，暂无法下单（建议到店自取）'); return; } fee=deliveryFee(dlv.dist, subtotal); dist=dlv.dist.toFixed(1); }
   var items=list.map(function(c){ var d=byId(c.id); return {id:d.id, name:d.name, price:d.price, qty:c.qty, note:c.note, unit:d.unit, per:(d.per?d.per:0)}; });
   var hasWeight=items.some(function(it){return it.per>0;});
   var rawTotal=subtotal+fee;
