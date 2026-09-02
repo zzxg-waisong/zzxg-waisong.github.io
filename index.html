@@ -120,7 +120,10 @@ body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f6f7f8;c
         <h1>🍉 榨榨鲜果</h1>
         <p>新鲜水果 · 现榨果汁 · 现榨现做 · 鲜果原味 · 免费配送</p>
       </div>
+      <div style="display:flex;flex-direction:column;gap:6px;align-items:stretch">
+      <button class="admin-entry" style="color:#e65100" onclick="openPromo()">🎁 优惠</button>
       <button class="admin-entry" onclick="location.hash='#/admin'">🔒 商家后台</button>
+    </div>
     </div>
   </div>
   <div class="ticker"><div class="tk">
@@ -223,6 +226,28 @@ body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f6f7f8;c
       <button class="btn" style="width:100%;padding:12px;font-size:16px;margin-top:10px" onclick="payDone()">我 已 付 款</button>
       <p style="text-align:center;font-size:12px;color:#999;margin-top:6px">付款后点击上方按钮，自动整理订单发给店主</p>
     </div>
+  </div>
+</div>
+
+<!-- 优惠说明弹窗 -->
+<div class="modal" id="promoModal">
+  <div class="box" style="max-width:520px;position:relative">
+    <button title="关闭" style="position:absolute;top:10px;right:10px;width:32px;height:32px;border:none;background:#f0f0f0;border-radius:50%;font-size:16px;color:#888;cursor:pointer;z-index:5;line-height:1" onclick="closePromo()">✕</button>
+    <h3 style="text-align:center;margin:4px 0 12px;font-size:17px">🎁 优惠说明</h3>
+    <div style="background:#fff8e1;border:1px solid #f0e0b0;border-radius:10px;padding:12px 14px;font-size:14px;line-height:2.1">
+      <div>① <b style="color:#e65100">新客首单立享 5 元优惠</b>（每个手机号一次）</div>
+      <div>② 满 <b>20</b> 元起送</div>
+      <div>③ <b>3 公里内</b>满 20 元 <b>免配送费</b></div>
+      <div>④ <b>5 公里内</b> 3 元/单，满 30 元 <b>免配送费</b></div>
+      <div>⑤ 超过 5 公里暂不配送</div>
+      <div>⑥ 金额自动<b>抹零</b>：0.5 元以下抹到整数，1 元以下抹到 0.5 元</div>
+    </div>
+    <div style="margin:14px 0 8px;font-size:14px;color:#555">查询我的优惠余额：</div>
+    <div style="display:flex;gap:8px">
+      <input id="promoPhone" type="tel" maxlength="11" placeholder="输入点单手机号" style="flex:1;border:1px solid #ddd;border-radius:8px;padding:10px;font-size:15px">
+      <button class="btn" onclick="checkPromo()">查询</button>
+    </div>
+    <div id="promoRes" style="margin-top:12px;font-size:14px;line-height:1.8"></div>
   </div>
 </div>
 
@@ -658,6 +683,25 @@ function showPay(order){
   document.getElementById('payImg').src=payCfg.payUrl||'收款码.png';
   document.getElementById('wxImg').src=payCfg.wxUrl||'微信二维码.png';
   document.getElementById('payModal').classList.add('show');
+}
+function openPromo(){ document.getElementById('promoModal').classList.add('show'); document.getElementById('promoRes').innerHTML=''; }
+function closePromo(){ var m=document.getElementById('promoModal'); if(m) m.classList.remove('show'); }
+function checkPromo(){
+  var ph=(document.getElementById('promoPhone').value||'').trim();
+  var res=document.getElementById('promoRes');
+  if(!/^1\d{10}$/.test(ph)){ res.innerHTML='<span style="color:#e65100">请输入正确的 11 位手机号</span>'; return; }
+  res.innerHTML='查询中…';
+  try{
+    fetch(SB_URL+'/rest/v1/rpc/get_balance_public',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({phone:ph})})
+      .then(function(r){ return r.json(); })
+      .then(function(j){
+        var b=(j&&j.balance!=null)?Number(j.balance):5; var used=5-b;
+        if(b>=4.999){ res.innerHTML='<div style="background:#e8f5e9;border:1px solid #c8e6c9;border-radius:8px;padding:12px">您是<b>新客</b>，首单立享 <b style="color:#e65100">5 元</b>优惠！<br>满 20 元起送，3 公里内满 20 元免配送费～</div>'; }
+        else if(b>0){ res.innerHTML='<div style="background:#fff8e1;border:1px solid #f0e0b0;border-radius:8px;padding:12px">您已累计优惠 <b style="color:#e65100">'+money(used)+'</b> 元，还剩余 <b style="color:#2e7d32">'+money(b)+'</b> 元优惠额度，<b>下次下单继续抵用</b>！<br>下单后记得提醒店主点「新客优惠」哦～</div>'; }
+        else { res.innerHTML='<div style="background:#f5f5f5;border:1px solid #ddd;border-radius:8px;padding:12px">您的新客 5 元优惠已<b>全部用完</b>，感谢惠顾，欢迎再次光临！</div>'; }
+      })
+      .catch(function(){ res.innerHTML='<span style="color:#e65100">查询失败，请检查网络</span>'; });
+  }catch(e){ res.innerHTML='<span style="color:#e65100">查询失败</span>'; }
 }
 function zoomImg(src){ document.getElementById('zoomImg').src=src; document.getElementById('zoomModal').classList.add('show'); }
 document.getElementById('zoomModal').addEventListener('click',function(e){ if(e.target===this||e.target.tagName==='P') this.classList.remove('show'); });
