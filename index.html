@@ -269,7 +269,8 @@ var LS_DISHES='fruit_dishes', LS_ORDERS='fruit_orders', LS_PWD='fruit_admin_pwd'
     LS_PAY='fruit_pay', LS_SHOP='fruit_shop', LS_SESSION='fruit_admin_ok', LS_CLOUD='fruit_cloud';
 var SB_URL='https://aenrwtwhhuqzmbxsjump.supabase.co', SB_KEY='sb_publishable_TYMADeCoaKMsnJ7INuHnfQ_n9yKIHkl', LS_CLOUDPWD='fruit_cloud_pwd';
 var cloudOrders=[]; // 顾客手机下单的云端订单
-var cloudPhoneCount={}; // 手机号出现次数（新客识别）
+var cloudPhoneCount={}; // 手机号出现次数
+var cloudBalances={}; // 新客优惠余额（云端账户）
 var cloudTimer=null, cloudSeen={}, autoAlarm=(localStorage.getItem('zz_auto_alarm')!=='0'), alarmTimer=null, alarmOrder=null, cloudWorker=null;
 var IMG_VER='20260828b'; // 图片版本号：更新商品图后递增，用于强制刷新浏览器缓存
 
@@ -798,12 +799,21 @@ function fetchCloudOrders(silent){
         j.forEach(function(c){ cloudSeen[c.id]=1; });
         cloudOrders=j;
         var pc={}; j.forEach(function(cc){ var ph=String(((cc.payload||{}).phone)||'').trim(); if(ph) pc[ph]=(pc[ph]||0)+1; }); cloudPhoneCount=pc;
-        if(silent && fresh.length===0) return;
+        if(silent && fresh.length===0){ renderCloudB(); return; }
         if(fresh.length>0 && autoAlarm) speakNewOrder(fresh[0]);
-        renderAdmin();
+        renderCloudB();
       })
       .catch(function(){ if(!silent) alert('云端订单拉取失败，请检查网络'); });
   }catch(e){}
+}
+function renderCloudB(){
+  var pwd=localStorage.getItem(LS_CLOUDPWD)||'1986shenhu';
+  try{
+    fetch(SB_URL+'/rest/v1/rpc/get_balances',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({admin_pwd:pwd})})
+      .then(function(r){ return r.json(); })
+      .then(function(j){ if(Array.isArray(j)){ var b={}; j.forEach(function(x){ b[x.phone]=x.balance; }); cloudBalances=b; } renderAdmin(); })
+      .catch(function(){ renderAdmin(); });
+  }catch(e){ renderAdmin(); }
 }
 function speakNewOrder(id){
   try{
@@ -868,18 +878,22 @@ function acceptCloudOrder(id){
   updateCloudStatus(id,'已接单');
 }
 function newCustCloudOrder(id){
+  var c=cloudOrders.find(function(x){return x.id===id;}); if(!c) return;
+  var p=c.payload||{};
+  var minFree=0;
+  if(!p.deliveryFee){ var d=Number(p.dist||0); minFree=(!d||d<=3)?20:30; }
   var pwd=localStorage.getItem(LS_CLOUDPWD)||'1986shenhu';
   try{
-    fetch(SB_URL+'/rest/v1/rpc/update_order_newcust',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({admin_pwd:pwd,order_id:id})})
+    fetch(SB_URL+'/rest/v1/rpc/apply_newcust',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({admin_pwd:pwd,order_id:id,min_free:minFree})})
       .then(function(r){ return r.json(); })
-      .then(function(j){ if(j && j.ok){ fetchCloudOrders(); } else { alert('新客优惠标记失败'); } })
-      .catch(function(){ alert('新客优惠标记失败'); });
+      .then(function(j){ if(j && j.ok){ fetchCloudOrders(); } else { var m='新客优惠失败'; if(j&&j.reason==='already') m='该单已优惠过'; else if(j&&j.reason==='no_grant') m='本次优惠后无法保住免配送，未优惠'; else if(j&&j.reason==='not_found') m='订单不存在'; else if(j&&j.reason==='no_phone') m='订单无手机号'; alert(m); } })
+      .catch(function(){ alert('新客优惠失败'); });
   }catch(e){}
 }
 function cloudAmount(c){
   var p=c.payload||{};
   var base=(p.weightTotal!=null&&p.weightTotal?Number(p.weightTotal):(p.total!=null?Number(p.total):0));
-  if(p.newcust) base=base-5;
+  if(p.newcust && p.discount!=null) base=base-Number(p.discount);
   return base;
 }
 function renderCloudOrder(c){
@@ -889,7 +903,7 @@ function renderCloudOrder(c){
   var stCls=c.status==='已完成'?'off':(c.status==='已付款'?'paid':(c.status==='已称重'?'weigh':(c.status==='已接单'?'paid':'new')));
   var stTxt=(c.status==='new')?'待处理':c.status;
   var amt=(p.weightTotal!=null&&p.weightTotal||p.total!=null)?cloudAmount(c):'';
-  var isNewCust=!p.newcust && String(p.phone||'').trim() && cloudPhoneCount[String(p.phone||'').trim()]===1;
+  var isNewCust=!p.newcust && String(p.phone||'').trim() && cloudBalances[String(p.phone||'').trim()]>0;
   var created=(c.created_at||'').replace('T',' ').slice(0,19);
   return '<div class="card" style="background:#fff"><h3>云端#'+c.id+' <span class="badge '+stCls+'">'+esc(stTxt)+'</span></h3>'+
     '<div class="rowline"><span>下单时间</span><span>'+esc(created)+'</span></div>'+
@@ -899,7 +913,7 @@ function renderCloudOrder(c){
     '<div class="rowline"><span>商品</span><span>'+lines+'</span></div>'+
     (amt!==''?'<div class="rowline"><span>金额</span><span style="color:#e53935;font-weight:700">'+money(amt)+(p.newcust?'（已含新客-5元）':(p.hasWeight&&!p.weightTotal?'（预估）':''))+'</span></div>':'')+
     '<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">'+
-    (isNewCust?'<button class="btn" style="background:#ad1457;color:#fff" onclick="newCustCloudOrder('+c.id+')">🎁 新客优惠5元</button>':'')+
+    (isNewCust?'<button class="btn" style="background:#ad1457;color:#fff" onclick="newCustCloudOrder('+c.id+')">🎁 新客优惠</button>':'')+
     (c.status==='new'?'<button class="btn" style="background:#1565c0;color:#fff" onclick="acceptCloudOrder('+c.id+')">✅ 接单</button>':'')+
     '<button class="btn" style="background:#2e7d32;color:#fff" onclick="printCloudOrder('+c.id+')">🖨 打印</button>'+
     '<button class="btn" onclick="navCloud('+c.id+')">高德导航</button>'+
@@ -924,7 +938,7 @@ function printCloudOrder(id){
   if(p.remark){ var rm=String(p.remark).trim(); if(rm && !/^https?:\/\/|\.github\.io|\.edgeone\.dev|uri\.amap\.com/i.test(rm)) note=rm; }
   var amt=cloudAmount(c);
   var paid=(c.status==='已付款');
-  var body={ seqNo:String(c.id), title:'榨榨鲜果', lines:lines, note:note, round:'', amount:'¥'+Number(amt).toFixed(2), newCust:(p.newcust?true:false), time:nowStr(), paid:paid,
+  var body={ seqNo:String(c.id), title:'榨榨鲜果', lines:lines, note:note, round:'', amount:'¥'+Number(amt).toFixed(2), newCust:(p.newcust?true:false), newCustDiscount:(p.newcust?(Number(p.discount)||0):0), time:nowStr(), paid:paid,
     orderNo:(p.id||('云端#'+c.id)), created:(p.created||''), subtotal:'', total:'', customer:(p.name||'')+' '+(p.phone||''), addr:(p.addr||''), deliveryTime:(p.time||''), status:(c.status==='new'?'待处理':c.status) };
   fetch('http://localhost:8899/print',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
     .then(function(r){ return r.json(); }).then(function(j){ if(!j||!j.ok){ throw 0; } }).catch(function(){ alert('打印失败：请确认本机打印代理已启动（桌面「榨榨鲜果外送」）'); });
@@ -942,7 +956,7 @@ function copyCloudOrderText(id){
   var p=c.payload||{};
   var t='🍉 榨榨鲜果 外卖订单\n——————————————\n【订单号】'+(p.id||('云端#'+c.id))+'\n【下单时间】'+(p.created||'')+'\n【商品】\n'+
     (p.items||[]).map(function(it){ var amt2=(it.per>0&&p.weights&&p.weights[it.id])?(it.per*p.weights[it.id]):(it.price*it.qty); return '  '+it.name+((it.per>0&&p.weights&&p.weights[it.id])?('（称重'+p.weights[it.id]+'斤×'+it.per+'元/斤）'):(' ×'+it.qty))+'  '+money(amt2); }).join('\n')+
-    '\n——————————————\n'+(p.newcust?'【新客优惠】-5.00\n':'')+'【应付合计】'+money(cloudAmount(c))+'\n【顾客】'+(p.name||'')+' '+(p.phone||'')+'\n【地址】'+(p.addr||'')+'\n【预送】'+(p.time||'')+'\n【状态】'+(c.status==='new'?'待处理':c.status);
+    '\n——————————————\n'+(p.newcust?'【新客优惠】-'+Number(p.discount||0).toFixed(2)+'\n':'')+'【应付合计】'+money(cloudAmount(c))+'\n【顾客】'+(p.name||'')+' '+(p.phone||'')+'\n【地址】'+(p.addr||'')+'\n【预送】'+(p.time||'')+'\n【状态】'+(c.status==='new'?'待处理':c.status);
   window._lastText=t; copyText();
 }
 function weighCloudModal(id){
