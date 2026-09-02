@@ -128,7 +128,7 @@ body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f6f7f8;c
   </div>
   <div class="ticker"><div class="tk">
     <span>🔥 加微信好友，进群优惠多多</span>✦
-    <span>新人进群，立享5元优惠</span>✦
+    <span>新客首单，立享5元优惠</span>✦
     <span>3公里内 满20元 免配送费</span>✦
     <span>3-5公里 3元/单 满30元 免配送费</span>✦
     <span>5-10公里 每超1公里加2元</span>✦
@@ -181,6 +181,7 @@ body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f6f7f8;c
         <option value="19:00-20:00">19:00 - 20:00</option>
       </select>
       <label>备注（可选）</label><input id="ckRemark" placeholder="例如：放门口 / 敲门">
+      <div style="font-size:12px;color:#888;line-height:1.7;margin-top:12px;background:#fafafa;border-radius:6px;padding:8px 10px">🔒 您填写的称呼、电话、地址仅用于本次配送<br>💧 现榨果汁建议尽快饮用（2 小时内风味最佳）</div>
       <div style="display:flex;gap:8px;margin-top:16px">
         <button class="btn gray" style="flex:1" onclick="closeCheckout()">返回</button>
         <button class="btn" style="flex:1" onclick="submitOrder()">提交订单</button>
@@ -666,7 +667,7 @@ function submitOrder(){
   var dlv=window._delivery;
   var fee=0, dist='';
   if(dlv){ if(dlv.fee<0 || dlv.dist>10){ alert('该地址超出 10 公里配送范围，暂无法下单（建议到店自取）'); return; } fee=deliveryFee(dlv.dist, subtotal); dist=dlv.dist.toFixed(1); }
-  var items=list.map(function(c){ var d=byId(c.id); return {id:d.id, name:d.name, price:d.price, qty:c.qty, note:c.note, unit:d.unit, per:(d.per?d.per:0)}; });
+  var items=list.map(function(c){ var d=byId(c.id); return {id:d.id, name:d.name, price:d.price, qty:c.qty, note:c.note, unit:d.unit, per:(d.per?d.per:0), cat:d.cat}; });
   var hasWeight=items.some(function(it){return it.per>0;});
   var rawTotal=subtotal+fee;
   var total=hasWeight?rawTotal:roundHalf(rawTotal);
@@ -991,7 +992,7 @@ function printCloudOrder(id){
   var amt=roundHalf(raw);
   var roundAmt=Math.round((raw-amt)*100)/100;
   var paid=(c.status==='已付款');
-  var body={ seqNo:String(c.id), title:'榨榨鲜果', lines:lines, note:note, round:(roundAmt>0?('-'+money(roundAmt)):''), amount:'¥'+Number(amt).toFixed(2), newCust:(p.newcust?true:false), newCustDiscount:(p.newcust?(Number(p.discount)||0):0), time:nowStr(), paid:paid,
+  var body={ seqNo:String(c.id), title:'榨榨鲜果', lines:lines, note:note, round:(roundAmt>0?('-'+money(roundAmt)):''), amount:'¥'+Number(amt).toFixed(2), newCust:(p.newcust?true:false), newCustDiscount:(p.newcust?(Number(p.discount)||0):0), time:nowStr(), paid:paid, hasJuice:(p.items||[]).some(function(it){return it.cat==='果汁'||it.cat==='半价';}),
     orderNo:(p.id||('云端#'+c.id)), created:(p.created||''), subtotal:'', total:'', customer:(p.name||'')+' '+(p.phone||''), addr:(p.addr||''), deliveryTime:(p.time||''), status:(c.status==='new'?'待处理':c.status) };
   fetch('http://localhost:8899/print',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
     .then(function(r){ return r.json(); }).then(function(j){ if(!j||!j.ok){ throw 0; } }).catch(function(){ alert('打印失败：请确认本机打印代理已启动（桌面「榨榨鲜果外送」）'); });
@@ -1466,7 +1467,7 @@ function printViaAgent(i, paid){
   var note='';
   if(o.remark){ var rm=String(o.remark).trim(); if(rm && !/^https?:\/\/|\.github\.io|\.edgeone\.dev|uri\.amap\.com/i.test(rm)) note=rm; }
   function pickV(k){ return pick(k).split('（')[0].trim(); }
-  var body={ seqNo:String(i+1), title:'榨榨鲜果', lines:lines, note:note, round:pickV('【抹零】'), amount:pickV('【应付合计】'), time:nowStr(), paid:!!paid,
+  var body={ seqNo:String(i+1), title:'榨榨鲜果', lines:lines, note:note, round:pickV('【抹零】'), amount:pickV('【应付合计】'), time:nowStr(), paid:!!paid, hasJuice:(o.items||[]).some(function(it){return it.cat==='果汁'||it.cat==='半价';}),
     orderNo:o.id, created:o.created, subtotal:pickV('【商品小计】'), total:pickV('【合计】'),
     customer:(o.name||'')+' '+(o.phone||''), addr:o.addr||'', deliveryTime:o.time||'', status:o.status||'' };
   fetch('http://localhost:8899/print',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
