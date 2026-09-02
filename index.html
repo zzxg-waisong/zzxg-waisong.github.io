@@ -440,11 +440,18 @@ function renderCats(){
 }
 function setCat(c){ curCat=c; renderCats(); renderDishes(); }
 function toggleDishSort(){ dishSort = dishSort==='default'?'priceAsc':(dishSort==='priceAsc'?'priceDesc':'default'); renderCats(); renderDishes(); }
+function baseName(name){ return String(name||'').replace(/（.*?）/g,'').replace(/\(.*?\)/g,'').trim(); }
+function groupSort(list){
+  var groups={}, order=[];
+  list.forEach(function(d){ var k=baseName(d.name); if(!(k in groups)){ groups[k]=[]; order.push(k); } groups[k].push(d); });
+  var out=[]; order.forEach(function(k){ groups[k].forEach(function(d){ out.push(d); }); }); return out;
+}
 function renderDishes(){
   var box=document.getElementById('dishList'); var html='';
   var list = dishes.filter(function(d){ return d.cat===curCat && d.on; });
   if(dishSort==='priceAsc') list.sort(function(a,b){return a.price-b.price;});
   else if(dishSort==='priceDesc') list.sort(function(a,b){return b.price-a.price;});
+  else list=groupSort(list);
   list.forEach(function(d){
     var c=cart[d.id]||{qty:0,note:''};
     var img=(d.img===undefined)?(d.id+'.jpg'):d.img;
