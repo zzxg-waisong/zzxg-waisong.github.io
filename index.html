@@ -296,7 +296,7 @@ var SB_URL='https://aenrwtwhhuqzmbxsjump.supabase.co', SB_KEY='sb_publishable_TY
 var cloudOrders=[]; // 顾客手机下单的云端订单
 var cloudPhoneCount={}; // 手机号出现次数
 var cloudBalances={}; // 新客优惠余额（云端账户）
-var cloudTimer=null, cloudSeen={}, autoAlarm=(localStorage.getItem('zz_auto_alarm')!=='0'), alarmTimer=null, alarmOrder=null, cloudWorker=null;
+var cloudTimer=null, cloudSeen={}, autoAlarm=(localStorage.getItem('zz_auto_alarm')!=='0'), alarmTimer=null, alarmOrder=null, cloudWorker=null, localAlarmed={}; // 本机已提示过的本地单（去重，本地优先）
 var IMG_VER='20260828b'; // 图片版本号：更新商品图后递增，用于强制刷新浏览器缓存
 
 function defaultDishes(){
@@ -669,6 +669,8 @@ function submitOrder(){
   var total=hasWeight?rawTotal:roundHalf(rawTotal);
   var order={id:oid(), items:items, hasWeight:hasWeight, weights:{}, subtotal:subtotal, deliveryFee:fee, dist:dist, total:total, estTotal:total, name:name, phone:phone, addr:addr, time:time, remark:remark, created:nowStr(), status:hasWeight?'待称重':'待付款'};
   orders.unshift(order); save(LS_ORDERS, orders);
+  localAlarmed[order.id]=1;
+  if(autoAlarm && localStorage.getItem('zz_merchant')){ try{ var _la=new Audio('https://zzxg-waisong.github.io/voice_new_order.wav'); _la.volume=Math.max(0,Math.min(1,parseInt(localStorage.getItem('zz_voice_vol')||'100',10)/100)); _la.play(); }catch(e){} }
   try{ placeCloudOrder(order); }catch(e){}
   cart={}; renderDishes(); renderCartbar(); closeCheckout();
   curOrder=order; showPay(order);
@@ -698,7 +700,7 @@ function checkPromo(){
         var b=(j&&j.balance!=null)?Number(j.balance):5; var used=5-b;
         if(b>=4.999){ res.innerHTML='<div style="background:#e8f5e9;border:1px solid #c8e6c9;border-radius:8px;padding:12px">您是<b>新客</b>，首单立享 <b style="color:#e65100">5 元</b>优惠！<br>满 20 元起送，3 公里内满 20 元免配送费～</div>'; }
         else if(b>0){ res.innerHTML='<div style="background:#fff8e1;border:1px solid #f0e0b0;border-radius:8px;padding:12px">您已累计优惠 <b style="color:#e65100">'+money(used)+'</b> 元，还剩余 <b style="color:#2e7d32">'+money(b)+'</b> 元优惠额度，<b>下次下单继续抵用</b>！<br>下单后记得提醒店主点「新客优惠」哦～</div>'; }
-        else { res.innerHTML='<div style="background:#f5f5f5;border:1px solid #ddd;border-radius:8px;padding:12px">您的新客 5 元优惠已<b>全部用完</b>，感谢惠顾，欢迎再次光临！</div>'; }
+        else { res.innerHTML='<div style="background:#f5f5f5;border:1px solid #ddd;border-radius:8px;padding:12px">您的新客 5 元优惠已<b>全部用完</b>，承蒙惠顾！<br><b style="color:#2e7d32">加好友进群，可增加优惠额度～</b></div>'; }
       })
       .catch(function(){ res.innerHTML='<span style="color:#e65100">查询失败，请检查网络</span>'; });
   }catch(e){ res.innerHTML='<span style="color:#e65100">查询失败</span>'; }
@@ -798,7 +800,7 @@ function backToShop(){ location.hash='#/'; }
 function adminLogin(){
   var pwd=document.getElementById('adminPwd').value;
   var stored=localStorage.getItem(LS_PWD)||'1986shenhu';
-  if(pwd===stored){ adminOk=true; localStorage.setItem(LS_SESSION,'1'); document.getElementById('loginModal').classList.remove('show'); renderAdmin(); startCloudTimer(); }
+  if(pwd===stored){ adminOk=true; localStorage.setItem(LS_SESSION,'1'); localStorage.setItem('zz_merchant','1'); document.getElementById('loginModal').classList.remove('show'); renderAdmin(); startCloudTimer(); }
   else alert('密码错误');
 }
 function adminLogout(){ adminOk=false; localStorage.setItem(LS_SESSION,'0'); stopCloudTimer(); location.hash='#/'; }
@@ -838,7 +840,7 @@ function fetchCloudOrders(silent){
         if(!Array.isArray(j)){ if(!silent) alert('云端订单拉取失败（密码错误或网络问题）'); return; }
         var fresh=[];
         if(Object.keys(cloudSeen).length>0){
-          j.forEach(function(c){ if(!cloudSeen[c.id] && c.status==='new') fresh.push(c.id); });
+          j.forEach(function(c){ if(!cloudSeen[c.id] && c.status==='new' && !localAlarmed[(c.payload||{}).id]) fresh.push(c.id); });
         }
         j.forEach(function(c){ cloudSeen[c.id]=1; });
         cloudOrders=j;
@@ -920,6 +922,7 @@ function acceptCloudOrder(id){
   alarmOrder=null;
   if(alarmTimer){ clearInterval(alarmTimer); alarmTimer=null; }
   updateCloudStatus(id,'已接单');
+  try{ var _aa=new Audio('https://zzxg-waisong.github.io/voice_accepted.wav'); _aa.volume=Math.max(0,Math.min(1,parseInt(localStorage.getItem('zz_voice_vol')||'100',10)/100)); _aa.play(); }catch(e){}
 }
 function newCustCloudOrder(id){
   var c=cloudOrders.find(function(x){return x.id===id;}); if(!c) return;
@@ -1007,6 +1010,19 @@ function copyCloudOrderText(id){
     '\n——————————————\n'+(p.newcust?'【新客优惠】-'+Number(p.discount||0).toFixed(2)+'\n':'')+(roundAmt>0?'【抹零】-'+money(roundAmt)+'\n':'')+'【应付合计】'+money(amt)+'\n【顾客】'+(p.name||'')+' '+(p.phone||'')+'\n【地址】'+(p.addr||'')+'\n【预送】'+(p.time||'')+'\n【状态】'+(c.status==='new'?'待处理':c.status);
   window._lastText=t; copyText();
 }
+function addBalance(){
+  var ph=(document.getElementById('addBalPhone').value||'').trim();
+  var amt=parseFloat(document.getElementById('addBalAmt').value);
+  if(!/^1\d{10}$/.test(ph)){ alert('请输入正确的手机号'); return; }
+  if(!(amt>0)){ alert('请输入大于 0 的金额'); return; }
+  var pwd=localStorage.getItem(LS_CLOUDPWD)||'1986shenhu';
+  try{
+    fetch(SB_URL+'/rest/v1/rpc/add_balance',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({admin_pwd:pwd,p_phone:ph,p_amount:amt})})
+      .then(function(r){ return r.json(); })
+      .then(function(j){ if(j&&j.ok){ alert('已为 '+ph+' 增加 '+amt+' 元优惠额度，当前余额 '+j.balance+' 元'); document.getElementById('addBalPhone').value=''; document.getElementById('addBalAmt').value=''; fetchCloudOrders(); } else { alert('增加失败'); } })
+      .catch(function(){ alert('增加失败，请检查网络'); });
+  }catch(e){ alert('增加失败'); }
+}
 function weighCloudModal(id){
   var c=cloudOrders.find(function(x){return x.id===id;}); if(!c) return;
   var p=c.payload||{};
@@ -1054,6 +1070,12 @@ function renderOrders(){
     '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><b>📱 顾客手机下的单（云端）</b>'+
     '<button class="btn" style="background:#1a73e8;color:#fff" onclick="fetchCloudOrders()">🔄 刷新云端订单</button></div>'+
     (cloudOrders.length?'<div style="font-size:12px;color:#555;margin:8px 0">共 '+cloudOrders.length+' 单（顾客微信扫码下单后，点「刷新云端订单」即可看到）</div>':'<div style="font-size:12px;color:#888;margin:8px 0">云端未拉取（点击刷新查看顾客手机下的单）</div>')+
+    '<div style="display:flex;gap:6px;margin:10px 0;flex-wrap:wrap;align-items:center;background:#eef4fb;border:1px solid #d0e0f5;border-radius:8px;padding:8px">'+
+      '<b style="font-size:13px">🎁 加优惠额度</b>'+
+      '<input id="addBalPhone" type="tel" maxlength="11" placeholder="手机号" style="flex:1;min-width:110px;border:1px solid #ddd;border-radius:6px;padding:6px;font-size:13px">'+
+      '<input id="addBalAmt" type="number" min="0.5" step="0.5" placeholder="金额" style="width:64px;border:1px solid #ddd;border-radius:6px;padding:6px;font-size:13px">'+
+      '<button class="btn" style="background:#ad1457;color:#fff;font-size:12px;padding:5px 12px" onclick="addBalance()">增加</button>'+
+    '</div>'+
     cloudOrders.map(renderCloudOrder).join('')+
     '</div>';
   if(!orders.length) html+='<div style="text-align:center;color:#999;padding:30px">暂无订单</div>';
