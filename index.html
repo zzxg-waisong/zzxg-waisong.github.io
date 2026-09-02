@@ -296,7 +296,7 @@ var SB_URL='https://aenrwtwhhuqzmbxsjump.supabase.co', SB_KEY='sb_publishable_TY
 var cloudOrders=[]; // 顾客手机下单的云端订单
 var cloudPhoneCount={}; // 手机号出现次数
 var cloudBalances={}; // 新客优惠余额（云端账户）
-var cloudTimer=null, cloudSeen={}, autoAlarm=(localStorage.getItem('zz_auto_alarm')!=='0'), alarmTimer=null, alarmOrder=null, cloudWorker=null, localAlarmed={}; // 本机已提示过的本地单（去重，本地优先）
+var cloudTimer=null, cloudSeen=(function(){try{return JSON.parse(localStorage.getItem('zz_cloud_seen')||'{}');}catch(e){return {};}})(), autoAlarm=(localStorage.getItem('zz_auto_alarm')!=='0'), alarmTimer=null, alarmOrder=null, cloudWorker=null, localAlarmed=(function(){try{return JSON.parse(localStorage.getItem('zz_local_alarmed')||'{}');}catch(e){return {};}})(); // 本机已提示过的本地单（去重，本地优先）
 var IMG_VER='20260828b'; // 图片版本号：更新商品图后递增，用于强制刷新浏览器缓存
 
 function defaultDishes(){
@@ -669,7 +669,7 @@ function submitOrder(){
   var total=hasWeight?rawTotal:roundHalf(rawTotal);
   var order={id:oid(), items:items, hasWeight:hasWeight, weights:{}, subtotal:subtotal, deliveryFee:fee, dist:dist, total:total, estTotal:total, name:name, phone:phone, addr:addr, time:time, remark:remark, created:nowStr(), status:hasWeight?'待称重':'待付款'};
   orders.unshift(order); save(LS_ORDERS, orders);
-  localAlarmed[order.id]=1;
+  localAlarmed[order.id]=1; try{ localStorage.setItem('zz_local_alarmed',JSON.stringify(localAlarmed)); }catch(e){}
   if(autoAlarm && localStorage.getItem('zz_merchant')){ try{ var _la=new Audio('https://zzxg-waisong.github.io/voice_new_order.wav'); _la.volume=Math.max(0,Math.min(1,parseInt(localStorage.getItem('zz_voice_vol')||'100',10)/100)); _la.play(); }catch(e){} }
   try{ placeCloudOrder(order); }catch(e){}
   cart={}; renderDishes(); renderCartbar(); closeCheckout();
@@ -843,6 +843,7 @@ function fetchCloudOrders(silent){
           j.forEach(function(c){ if(!cloudSeen[c.id] && c.status==='new' && !localAlarmed[(c.payload||{}).id]) fresh.push(c.id); });
         }
         j.forEach(function(c){ cloudSeen[c.id]=1; });
+        try{ localStorage.setItem('zz_cloud_seen',JSON.stringify(cloudSeen)); }catch(e){}
         cloudOrders=j;
         var pc={}; j.forEach(function(cc){ var ph=String(((cc.payload||{}).phone)||'').trim(); if(ph) pc[ph]=(pc[ph]||0)+1; }); cloudPhoneCount=pc;
         if(silent && fresh.length===0){ renderCloudB(); return; }
@@ -875,7 +876,7 @@ function speakNewOrder(id){
     play();
     alarmTimer=setInterval(function(){
       times++;
-      if(alarmOrder!==(id==null?0:id) || times>=2){ clearInterval(alarmTimer); alarmTimer=null; return; }
+      if(alarmOrder!==(id==null?0:id) || times>=3){ clearInterval(alarmTimer); alarmTimer=null; return; }
       play();
     },15000);
   }catch(e){}
