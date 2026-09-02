@@ -894,7 +894,7 @@ function cloudAmount(c){
   var p=c.payload||{};
   var base=(p.weightTotal!=null&&p.weightTotal?Number(p.weightTotal):(p.total!=null?Number(p.total):0));
   if(p.newcust && p.discount!=null) base=base-Number(p.discount);
-  return base;
+  return roundHalf(base);
 }
 function renderCloudOrder(c){
   var p=c.payload||{};
@@ -911,7 +911,7 @@ function renderCloudOrder(c){
     (p.addr?'<div class="rowline"><span>地址</span><span>'+esc(p.addr)+'</span></div>':'')+
     (p.time?'<div class="rowline"><span>预送</span><span>'+esc(p.time)+'</span></div>':'')+
     '<div class="rowline"><span>商品</span><span>'+lines+'</span></div>'+
-    (amt!==''?'<div class="rowline"><span>金额</span><span style="color:#e53935;font-weight:700">'+money(amt)+(p.newcust?'（已含新客-5元）':(p.hasWeight&&!p.weightTotal?'（预估）':''))+'</span></div>':'')+
+    (amt!==''?'<div class="rowline"><span>金额</span><span style="color:#e53935;font-weight:700">'+money(amt)+(p.newcust?'（已含新客-'+Number(p.discount||0).toFixed(2)+'元）':(p.hasWeight&&!p.weightTotal?'（预估）':''))+'</span></div>':'')+
     '<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">'+
     (isNewCust?'<button class="btn" style="background:#ad1457;color:#fff" onclick="newCustCloudOrder('+c.id+')">🎁 新客优惠</button>':'')+
     (c.status==='new'?'<button class="btn" style="background:#1565c0;color:#fff" onclick="acceptCloudOrder('+c.id+')">✅ 接单</button>':'')+
@@ -936,9 +936,11 @@ function printCloudOrder(id){
   });
   var note='';
   if(p.remark){ var rm=String(p.remark).trim(); if(rm && !/^https?:\/\/|\.github\.io|\.edgeone\.dev|uri\.amap\.com/i.test(rm)) note=rm; }
-  var amt=cloudAmount(c);
+  var raw=(p.weightTotal!=null&&p.weightTotal?Number(p.weightTotal):(p.total!=null?Number(p.total):0))-(p.newcust&&p.discount!=null?Number(p.discount):0);
+  var amt=roundHalf(raw);
+  var roundAmt=Math.round((raw-amt)*100)/100;
   var paid=(c.status==='已付款');
-  var body={ seqNo:String(c.id), title:'榨榨鲜果', lines:lines, note:note, round:'', amount:'¥'+Number(amt).toFixed(2), newCust:(p.newcust?true:false), newCustDiscount:(p.newcust?(Number(p.discount)||0):0), time:nowStr(), paid:paid,
+  var body={ seqNo:String(c.id), title:'榨榨鲜果', lines:lines, note:note, round:(roundAmt>0?('-'+money(roundAmt)):''), amount:'¥'+Number(amt).toFixed(2), newCust:(p.newcust?true:false), newCustDiscount:(p.newcust?(Number(p.discount)||0):0), time:nowStr(), paid:paid,
     orderNo:(p.id||('云端#'+c.id)), created:(p.created||''), subtotal:'', total:'', customer:(p.name||'')+' '+(p.phone||''), addr:(p.addr||''), deliveryTime:(p.time||''), status:(c.status==='new'?'待处理':c.status) };
   fetch('http://localhost:8899/print',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
     .then(function(r){ return r.json(); }).then(function(j){ if(!j||!j.ok){ throw 0; } }).catch(function(){ alert('打印失败：请确认本机打印代理已启动（桌面「榨榨鲜果外送」）'); });
@@ -954,9 +956,11 @@ function copyCloudAddr(id){ var c=cloudOrders.find(function(x){return x.id===id;
 function copyCloudOrderText(id){
   var c=cloudOrders.find(function(x){return x.id===id;}); if(!c) return;
   var p=c.payload||{};
+  var raw=(p.weightTotal!=null&&p.weightTotal?Number(p.weightTotal):(p.total!=null?Number(p.total):0))-(p.newcust&&p.discount!=null?Number(p.discount):0);
+  var amt=roundHalf(raw); var roundAmt=Math.round((raw-amt)*100)/100;
   var t='🍉 榨榨鲜果 外卖订单\n——————————————\n【订单号】'+(p.id||('云端#'+c.id))+'\n【下单时间】'+(p.created||'')+'\n【商品】\n'+
     (p.items||[]).map(function(it){ var amt2=(it.per>0&&p.weights&&p.weights[it.id])?(it.per*p.weights[it.id]):(it.price*it.qty); return '  '+it.name+((it.per>0&&p.weights&&p.weights[it.id])?('（称重'+p.weights[it.id]+'斤×'+it.per+'元/斤）'):(' ×'+it.qty))+'  '+money(amt2); }).join('\n')+
-    '\n——————————————\n'+(p.newcust?'【新客优惠】-'+Number(p.discount||0).toFixed(2)+'\n':'')+'【应付合计】'+money(cloudAmount(c))+'\n【顾客】'+(p.name||'')+' '+(p.phone||'')+'\n【地址】'+(p.addr||'')+'\n【预送】'+(p.time||'')+'\n【状态】'+(c.status==='new'?'待处理':c.status);
+    '\n——————————————\n'+(p.newcust?'【新客优惠】-'+Number(p.discount||0).toFixed(2)+'\n':'')+(roundAmt>0?'【抹零】-'+money(roundAmt)+'\n':'')+'【应付合计】'+money(amt)+'\n【顾客】'+(p.name||'')+' '+(p.phone||'')+'\n【地址】'+(p.addr||'')+'\n【预送】'+(p.time||'')+'\n【状态】'+(c.status==='new'?'待处理':c.status);
   window._lastText=t; copyText();
 }
 function weighCloudModal(id){
