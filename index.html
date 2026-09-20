@@ -126,6 +126,7 @@ body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f6f7f8;c
     </div>
     </div>
   </div>
+  <div id="shopBanner" style="display:none;padding:8px 14px;font-size:14px;font-weight:700;text-align:center"></div>
   <div class="ticker"><div class="tk">
     <span>🔥 加微信好友，进群优惠多多</span>✦
     <span>新客首单，立享5元优惠</span>✦
@@ -179,6 +180,9 @@ body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f6f7f8;c
         <option value="17:00-18:00">17:00 - 18:00</option>
         <option value="18:00-19:00">18:00 - 19:00</option>
         <option value="19:00-20:00">19:00 - 20:00</option>
+        <option value="次日10:00-12:00">次日 10:00 - 12:00</option>
+        <option value="次日14:00-17:00">次日 14:00 - 17:00</option>
+        <option value="次日18:00-20:00">次日 18:00 - 20:00</option>
       </select>
       <label>备注（可选）</label><input id="ckRemark" placeholder="例如：放门口 / 敲门">
       <div style="font-size:12px;color:#888;line-height:1.7;margin-top:12px;background:#fafafa;border-radius:6px;padding:8px 10px">🔒 您填写的称呼、电话、地址仅用于本次配送<br>💧 现榨果汁建议尽快饮用（2 小时内风味最佳）</div>
@@ -268,6 +272,7 @@ body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f6f7f8;c
   <div class="admin-top">
     <h2>商家后台</h2>
     <div>
+      <button class="btn" id="shopToggleBtn" style="font-size:12px;padding:4px 10px;background:#2e7d32" onclick="toggleShopStatus()">🟢 营业中</button>
       <button class="btn" style="font-size:12px;padding:4px 10px;background:#2e7d32" onclick="adminRefresh()">🔄 刷新同步</button>
       <button class="btn gray" style="font-size:12px;padding:4px 10px;margin-left:6px" onclick="backToShop()">返回点单页</button>
       <button class="btn red" style="font-size:12px;padding:4px 10px;margin-left:6px" onclick="adminLogout()">退出</button>
@@ -523,7 +528,49 @@ function renderCartItems(){
   box.innerHTML=html||'<div style="text-align:center;color:#999;padding:20px">购物车是空的</div>';
   document.getElementById('drawerTotal').textContent=money(cartTotal());
 }
+var shopOpen=true, adminShopOpen=true;
+function refreshShopStatus(){
+  try{
+    fetch(SB_URL+'/rest/v1/rpc/get_shop_status',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:'{}'})
+      .then(function(r){ return r.json(); })
+      .then(function(j){ if(j && j.open!=null){ shopOpen=!!j.open; renderShopBanner(); } })
+      .catch(function(){});
+  }catch(e){}
+}
+function renderShopBanner(){
+  var el=document.getElementById('shopBanner'); if(!el) return;
+  if(shopOpen){ el.style.display='block'; el.style.background='#e8f5e9'; el.style.color='#2e7d32'; el.innerHTML='🟢 营业中 · 欢迎下单'; }
+  else { el.style.display='block'; el.style.background='#ffebee'; el.style.color='#c62828'; el.innerHTML='🔴 已打烊 · 暂不接即时单（可选「次日」时间段下单）'; }
+}
+function loadAdminShopStatus(){
+  try{
+    fetch(SB_URL+'/rest/v1/rpc/get_shop_status',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:'{}'})
+      .then(function(r){ return r.json(); })
+      .then(function(j){ if(j && j.open!=null){ adminShopOpen=!!j.open; shopOpen=adminShopOpen; renderShopToggle(); renderShopBanner(); } })
+      .catch(function(){});
+  }catch(e){}
+}
+function renderShopToggle(){
+  var el=document.getElementById('shopToggleBtn'); if(!el) return;
+  if(adminShopOpen){ el.style.background='#2e7d32'; el.textContent='🟢 营业中'; }
+  else { el.style.background='#c62828'; el.textContent='🔴 已打烊'; }
+}
+function toggleShopStatus(){
+  var pwd=localStorage.getItem(LS_CLOUDPWD)||'1986shenhu';
+  var target=!adminShopOpen;
+  try{
+    fetch(SB_URL+'/rest/v1/rpc/set_shop_status',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({admin_pwd:pwd, p_open:target})})
+      .then(function(r){ return r.json(); })
+      .then(function(j){
+        if(j && j.ok){ adminShopOpen=!!j.open; shopOpen=adminShopOpen; renderShopToggle(); renderShopBanner(); alert(adminShopOpen?"✅ 已切换为营业中":"✅ 已切换为已打烊（顾客端将显示打烊，即时单会被拦截）"); }
+        else alert('切换失败：密码错误或网络问题');
+      })
+      .catch(function(){ alert('切换失败：网络问题'); });
+  }catch(e){}
+}
+window.setInterval(function(){ if(!adminOk) refreshShopStatus(); }, 60000);
 function openCheckout(){
+  refreshShopStatus();
   if(!cartList().length){ alert('购物车是空的'); return; }
   closeDrawer(); document.getElementById('checkoutModal').classList.add('show');
   window._delivery=null; document.getElementById('deliveryBox').style.display='none';
@@ -663,6 +710,7 @@ function submitOrder(){
   var phone=document.getElementById('ckPhone').value.trim();
   var addr=document.getElementById('ckAddr').value.trim();
   var time=document.getElementById('ckTime').value;
+  if(!shopOpen && String(time||'').indexOf('次日')!==0){ alert('本店已打烊，暂不接即时单。如需次日配送，请选择「次日」时间段，或明天营业后再下单。'); return; }
   var remark=document.getElementById('ckRemark').value.trim();
   if(!name){ alert('请填写称呼'); return; }
   if(!/^1\d{10}$/.test(phone) && phone.length<7){ alert('请填写正确的联系电话'); return; }
@@ -804,6 +852,7 @@ function showAdmin(){
   document.getElementById('admin').classList.remove('hidden');
   if(!adminOk){ document.getElementById('loginModal').classList.add('show'); return; }
   document.getElementById('loginModal').classList.remove('show');
+  loadAdminShopStatus();
   renderAdmin();
   startCloudTimer();
 }
