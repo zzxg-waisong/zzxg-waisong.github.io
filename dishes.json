@@ -223,11 +223,11 @@
  },
  {
   "id": "j8",
-  "name": "蜜橘汁（500ml）",
-  "price": 6,
-  "unit": "杯",
-  "cat": "果汁",
   "on": true,
-  "img": "mijuzhi.jpg"
+  "cat": "果汁",
+  "img": "mijuzhi.jpg",
+  "name": "蜜橘汁（500ml）",
+  "unit": "杯",
+  "price": 15
  }
 ]
