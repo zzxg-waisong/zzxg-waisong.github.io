@@ -1,241 +1,233 @@
 [
  {
-  "id": "j1",
-  "name": "西瓜汁（500ml）",
-  "price": 10,
-  "unit": "杯",
-  "cat": "果汁",
-  "on": false,
-  "img": "xiguazhi.jpg",
-  "per": 0
- },
- {
-  "id": "j2",
-  "name": "麒麟西瓜汁（500ml）",
-  "price": 14,
-  "unit": "杯",
-  "cat": "果汁",
-  "on": false,
-  "img": "qilin_xiguazhi.jpg",
-  "per": 0
- },
- {
-  "id": "j3",
-  "name": "石榴汁（500ml）",
-  "price": 17,
-  "unit": "杯",
-  "cat": "果汁",
-  "on": false,
-  "img": "shiliuzhi.jpg",
-  "per": 0
- },
- {
-  "id": "j4",
-  "name": "盐源苹果汁（500ml）",
-  "price": 17,
-  "unit": "杯",
-  "cat": "果汁",
-  "on": false,
-  "img": "pingguozhi.jpg",
-  "per": 0
- },
- {
-  "id": "j5",
-  "name": "青苹果汁（500ml）",
-  "price": 14,
-  "unit": "杯",
-  "cat": "果汁",
-  "on": false,
-  "img": "qingpingguozhi.jpg",
-  "per": 0
- },
- {
-  "id": "j6",
-  "name": "哈密瓜汁（500ml）",
-  "price": 12,
-  "unit": "杯",
-  "cat": "果汁",
+  "id": "d1",
   "on": true,
-  "img": "hamiguazhi.jpg"
- },
- {
-  "id": "j7",
-  "name": "黄皮哈密瓜汁（500ml）",
-  "price": 14,
-  "unit": "杯",
-  "cat": "果汁",
-  "on": false,
-  "img": "huangpihamiguazhi.jpg",
-  "per": 0
- },
- {
-  "id": "d10",
-  "name": "石榴（皮干）",
-  "price": 2,
-  "unit": "斤",
-  "cat": "打折",
-  "on": false,
-  "img": "huapi_shiliu.jpg",
-  "per": 2
- },
- {
-  "id": "d8",
-  "name": "石榴",
-  "price": 6,
-  "unit": "斤",
   "cat": "水果",
-  "on": false,
-  "img": "shiliu.jpg",
-  "per": 6
- },
- {
-  "id": "d11",
-  "name": "花皮石榴（大）",
-  "price": 4,
-  "unit": "斤",
-  "cat": "水果",
-  "on": false,
-  "img": "dahuapi_shiliu.jpg",
-  "per": 4
- },
- {
-  "id": "d9",
-  "name": "石榴（大）",
-  "price": 6,
-  "unit": "斤",
-  "cat": "水果",
-  "on": false,
-  "img": "da_shiliu.jpg",
-  "per": 6
- },
- {
-  "id": "d15",
-  "name": "小番茄（约1斤）",
-  "price": 8,
-  "unit": "盒",
-  "cat": "水果",
-  "on": true,
-  "img": "xiaofanqie.jpg",
-  "per": 0
- },
- {
-  "id": "d4",
-  "name": "海南香蕉",
-  "price": 2.5,
-  "unit": "斤",
-  "cat": "水果",
-  "on": false,
-  "img": "hainan_xiangjiao.jpg",
-  "per": 2.5
- },
- {
-  "id": "d7",
-  "name": "青苹果",
-  "price": 5,
-  "unit": "份",
-  "cat": "水果",
-  "on": false,
-  "img": "qing_pingguo.jpg",
-  "per": 5
- },
- {
-  "id": "d16",
-  "name": "小柿子（8颗装）",
-  "price": 10,
-  "unit": "盒",
-  "cat": "水果",
-  "on": false,
-  "img": "xiaoshizi.jpg",
-  "per": 0
- },
- {
-  "id": "d6",
-  "name": "陕西红富士苹果",
-  "price": 9,
-  "unit": "斤",
-  "cat": "水果",
-  "on": true,
-  "img": "hongfushi_pingguo.jpg",
-  "per": 9
- },
- {
-  "id": "d3",
-  "name": "老挝香蕉",
-  "price": 5,
-  "unit": "斤",
-  "cat": "水果",
-  "on": true,
-  "img": "laowo_xiangjiao.jpg",
-  "per": 5
+  "img": "wuzi_qilin_xigua.jpg",
+  "per": 4,
+  "name": "无籽麒麟西瓜（10斤左右）",
+  "unit": "个",
+  "price": 40
  },
  {
   "id": "d2",
-  "name": "地雷西瓜（1/4个起售）",
-  "price": 1.5,
-  "unit": "斤",
+  "on": true,
   "cat": "水果",
-  "on": false,
   "img": "dilei_xigua.jpg",
-  "per": 1.5
+  "per": 1.5,
+  "name": "地雷西瓜（1/4个）",
+  "unit": "份",
+  "price": 12
+ },
+ {
+  "id": "d3",
+  "on": true,
+  "cat": "水果",
+  "img": "laowo_xiangjiao.jpg",
+  "per": 5,
+  "name": "老挝香蕉（5根 2.5-3斤）",
+  "unit": "份",
+  "price": 12.5
+ },
+ {
+  "id": "d4",
+  "on": true,
+  "cat": "水果",
+  "img": "hainan_xiangjiao.jpg",
+  "per": 3,
+  "name": "海南香蕉（9根/半爪 3-3.5斤）",
+  "unit": "份",
+  "price": 10
  },
  {
   "id": "d5",
-  "name": "凉山盐源糖心丑苹果",
-  "price": 8,
-  "unit": "斤",
+  "on": true,
   "cat": "水果",
-  "on": false,
   "img": "tangxin_choupingguo.jpg",
-  "per": 8
+  "per": 8,
+  "name": "凉山盐源糖心丑苹果（4个 1.5-2斤）",
+  "unit": "份",
+  "price": 15
+ },
+ {
+  "id": "d6",
+  "on": true,
+  "cat": "水果",
+  "img": "hongfushi_pingguo.jpg",
+  "per": 6,
+  "name": "陕西红富士苹果（4个 1.5-2斤）",
+  "unit": "份",
+  "price": 12
+ },
+ {
+  "id": "d7",
+  "on": true,
+  "cat": "水果",
+  "img": "qing_pingguo.jpg",
+  "per": 5,
+  "name": "青苹果（4个 1.8-2斤）",
+  "unit": "份",
+  "price": 10
+ },
+ {
+  "id": "d8",
+  "on": true,
+  "cat": "水果",
+  "img": "shiliu.jpg",
+  "per": 6,
+  "name": "石榴",
+  "unit": "个",
+  "price": 4
+ },
+ {
+  "id": "d9",
+  "on": true,
+  "cat": "水果",
+  "img": "da_shiliu.jpg",
+  "per": 6,
+  "name": "石榴（大）",
+  "unit": "个",
+  "price": 5
+ },
+ {
+  "id": "d10",
+  "on": true,
+  "cat": "水果",
+  "img": "huapi_shiliu.jpg",
+  "per": 4,
+  "name": "花皮石榴",
+  "unit": "个",
+  "price": 3
+ },
+ {
+  "id": "d11",
+  "on": true,
+  "cat": "水果",
+  "img": "dahuapi_shiliu.jpg",
+  "per": 4,
+  "name": "花皮石榴（大）",
+  "unit": "个",
+  "price": 4
  },
  {
   "id": "d12",
-  "name": "海南红心柚",
-  "price": 15,
-  "unit": "个",
-  "cat": "水果",
   "on": true,
+  "cat": "水果",
   "img": "hongxin_you.jpg",
-  "per": 0
- },
- {
-  "id": "d14",
-  "name": "哈密瓜",
-  "price": 18,
+  "per": 5,
+  "name": "海南红心柚（约3斤）",
   "unit": "个",
-  "cat": "水果",
-  "on": true,
-  "img": "hamigua.jpg",
-  "per": 0
+  "price": 15
  },
  {
   "id": "d13",
-  "name": "黄皮哈密瓜",
-  "price": 20,
-  "unit": "个",
+  "on": true,
   "cat": "水果",
-  "on": false,
   "img": "huangpi_hamigua.jpg",
-  "per": 0
+  "per": 4.5,
+  "name": "黄皮哈密瓜",
+  "unit": "个",
+  "price": 20
  },
  {
-  "id": "d1788094417454",
-  "name": "无籽麒麟西瓜（8斤左右）",
-  "price": 4,
-  "unit": "斤",
-  "img": "wuzi_qilin_xigua.jpg",
+  "id": "d14",
+  "on": true,
   "cat": "水果",
-  "on": false,
-  "per": 4
+  "img": "hamigua.jpg",
+  "per": 3.5,
+  "name": "哈密瓜",
+  "unit": "个",
+  "price": 18
  },
  {
-  "id": "d1",
-  "name": "无籽麒麟西瓜（10斤左右）",
-  "price": 4,
-  "unit": "斤",
+  "id": "d15",
+  "on": true,
   "cat": "水果",
-  "on": false,
-  "img": "wuzi_qilin_xigua.jpg",
-  "per": 4
+  "img": "xiaofanqie.jpg",
+  "per": 8,
+  "name": "小番茄（约1斤）",
+  "unit": "盒",
+  "price": 8
+ },
+ {
+  "id": "d16",
+  "on": true,
+  "cat": "水果",
+  "img": "xiaoshizi.jpg",
+  "name": "小柿子（8颗装）",
+  "unit": "盒",
+  "price": 10
+ },
+ {
+  "id": "j1",
+  "on": true,
+  "cat": "果汁",
+  "img": "xiguazhi.jpg",
+  "name": "西瓜汁（500ml）",
+  "unit": "杯",
+  "price": 10
+ },
+ {
+  "id": "j2",
+  "on": true,
+  "cat": "果汁",
+  "img": "qilin_xiguazhi.jpg",
+  "name": "麒麟西瓜汁（500ml）",
+  "unit": "杯",
+  "price": 14
+ },
+ {
+  "id": "j3",
+  "on": true,
+  "cat": "果汁",
+  "img": "shiliuzhi.jpg",
+  "name": "石榴汁（500ml）",
+  "unit": "杯",
+  "price": 17
+ },
+ {
+  "id": "j4",
+  "on": true,
+  "cat": "果汁",
+  "img": "pingguozhi.jpg",
+  "name": "盐源苹果汁（500ml）",
+  "unit": "杯",
+  "price": 17
+ },
+ {
+  "id": "j5",
+  "on": true,
+  "cat": "果汁",
+  "img": "qingpingguozhi.jpg",
+  "name": "青苹果汁（500ml）",
+  "unit": "杯",
+  "price": 14
+ },
+ {
+  "id": "j6",
+  "on": true,
+  "cat": "果汁",
+  "img": "hamiguazhi.jpg",
+  "name": "哈密瓜汁（500ml）",
+  "unit": "杯",
+  "price": 12
+ },
+ {
+  "id": "j7",
+  "on": true,
+  "cat": "果汁",
+  "img": "huangpihamiguazhi.jpg",
+  "name": "黄皮哈密瓜汁（500ml）",
+  "unit": "杯",
+  "price": 14
+ },
+ {
+  "id": "j8",
+  "name": "蜜橘汁（500ml）",
+  "price": 6,
+  "unit": "杯",
+  "cat": "果汁",
+  "on": true,
+  "img": "mijuzhi.jpg"
  }
 ]
