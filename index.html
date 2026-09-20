@@ -559,19 +559,31 @@ function renderShopToggle(){
   if(adminShopOpen){ el.style.background='#2e7d32'; el.textContent='🟢 营业中'; }
   else { el.style.background='#c62828'; el.textContent='🔴 已打烊'; }
 }
-function toggleShopStatus(){
+function toggleShopStatus(silent){
   var pwd=localStorage.getItem(LS_CLOUDPWD)||'1986shenhu';
   var target=!adminShopOpen;
   try{
     fetch(SB_URL+'/rest/v1/rpc/set_shop_status',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({admin_pwd:pwd, p_open:target})})
       .then(function(r){ return r.json(); })
       .then(function(j){
-        if(j && j.ok){ adminShopOpen=!!j.open; shopOpen=adminShopOpen; renderShopToggle(); renderShopBanner(); alert(adminShopOpen?"✅ 已切换为营业中":"✅ 已切换为已打烊（顾客端将显示打烊，即时单会被拦截）"); }
-        else alert('切换失败：密码错误或网络问题');
+        if(j && j.ok){ adminShopOpen=!!j.open; shopOpen=adminShopOpen; renderShopToggle(); renderShopBanner(); if(!silent) alert(adminShopOpen?"✅ 已切换为营业中":"✅ 已切换为已打烊（顾客端将显示打烊，即时单会被拦截）"); }
+        else if(!silent) alert('切换失败：密码错误或网络问题');
       })
-      .catch(function(){ alert('切换失败：网络问题'); });
+      .catch(function(){ if(!silent) alert('切换失败：网络问题'); });
   }catch(e){}
 }
+/* 自动营业时间：9:00 自动营业，21:00 自动打烊（只在跨整点边界时切，不覆盖手动临时切换） */
+var _lastAutoHour = new Date().getHours();
+function autoCheckShopHours(){
+  var h = new Date().getHours();
+  if(_lastAutoHour === h) return;
+  // 跨过 9:00（从 <9 到 >=9）→ 自动营业
+  if(_lastAutoHour < 9 && h >= 9 && !adminShopOpen){ toggleShopStatus(true); }
+  // 跨过 21:00（从 <21 到 >=21）→ 自动打烊
+  if(_lastAutoHour < 21 && h >= 21 && adminShopOpen){ toggleShopStatus(true); }
+  _lastAutoHour = h;
+}
+window.setInterval(function(){ if(adminOk) autoCheckShopHours(); }, 60000);
 window.setInterval(function(){ if(!adminOk) refreshShopStatus(); }, 60000);
 function openCheckout(){
   if(!cartList().length){ alert('购物车是空的'); return; }
