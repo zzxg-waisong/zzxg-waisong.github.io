@@ -470,7 +470,7 @@ function renderDishes(){
       (d.cat==='半价'?(canAddHalf(d)?'<button class="btn" style="background:#fb8c00" onclick="addToCart(\''+d.id+'\')">第二杯半价</button>':'<button class="btn" style="background:#ccc;cursor:not-allowed;color:#999" onclick="alert(\'需选一杯价格相同或更高的原价果汁解锁~\')">原价果汁解锁</button>'):'<button class="btn" onclick="addToCart(\''+d.id+'\')">加入购物车</button>')+
       '</div></div>';
   });
-  box.innerHTML=html || '<div style="text-align:center;color:#999;padding:40px">该分类暂无商品</div>';
+  box.innerHTML=html || (cats().length? '<div style="text-align:center;color:#999;padding:40px">该分类暂无商品</div>' : '');
 }
 function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function saveCart(){ try{ localStorage.setItem('fruit_cart', JSON.stringify(cart)); }catch(e){} }
