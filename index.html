@@ -122,7 +122,7 @@ body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f6f7f8;c
       </div>
       <div style="display:flex;flex-direction:column;gap:6px;align-items:stretch">
       <button class="admin-entry" style="color:#e65100" onclick="openPromo()">🎁 优惠</button>
-      <button class="admin-entry" onclick="location.hash='#/admin'">🔒 商家后台</button>
+      <button class="admin-entry" style="opacity:.45;font-size:11px;padding:4px 8px" onclick="location.hash='#/admin'">🔒 后台</button>
     </div>
     </div>
   </div>
@@ -309,6 +309,8 @@ var cloudTimer=null, cloudSeen=(function(){try{return JSON.parse(localStorage.ge
 var IMG_VER='20260828b'; // 图片版本号：更新商品图后递增，用于强制刷新浏览器缓存
 
 function defaultDishes(){
+  return []; // 菜单全部由云端管理，本地不再硬编码旧菜单
+/* old:
   return [
     {id:'d1',name:'无籽麒麟西瓜（10斤左右）',price:40,unit:'个',cat:'水果',on:true,img:'wuzi_qilin_xigua.jpg',per:4},
     {id:'d2',name:'地雷西瓜（1/4个）',price:12,unit:'份',cat:'水果',on:true,img:'dilei_xigua.jpg',per:1.5},
@@ -334,6 +336,7 @@ function defaultDishes(){
     {id:'j6',name:'哈密瓜汁（500ml）',price:12,unit:'杯',cat:'果汁',on:true,img:'hamiguazhi.jpg'},
     {id:'j7',name:'黄皮哈密瓜汁（500ml）',price:14,unit:'杯',cat:'果汁',on:true,img:'huangpihamiguazhi.jpg'}
   ];
+*/
 }
 function load(k, def){ try{ var v=localStorage.getItem(k); return v?JSON.parse(v):def; }catch(e){ return def; } }
 function save(k, v){ localStorage.setItem(k, JSON.stringify(v)); }
@@ -394,7 +397,7 @@ var payCfg = load(LS_PAY, {payUrl:'收款码.png', wxUrl:'微信二维码.png'})
 var shopCfg = load(LS_SHOP, {address:'', amapKey:'17e56cae3aca57e9862453d89791043c', shopLat:'30.856438', shopLng:'104.323828', jskey:'0d47ebe194506326a62c092365563bf4', jscode:'edf199ba7acbb15a4b446f525976876c'});
 var adminOk = localStorage.getItem(LS_SESSION)==='1';
 var cloudCfg = load(LS_CLOUD, {token:'', repo:'zzxg-waisong/zzxg-waisong.github.io'});
-var cart = {};   // id -> {qty,note}
+var cart = load('fruit_cart', {});   // id -> {qty,note}（刷新不丢）
 var curCat = '水果'; var adminDishCat = '水果'; var dishSort = 'default';
 var curOrder = null;
 
@@ -426,7 +429,7 @@ function showCustomer(){
   renderCats(); renderDishes(); renderCartbar();
   loadCloud();
 }
-function cats(){ var order=['水果','打折','果汁','半价'], c=[]; order.forEach(function(cat){ if(dishes.some(function(d){return d.on && d.cat===cat;})) c.push(cat); }); if(!c.length) c=['水果','果汁']; return c; }
+function cats(){ var order=['水果','打折','果汁','半价'], c=[]; order.forEach(function(cat){ if(dishes.some(function(d){return d.on && d.cat===cat;})) c.push(cat); }); return c; }
 function catLabel(c){ return c==='水果'?'新鲜水果':(c==='果汁'?'现榨果汁':(c==='打折'?'打折水果':(c==='半价'?'第二杯半价':c))); }
 /* 第二杯半价：从现榨果汁自动同步生成，价格自动×0.5 */
 function syncHalfPrice(){
@@ -437,7 +440,9 @@ function syncHalfPrice(){
 }
 function renderCats(){
   var box=document.getElementById('cats'); var html='';
-  cats().forEach(function(c){ html+='<div class="cat'+(c===curCat?' on':'')+'" onclick="setCat(\''+c+'\')">'+catLabel(c)+'</div>'; });
+  var cs=cats();
+  if(!cs.length){ box.innerHTML='<div style="padding:14px;text-align:center;color:#999;font-size:14px">本店菜单更新中，敬请期待～</div>'; return; }
+  cs.forEach(function(c){ html+='<div class="cat'+(c===curCat?' on':'')+'" onclick="setCat(\''+c+'\')">'+catLabel(c)+'</div>'; });
   box.innerHTML=html;
 }
 function setCat(c){ curCat=c; renderCats(); renderDishes(); }
@@ -457,7 +462,7 @@ function renderDishes(){
   list.forEach(function(d){
     var c=cart[d.id]||{qty:0,note:''};
     var img=(d.img===undefined)?(d.id+'.jpg'):d.img;
-    var imgHtml=img?'<div class="dimg"><img src="'+esc(img)+'?v='+IMG_VER+'" alt="'+esc(d.name)+'" loading="lazy" onclick="zoomImg(this.src)"></div>':'';
+    var imgHtml=img?'<div class="dimg"><img src="'+esc(img)+'?v='+IMG_VER+'" alt="'+esc(d.name)+'" loading="lazy" onerror="this.src=\'data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2286%22 height=%2286%22><rect width=%2286%22 height=%2286%22 fill=%22%23f0f0f0%22/><text x=%2243%22 y=%2248%22 font-size=%2212%22 text-anchor=%22middle%22 fill=%22%23999%22>暂无图片</text></svg>\'" onclick="zoomImg(this.src)"></div>':'';
     html+='<div class="dish">'+imgHtml+'<div class="info"><div class="name">'+esc(d.name)+'</div>'+
       '<div class="unit">'+esc(d.unit||'')+'</div>'+
       '<div class="price">'+(d.cat==='半价'?'<span style="background:#fb8c00;color:#fff;font-size:10px;padding:1px 5px;border-radius:3px;margin-right:4px;vertical-align:middle">半价</span>':'')+money(d.price)+'<small> / '+esc(d.unit||'份')+'</small></div></div>'+
@@ -468,14 +473,15 @@ function renderDishes(){
   box.innerHTML=html || '<div style="text-align:center;color:#999;padding:40px">该分类暂无商品</div>';
 }
 function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function saveCart(){ try{ localStorage.setItem('fruit_cart', JSON.stringify(cart)); }catch(e){} }
 function addToCart(id){
   var d=byId(id);
   if(d&&d.cat==='半价'&&!canAddHalf(d)){ alert('第二杯半价只能选价格相同或更低的果汁哦~'); return; }
   if(!cart[id]) cart[id]={qty:0,note:''};
-  cart[id].qty++; renderDishes(); renderCartbar();
+  cart[id].qty++; saveCart(); renderDishes(); renderCartbar();
 }
-function setNote(id,val){ if(!cart[id]) cart[id]={qty:0,note:''}; cart[id].note=val; }
-function changeQty(id,delta){ if(!cart[id]) cart[id]={qty:0,note:''}; cart[id].qty+=delta; if(cart[id].qty<=0) delete cart[id]; var d=byId(id); if(d&&d.cat==='果汁'&&delta<0){ fixHalfCart(); } renderCartItems(); renderCartbar(); renderDishes(); }
+function setNote(id,val){ if(!cart[id]) cart[id]={qty:0,note:''}; cart[id].note=val; saveCart(); }
+function changeQty(id,delta){ if(!cart[id]) cart[id]={qty:0,note:''}; cart[id].qty+=delta; if(cart[id].qty<=0) delete cart[id]; var d=byId(id); if(d&&d.cat==='果汁'&&delta<0){ fixHalfCart(); } saveCart(); renderCartItems(); renderCartbar(); renderDishes(); }
 function cartList(){ var r=[]; for(var id in cart){ if(cart[id].qty>0) r.push({id:id,qty:cart[id].qty,note:cart[id].note}); } return r; }
 function juiceCount(){ var n=0; cartList().forEach(function(c){ var d=byId(c.id); if(d&&d.cat==='果汁') n+=c.qty; }); return n; }
 function halfCount(){ var n=0; cartList().forEach(function(c){ var d=byId(c.id); if(d&&d.cat==='半价') n+=c.qty; }); return n; }
@@ -525,17 +531,18 @@ function renderCartItems(){
   box.innerHTML=html||'<div style="text-align:center;color:#999;padding:20px">购物车是空的</div>';
   document.getElementById('drawerTotal').textContent=money(cartTotal());
 }
-var shopOpen=true, adminShopOpen=true;
+var shopOpen=false, adminShopOpen=false, _shopLoaded=false;
 function refreshShopStatus(){
   try{
     fetch(SB_URL+'/rest/v1/rpc/get_shop_status',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:'{}'})
       .then(function(r){ return r.json(); })
-      .then(function(j){ if(j && j.open!=null){ shopOpen=!!j.open; renderShopBanner(); } })
+      .then(function(j){ if(j && j.open!=null){ shopOpen=!!j.open; _shopLoaded=true; renderShopBanner(); } })
       .catch(function(){});
   }catch(e){}
 }
 function renderShopBanner(){
   var el=document.getElementById('shopBanner'); if(!el) return;
+  if(!_shopLoaded){ el.style.display='none'; return; }
   if(shopOpen){ el.style.display='block'; el.style.background='#e8f5e9'; el.style.color='#2e7d32'; el.innerHTML='🟢 营业中 · 欢迎下单'; }
   else { el.style.display='block'; el.style.background='#ffebee'; el.style.color='#c62828'; el.innerHTML='🔴 已打烊 · 暂不接即时单（可选「次日」时间段下单）'; }
 }
@@ -543,7 +550,7 @@ function loadAdminShopStatus(){
   try{
     fetch(SB_URL+'/rest/v1/rpc/get_shop_status',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:'{}'})
       .then(function(r){ return r.json(); })
-      .then(function(j){ if(j && j.open!=null){ adminShopOpen=!!j.open; shopOpen=adminShopOpen; renderShopToggle(); renderShopBanner(); } })
+      .then(function(j){ if(j && j.open!=null){ adminShopOpen=!!j.open; shopOpen=adminShopOpen; _shopLoaded=true; renderShopToggle(); renderShopBanner(); } })
       .catch(function(){});
   }catch(e){}
 }
@@ -567,8 +574,15 @@ function toggleShopStatus(){
 }
 window.setInterval(function(){ if(!adminOk) refreshShopStatus(); }, 60000);
 function openCheckout(){
-  refreshShopStatus();
   if(!cartList().length){ alert('购物车是空的'); return; }
+  // 同步查一次营业状态，避免打烊竞态
+  var ck=document.getElementById('ckTime').value;
+  if(!shopOpen && String(ck||'').indexOf('次日')!==0){
+    // 再发一次确认请求
+    try{ fetch(SB_URL+'/rest/v1/rpc/get_shop_status',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:'{}'})
+      .then(function(r){return r.json();})
+      .then(function(j){ if(j&&j.open!=null){ shopOpen=!!j.open; renderShopBanner(); } }).catch(function(){}); }catch(e){}
+  }
   closeDrawer(); document.getElementById('checkoutModal').classList.add('show');
   window._delivery=null; document.getElementById('deliveryBox').style.display='none';
 }
@@ -728,7 +742,7 @@ function submitOrder(){
   localAlarmed[order.id]=1; try{ localStorage.setItem('zz_local_alarmed',JSON.stringify(localAlarmed)); }catch(e){}
   if(autoAlarm && localStorage.getItem('zz_merchant')){ try{ var _la=new Audio('https://zzxg-waisong.github.io/voice_new_order.wav'); _la.volume=Math.max(0,Math.min(1,parseInt(localStorage.getItem('zz_voice_vol')||'100',10)/100)); _la.play(); }catch(e){} }
   try{ placeCloudOrder(order); }catch(e){}
-  cart={}; renderDishes(); renderCartbar(); closeCheckout();
+  cart={}; saveCart(); renderDishes(); renderCartbar(); closeCheckout();
   curOrder=order; showPay(order);
 }
 function showPay(order){
@@ -772,9 +786,15 @@ function closePay(){ var m=document.getElementById('payModal'); if(m) m.classLis
 function payDone(){
   if(!curOrder) return;
   var order=curOrder; order.status='已付款'; save(LS_ORDERS, orders);
+  // 同步云端订单状态为已付款（店主后台可见）
+  try{
+    var pwd=localStorage.getItem(LS_CLOUDPWD)||'1986shenhu';
+    fetch(SB_URL+'/rest/v1/rpc/update_order_status',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({admin_pwd:pwd,order_id:order.id,status:'已付款'})}).catch(function(){});
+  }catch(e){}
   var text=formatOrderText(order);
   document.getElementById('payModal').classList.remove('show');
-  openResult(text, order);
+  // 非称重单付款后直接提示成功，不再让顾客复制订单
+  openResult(text, order, false, true);
 }
 function formatOrderText(o){
   var lines=[];
@@ -816,17 +836,24 @@ function formatOrderText(o){
   lines.push('【状态】'+o.status);
   return lines.join('\n');
 }
-function openResult(text, order, weighMode){
+function openResult(text, order, weighMode, paidDone){
   var box=document.createElement('div');
   box.className='modal show'; box.id='resultModal';
-  var tip = weighMode
-    ? '<p style="font-size:13px;color:#e65100;margin:10px 0;line-height:1.7;background:#fff8e1;padding:10px;border-radius:8px">⚖️ 本单为<b>称重结算</b>：金额为预估。店主称重后会<b>微信联系您确认实际金额</b>，确认后您再付款，付款后马上配送。</p>'
-    : '<p style="font-size:12px;color:#888;margin-top:10px;line-height:1.6">提示：纯网页无法直接唤起微信，请先"复制订单"，再打开微信粘贴发送给店主（或识别上面的微信码加好友发送）。</p>';
-  box.innerHTML='<div class="box"><h3 style="text-align:center;margin-bottom:10px">'+(weighMode?'📦 订单已提交（待称重）':'✅ 订单已生成，请发给店主')+'</h3>'+
+  var inner='';
+  if(weighMode){
+    inner='<p style="font-size:13px;color:#e65100;margin:10px 0;line-height:1.7;background:#fff8e1;padding:10px;border-radius:8px">⚖️ 本单为<b>称重结算</b>：金额为预估。店主称重后会<b>电话联系您确认实际金额</b>，确认后您再付款。<br>如需先沟通，请扫下方微信码加店主好友～</p>'+
+      '<div style="text-align:center;margin:10px 0"><img src="'+esc(payCfg.wxUrl||'微信二维码.png')+'" style="width:160px;border-radius:8px"><div style="font-size:12px;color:#888;margin-top:4px">加店主好友（称重后发报价）</div></div>'+
+      '<div style="display:flex;gap:8px"><button class="btn" style="flex:1" onclick="copyText()">复制订单</button></div>';
+  } else if(paidDone){
+    inner='<p style="text-align:center;font-size:15px;color:#2e7d32;margin:10px 0;line-height:1.7">✅ 付款成功，订单已收到<br>我们会尽快为您配送，请保持电话畅通～</p>';
+  } else {
+    inner='<p style="font-size:12px;color:#888;margin-top:10px;line-height:1.6">提示：纯网页无法直接唤起微信，请先"复制订单"，再打开微信粘贴发送给店主。</p>'+
+      '<div style="display:flex;gap:8px"><button class="btn" style="flex:1" onclick="copyText()">复制订单</button>'+
+      '<button class="btn orange" style="flex:1" onclick="sendWechat()">发送给商家微信</button></div>';
+  }
+  box.innerHTML='<div class="box"><h3 style="text-align:center;margin-bottom:10px">'+(weighMode?'📦 订单已提交（待称重）':(paidDone?'✅ 订单已收到':'✅ 订单已生成，请发给店主'))+'</h3>'+
     '<div class="ordertext">'+esc(text)+'</div>'+
-    '<div style="display:flex;gap:8px"><button class="btn" style="flex:1" onclick="copyText()">复制订单</button>'+
-    '<button class="btn orange" style="flex:1" onclick="sendWechat()">发送给商家微信</button></div>'+
-    tip+
+    inner+
     '<button class="btn gray" style="width:100%;margin-top:10px" onclick="document.getElementById(\'resultModal\').remove();window.location.hash=\'#/\';">完成</button></div>';
   document.body.appendChild(box);
   window._lastText=text;
@@ -1735,7 +1762,7 @@ function makeQr(text){
     // 底部版本号（年月日，便于核对）
     ctx.fillStyle='#888';
     ctx.font='24px "Microsoft YaHei","PingFang SC",sans-serif';
-    ctx.fillText('V20260828', W/2, W+30);
+    var _v=new Date(); ctx.fillText('V'+_v.getFullYear()+(''+(_v.getMonth()+1)).padStart(2,'0')+(''+_v.getDate()).padStart(2,'0'), W/2, W+30);
     var dataUrl=canvas.toDataURL('image/png');
     document.getElementById('qrBox').innerHTML='<img src="'+dataUrl+'" style="width:240px;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.08)">';
     window._qrDataUrl=dataUrl;
@@ -1760,7 +1787,7 @@ function renderSetAdmin(){
   return html;
 }
 function resetData(){
-  if(confirm('确认清空本机所有数据？顾客端菜单不受影响。')){ localStorage.removeItem(LS_DISHES); localStorage.removeItem(LS_ORDERS); localStorage.removeItem(LS_PAY); localStorage.removeItem(LS_SHOP); location.reload(); }
+  if(confirm('确认清空本机所有数据？顾客端菜单不受影响。')){ localStorage.removeItem(LS_DISHES); localStorage.removeItem(LS_ORDERS); localStorage.removeItem(LS_PAY); localStorage.removeItem(LS_SHOP); localStorage.removeItem('fruit_cart'); location.reload(); }
 }
 
 /* 初始化 */
