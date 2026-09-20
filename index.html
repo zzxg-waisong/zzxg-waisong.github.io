@@ -340,20 +340,25 @@ function save(k, v){ localStorage.setItem(k, JSON.stringify(v)); }
 
 /* ============ 云端菜单同步（GitHub 仓库即云端数据库，点单二维码不变） ============ */
 var _lastLoad=0;
+function applyCloudMenu(arr){
+  if(!arr || !arr.length) return;
+  dishes=arr.filter(function(d){return d.cat!=='半价';});
+  try{ localStorage.setItem(LS_DISHES, JSON.stringify(dishes)); }catch(e){}
+  syncHalfPrice(); renderCats(); renderDishes(); renderCartbar();
+}
 function loadCloud(){
   var now=Date.now();
   if(now-_lastLoad<30000) return;
   _lastLoad=now;
-  fetch('dishes.json?v='+now, {cache:'no-store'})
+  fetch(SB_URL+'/rest/v1/rpc/get_menu',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:'{}'})
+    .then(function(r){ return r.json(); })
+    .then(function(arr){ if(arr && arr.length) applyCloudMenu(arr); else loadCloudFallback(); })
+    .catch(function(){ loadCloudFallback(); });
+}
+function loadCloudFallback(){
+  fetch('dishes.json?v='+Date.now(), {cache:'no-store'})
     .then(function(r){ if(!r.ok) throw 0; return r.json(); })
-    .then(function(arr){
-      if(arr && arr.length){
-        dishes=arr;
-        try{ localStorage.setItem(LS_DISHES, JSON.stringify(dishes)); }catch(e){}
-        syncHalfPrice();
-        renderCats(); renderDishes(); renderCartbar();
-      }
-    })
+    .then(function(arr){ applyCloudMenu(arr); })
     .catch(function(){});
 }
 function setCloudStatus(t){ var e=document.getElementById('cloudStatus'); if(e) e.innerHTML=t; }
@@ -365,28 +370,25 @@ function saveCloudCfg(){
 }
 function b64utf8(s){ return btoa(unescape(encodeURIComponent(s))); }
 function cloudSync(){
-  if(!cloudCfg.token){ alert('请先在下方填写并保存 GitHub 令牌'); return; }
   setCloudStatus('正在同步菜单到云端…');
-  var url='https://api.github.com/repos/'+cloudCfg.repo+'/contents/dishes.json';
-  var syncDishes=dishes.filter(function(d){return d.cat!=='半价';}); var content=b64utf8(JSON.stringify(syncDishes, null, 1));
-  fetch(url, {headers:{Authorization:'Bearer '+cloudCfg.token, Accept:'application/vnd.github+json'}})
-    .then(function(r){ if(r.status===404) return null; if(!r.ok) throw new Error('读取线上文件失败('+r.status+')，请检查令牌与仓库'); return r.json(); })
-    .then(function(f){
-      var body={message:'更新菜单 '+nowStr(), content:content};
-      if(f && f.sha) body.sha=f.sha;
-      return fetch(url, {method:'PUT', headers:{Authorization:'Bearer '+cloudCfg.token, Accept:'application/vnd.github+json','Content-Type':'application/json'}, body:JSON.stringify(body)});
+  var pwd=localStorage.getItem(LS_CLOUDPWD)||'1986shenhu';
+  var syncDishes=dishes.filter(function(d){return d.cat!=='半价';});
+  fetch(SB_URL+'/rest/v1/rpc/save_menu',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({admin_pwd:pwd, p_dishes:syncDishes})})
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      if(j && j.ok){ setCloudStatus('✅ 已同步 '+syncDishes.length+' 项到云端！手机/顾客端稍后刷新即最新（二维码不变）'); }
+      else setCloudStatus('❌ 同步失败：'+(j&&j.msg||'密码错误'));
     })
-    .then(function(r){ if(!r.ok) throw new Error('同步失败('+r.status+')，请检查令牌写权限'); setCloudStatus('✅ 已同步 '+dishes.length+' 项到云端！顾客端稍后刷新即最新（二维码不变）'); })
-    .catch(function(e){ setCloudStatus('❌ '+e.message); });
+    .catch(function(){ setCloudStatus('❌ 同步失败：网络问题'); });
 }
 function cloudPull(){
-  setCloudStatus('正在拉取线上菜单…');
-  fetch('dishes.json?v='+Date.now(), {cache:'no-store'})
-    .then(function(r){ if(!r.ok) throw new Error('拉取失败('+r.status+')'); return r.json(); })
+  setCloudStatus('正在拉取云端菜单…');
+  fetch(SB_URL+'/rest/v1/rpc/get_menu',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:'{}'})
+    .then(function(r){ return r.json(); })
     .then(function(arr){
-      if(!arr || !arr.length) throw new Error('线上菜单为空');
-      dishes=arr; save(LS_DISHES, dishes); syncHalfPrice(); renderDishesAdmin(); renderCats(); renderDishes(); renderCartbar();
-      setCloudStatus('✅ 已拉取线上菜单（'+dishes.length+' 项）载入后台');
+      if(!arr || !arr.length) throw new Error('云端菜单为空');
+      dishes=arr.filter(function(d){return d.cat!=='半价';}); save(LS_DISHES, dishes); syncHalfPrice(); renderDishesAdmin(); renderCats(); renderDishes(); renderCartbar();
+      setCloudStatus('✅ 已拉取云端菜单（'+dishes.length+' 项）载入后台');
     })
     .catch(function(e){ setCloudStatus('❌ '+e.message); });
 }
@@ -865,7 +867,6 @@ function adminLogin(){
 }
 function adminLogout(){ adminOk=false; localStorage.setItem(LS_SESSION,'0'); stopCloudTimer(); location.hash='#/'; }
 function adminRefresh(){
-  if(!cloudCfg.token){ alert('请先在「菜品」页填写 GitHub 令牌，才能同步云端菜单'); return; }
   cloudPull();
 }
 function renderAdmin(){
@@ -1340,12 +1341,9 @@ function renderDishesAdmin(){
     '</div>'+
     '<div class="card" style="background:#eef8ee;border:1px solid #c8e6c9;margin-bottom:12px">'+
     '<div style="font-size:13px;font-weight:700;color:#2e7d32;margin-bottom:6px">☁️ 云端菜单同步（顾客扫码点单即时生效，二维码不变）</div>'+
-    '<label>GitHub 令牌 Token（一次性申请，保存后不用再动）</label>'+
-    '<input id="cloudToken" type="password" value="'+esc(cloudCfg.token)+'" placeholder="ghp_ 开头">'+
-    '<label>仓库（一般不用改）</label><input id="cloudRepo" value="'+esc(cloudCfg.repo)+'">'+
+    '<div style="font-size:12px;color:#2e7d32;background:#f1f8e9;padding:8px 10px;border-radius:6px;margin-bottom:8px">✅ 已免 GitHub 令牌：手机/电脑用后台密码即可同步菜单，顾客扫码即时生效。</div>'+
     '<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">'+
-    '<button class="btn" onclick="saveCloudCfg()">保存令牌</button>'+
-    '<button class="btn outline" onclick="cloudPull()">拉取线上菜单</button>'+
+    '<button class="btn outline" onclick="cloudPull()">拉取云端菜单</button>'+
     '<button class="btn orange" onclick="cloudSync()">☁️ 同步菜单到云端</button></div>'+
     '<div id="cloudStatus" style="font-size:12px;color:#666;margin-top:8px"></div></div>'+
     (isHalf?'<p style="font-size:12px;color:#fb8c00;margin-bottom:10px">本分类由「现榨果汁」自动同步生成，价格自动为半价，无需手动编辑。</p>':'<p style="font-size:12px;color:#888;margin-bottom:10px">改好菜单后点「☁️ 同步菜单到云端」，顾客端即读取最新菜单（本机修改需手动同步才会生效）。</p>');
