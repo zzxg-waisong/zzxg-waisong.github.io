@@ -341,7 +341,7 @@ function save(k, v){ localStorage.setItem(k, JSON.stringify(v)); }
 /* ============ 云端菜单同步（GitHub 仓库即云端数据库，点单二维码不变） ============ */
 var _lastLoad=0;
 function applyCloudMenu(arr){
-  if(!arr || !arr.length) return;
+  if(!Array.isArray(arr)) return;
   dishes=arr.filter(function(d){return d.cat!=='半价';});
   try{ localStorage.setItem(LS_DISHES, JSON.stringify(dishes)); }catch(e){}
   syncHalfPrice(); renderCats(); renderDishes(); renderCartbar();
@@ -352,7 +352,7 @@ function loadCloud(){
   _lastLoad=now;
   fetch(SB_URL+'/rest/v1/rpc/get_menu',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:'{}'})
     .then(function(r){ return r.json(); })
-    .then(function(arr){ if(arr && arr.length) applyCloudMenu(arr); else loadCloudFallback(); })
+    .then(function(arr){ applyCloudMenu(arr); })
     .catch(function(){ loadCloudFallback(); });
 }
 function loadCloudFallback(){
