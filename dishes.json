@@ -5,8 +5,9 @@
   "price": 10,
   "unit": "杯",
   "cat": "果汁",
-  "on": true,
-  "img": "xiguazhi.jpg"
+  "on": false,
+  "img": "xiguazhi.jpg",
+  "per": 0
  },
  {
   "id": "j2",
@@ -14,8 +15,9 @@
   "price": 14,
   "unit": "杯",
   "cat": "果汁",
-  "on": true,
-  "img": "qilin_xiguazhi.jpg"
+  "on": false,
+  "img": "qilin_xiguazhi.jpg",
+  "per": 0
  },
  {
   "id": "j3",
@@ -23,8 +25,9 @@
   "price": 17,
   "unit": "杯",
   "cat": "果汁",
-  "on": true,
-  "img": "shiliuzhi.jpg"
+  "on": false,
+  "img": "shiliuzhi.jpg",
+  "per": 0
  },
  {
   "id": "j4",
@@ -32,8 +35,9 @@
   "price": 17,
   "unit": "杯",
   "cat": "果汁",
-  "on": true,
-  "img": "pingguozhi.jpg"
+  "on": false,
+  "img": "pingguozhi.jpg",
+  "per": 0
  },
  {
   "id": "j5",
@@ -41,8 +45,9 @@
   "price": 14,
   "unit": "杯",
   "cat": "果汁",
-  "on": true,
-  "img": "qingpingguozhi.jpg"
+  "on": false,
+  "img": "qingpingguozhi.jpg",
+  "per": 0
  },
  {
   "id": "j6",
@@ -59,8 +64,9 @@
   "price": 14,
   "unit": "杯",
   "cat": "果汁",
-  "on": true,
-  "img": "huangpihamiguazhi.jpg"
+  "on": false,
+  "img": "huangpihamiguazhi.jpg",
+  "per": 0
  },
  {
   "id": "d10",
