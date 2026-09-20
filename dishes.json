@@ -74,7 +74,7 @@
   "price": 2,
   "unit": "斤",
   "cat": "打折",
-  "on": true,
+  "on": false,
   "img": "huapi_shiliu.jpg",
   "per": 2
  },
@@ -84,7 +84,7 @@
   "price": 6,
   "unit": "斤",
   "cat": "水果",
-  "on": true,
+  "on": false,
   "img": "shiliu.jpg",
   "per": 6
  },
@@ -104,7 +104,7 @@
   "price": 6,
   "unit": "斤",
   "cat": "水果",
-  "on": true,
+  "on": false,
   "img": "da_shiliu.jpg",
   "per": 6
  },
@@ -124,7 +124,7 @@
   "price": 2.5,
   "unit": "斤",
   "cat": "水果",
-  "on": true,
+  "on": false,
   "img": "hainan_xiangjiao.jpg",
   "per": 2.5
  },
@@ -134,7 +134,7 @@
   "price": 5,
   "unit": "份",
   "cat": "水果",
-  "on": true,
+  "on": false,
   "img": "qing_pingguo.jpg",
   "per": 5
  },
@@ -144,19 +144,19 @@
   "price": 10,
   "unit": "盒",
   "cat": "水果",
-  "on": true,
+  "on": false,
   "img": "xiaoshizi.jpg",
   "per": 0
  },
  {
   "id": "d6",
   "name": "陕西红富士苹果",
-  "price": 6,
+  "price": 9,
   "unit": "斤",
   "cat": "水果",
   "on": true,
   "img": "hongfushi_pingguo.jpg",
-  "per": 6
+  "per": 9
  },
  {
   "id": "d3",
@@ -174,7 +174,7 @@
   "price": 1.5,
   "unit": "斤",
   "cat": "水果",
-  "on": true,
+  "on": false,
   "img": "dilei_xigua.jpg",
   "per": 1.5
  },
@@ -184,7 +184,7 @@
   "price": 8,
   "unit": "斤",
   "cat": "水果",
-  "on": true,
+  "on": false,
   "img": "tangxin_choupingguo.jpg",
   "per": 8
  },
@@ -214,7 +214,7 @@
   "price": 20,
   "unit": "个",
   "cat": "水果",
-  "on": true,
+  "on": false,
   "img": "huangpi_hamigua.jpg",
   "per": 0
  },
@@ -225,7 +225,7 @@
   "unit": "斤",
   "img": "wuzi_qilin_xigua.jpg",
   "cat": "水果",
-  "on": true,
+  "on": false,
   "per": 4
  },
  {
@@ -234,7 +234,7 @@
   "price": 4,
   "unit": "斤",
   "cat": "水果",
-  "on": true,
+  "on": false,
   "img": "wuzi_qilin_xigua.jpg",
   "per": 4
  }
