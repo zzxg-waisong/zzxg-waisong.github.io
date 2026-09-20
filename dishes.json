@@ -229,5 +229,23 @@
   "name": "蜜橘汁（500ml）",
   "unit": "杯",
   "price": 15
+ },
+ {
+  "id": "j9",
+  "name": "番茄汁（500ml）",
+  "price": 12,
+  "unit": "杯",
+  "cat": "果汁",
+  "on": true,
+  "img": "fanqiezhi.jpg"
+ },
+ {
+  "id": "j10",
+  "name": "红心柚汁（500ml）",
+  "price": 15,
+  "unit": "杯",
+  "cat": "果汁",
+  "on": false,
+  "img": "hongxin_youzhi.jpg"
  }
 ]
