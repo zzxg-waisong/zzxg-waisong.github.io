@@ -362,12 +362,7 @@ function loadCloudFallback(){
     .catch(function(){});
 }
 function setCloudStatus(t){ var e=document.getElementById('cloudStatus'); if(e) e.innerHTML=t; }
-function saveCloudCfg(){
-  cloudCfg.token=document.getElementById('cloudToken').value.trim();
-  cloudCfg.repo=document.getElementById('cloudRepo').value.trim()||'zzxg-waisong/zzxg-waisong.github.io';
-  save(LS_CLOUD, cloudCfg);
-  setCloudStatus('✅ 令牌已保存');
-}
+
 function b64utf8(s){ return btoa(unescape(encodeURIComponent(s))); }
 function cloudSync(){
   setCloudStatus('正在同步菜单到云端…');
