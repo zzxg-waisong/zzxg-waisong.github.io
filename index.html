@@ -170,11 +170,10 @@ body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f6f7f8;c
       <label>配送时间</label>
       <select id="ckTime">
         <option value="尽快送达">尽快送达</option>
-        <option value="今天稍晚">今天稍晚（1小时内）</option>
-        <option value="次日上午">明天上午（10:00-12:00）</option>
-        <option value="次日下午">明天下午（14:00-17:00）</option>
-        <option value="次日晚上">明天晚上（18:00-20:00）</option>
+        <optgroup label="今天"><option value="今天9:00前送达">9:00 前</option><option value="今天10:00前送达">10:00 前</option><option value="今天11:00前送达">11:00 前</option><option value="今天12:00前送达">12:00 前</option><option value="今天13:00前送达">13:00 前</option><option value="今天14:00前送达">14:00 前</option><option value="今天15:00前送达">15:00 前</option><option value="今天16:00前送达">16:00 前</option><option value="今天17:00前送达">17:00 前</option><option value="今天18:00前送达">18:00 前</option><option value="今天19:00前送达">19:00 前</option><option value="今天20:00前送达">20:00 前</option><option value="今天21:00前送达">21:00 前</option></optgroup>
+        <optgroup label="明天"><option value="明天9:00前送达">9:00 前</option><option value="明天10:00前送达">10:00 前</option><option value="明天11:00前送达">11:00 前</option><option value="明天12:00前送达">12:00 前</option><option value="明天13:00前送达">13:00 前</option><option value="明天14:00前送达">14:00 前</option><option value="明天15:00前送达">15:00 前</option><option value="明天16:00前送达">16:00 前</option><option value="明天17:00前送达">17:00 前</option><option value="明天18:00前送达">18:00 前</option><option value="明天19:00前送达">19:00 前</option><option value="明天20:00前送达">20:00 前</option><option value="明天21:00前送达">21:00 前</option></optgroup>
       </select>
+      <div style="font-size:12px;color:#999;margin-top:4px">📞 出发前电话联系您</div>
       <label>备注（可选）</label><input id="ckRemark" placeholder="例如：放门口 / 敲门">
       <div id="ckAmt" style="margin-top:12px;background:#fff8e1;border-radius:8px;padding:10px 12px;font-size:13px;line-height:1.9"></div>
       <div style="font-size:12px;color:#888;line-height:1.7;margin-top:12px;background:#fafafa;border-radius:6px;padding:8px 10px">🔒 您填写的称呼、电话、地址仅用于本次配送<br>💧 现榨果汁建议尽快饮用（2 小时内风味最佳）</div>
