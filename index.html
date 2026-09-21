@@ -844,7 +844,7 @@ function submitOrder(){
   var fee=0, dist='';
   if(dlv){ if(dlv.fee<0 || dlv.dist>10){ showOutOfRange(); return; } fee=deliveryFee(dlv.dist, subtotal); dist=dlv.dist.toFixed(1); }
   var items=list.map(function(c){ var d=byId(c.id); return {id:d.id, name:d.name, price:d.price, qty:c.qty, note:c.note, unit:d.unit, per:(d.per?d.per:0), cat:d.cat}; });
-  var hasWeight=items.some(function(it){return it.per>0;});
+  var hasWeight=items.some(function(it){return it.per>0 && it.id==='f_ganzhe';});
   var rawTotal=subtotal+fee;
   var total=hasWeight?rawTotal:roundHalf(rawTotal);
   var order={id:oid(), items:items, hasWeight:hasWeight, weights:{}, subtotal:subtotal, deliveryFee:fee, dist:dist, total:total, estTotal:total, name:name, phone:phone, addr:addr, time:time, remark:remark, created:nowStr(), status:hasWeight?'待称重':'待付款'};
