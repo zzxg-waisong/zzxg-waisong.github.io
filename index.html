@@ -599,9 +599,16 @@ function renderCartItems(){
   var box=document.getElementById('cartItems'); var html='';
   cartList().forEach(function(c){
     var d=byId(c.id); if(!d) return;
+    var isW=(d.per>0);
+    var qtyHtml;
+    if(isW){
+      qtyHtml='<div class="qty"><button onclick="changeQty(\''+c.id+'\',-1)" style="background:#eee;color:#666">删除</button></div>';
+    } else {
+      qtyHtml='<div class="qty"><button onclick="changeQty(\''+c.id+'\',-1)">−</button><span>'+c.qty+'</span><button onclick="changeQty(\''+c.id+'\',1)">+</button></div>';
+    }
     html+='<div class="cart-item"><div class="n">'+esc(d.name)+
-      (c.note?'<small>备注：'+esc(c.note)+'</small>':'')+'</div>'+
-      '<div class="qty"><button onclick="changeQty(\''+c.id+'\',-1)">−</button><span>'+c.qty+'</span><button onclick="changeQty(\''+c.id+'\',1)">+</button></div>'+
+      (c.note?'<small>'+esc(c.note)+'</small>':'')+'</div>'+
+      qtyHtml+
       '<div style="min-width:64px;text-align:right;font-weight:600">'+money(estPrice(d,c))+'</div></div>';
   });
   box.innerHTML=html||'<div style="text-align:center;color:#999;padding:20px">购物车是空的</div>';
