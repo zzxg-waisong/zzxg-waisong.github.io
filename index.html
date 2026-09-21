@@ -556,7 +556,16 @@ function fixHalfCart(){
     if(over.length){ var l2=over[over.length-1]; cart[l2.id].qty--; if(cart[l2.id].qty<=0) delete cart[l2.id]; changed=true; }
   }
 }
-function cartTotal(){ var t=0; cartList().forEach(function(c){ var d=byId(c.id); if(d) t+=d.price*c.qty; }); return t; }
+function estPrice(d, c){
+  if(!d || !(d.per>0)) return d? d.price*c.qty : 0;
+  var note=c.note||'';
+  var m1=note.match(/按斤([\d.]+)斤/);
+  if(m1) return d.price*parseFloat(m1[1]);
+  var m2=note.match(/按金额([\d.]+)元/);
+  if(m2) return parseFloat(m2[1]);
+  return d.price;
+}
+function cartTotal(){ var t=0; cartList().forEach(function(c){ var d=byId(c.id); if(d) t+=estPrice(d,c); }); return t; }
 function byId(id){ for(var i=0;i<dishes.length;i++) if(dishes[i].id===id) return dishes[i]; return null; }
 function renderCartbar(){
   var list=cartList(), n=0; list.forEach(function(c){n+=c.qty;});
@@ -573,7 +582,7 @@ function renderCartItems(){
     html+='<div class="cart-item"><div class="n">'+esc(d.name)+
       (c.note?'<small>备注：'+esc(c.note)+'</small>':'')+'</div>'+
       '<div class="qty"><button onclick="changeQty(\''+c.id+'\',-1)">−</button><span>'+c.qty+'</span><button onclick="changeQty(\''+c.id+'\',1)">+</button></div>'+
-      '<div style="min-width:64px;text-align:right;font-weight:600">'+money(d.price*c.qty)+'</div></div>';
+      '<div style="min-width:64px;text-align:right;font-weight:600">'+money(estPrice(d,c))+'</div></div>';
   });
   box.innerHTML=html||'<div style="text-align:center;color:#999;padding:20px">购物车是空的</div>';
   document.getElementById('drawerTotal').textContent=money(cartTotal());
