@@ -756,7 +756,7 @@ function submitOrder(){
   var remark=document.getElementById('ckRemark').value.trim();
   if(!name){ alert('请填写称呼'); return; }
   if(!/^1\d{10}$/.test(phone) && phone.length<7){ alert('请填写正确的联系电话'); return; }
-  if(!addr){ alert('请填写外卖地址'); return; }
+  if(!addr){ alert('请填写外卖地址（可手动输入，或从下方候选点选）'); return; }
   var list=cartList(); if(!list.length){ alert('购物车为空'); return; }
   if(halfCount()>juiceCount()){ alert('第二杯半价商品数量不能超过原价果汁数量，请调整购物车'); return; }
   var subtotal=cartTotal();
