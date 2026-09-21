@@ -359,11 +359,15 @@ function fillTimeOptions(){
   s3.innerHTML=h3;
 }
 function syncTime(){
-  var v1=document.getElementById('ckTime1').value;
-  var v2=document.getElementById('ckTime2').value;
-  var v3=document.getElementById('ckTime3').value;
+  var s1=document.getElementById('ckTime1');
+  var s2=document.getElementById('ckTime2');
+  var s3=document.getElementById('ckTime3');
+  var v1=s1.value, v2=s2.value, v3=s3.value;
   var sel=document.getElementById('ckTime');
-  if(v2){ sel.value=v2; } else if(v3){ sel.value=v3; } else { sel.value=v1; }
+  [s1,s2,s3].forEach(function(s){ s.style.background='#fff'; s.style.borderColor='#ddd'; s.style.color='#333'; });
+  var active=null;
+  if(v2){ sel.value=v2; active=s2; } else if(v3){ sel.value=v3; active=s3; } else { sel.value=v1; active=s1; }
+  if(active && active.value){ active.style.background='#fff3e0'; active.style.borderColor='#fb8c00'; active.style.color='#e65100'; active.style.fontWeight='700'; }
 }
 function loadCloud(){
   var now=Date.now();
