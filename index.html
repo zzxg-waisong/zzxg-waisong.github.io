@@ -458,7 +458,11 @@ function renderDishes(){
   var list = dishes.filter(function(d){ return d.cat===curCat && d.on; });
   if(dishSort==='priceAsc') list.sort(function(a,b){return a.price-b.price;});
   else if(dishSort==='priceDesc') list.sort(function(a,b){return b.price-a.price;});
-  else list=groupSort(list);
+  else list=(function(){
+    var weigh=list.filter(function(d){return d.per>0;});
+    var fixed=list.filter(function(d){return !(d.per>0);});
+    return groupSort(weigh).concat(groupSort(fixed));
+  })();
   list.forEach(function(d){
     var c=cart[d.id]||{qty:0,note:''};
     var img=(d.img===undefined)?(d.id+'.jpg'):d.img;
