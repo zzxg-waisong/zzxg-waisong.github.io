@@ -1377,7 +1377,7 @@ function viewOrder(i){
     '<div style="display:flex;gap:8px;flex-wrap:wrap">'+
     '<button class="btn" style="flex:1" onclick="printThis(\''+i+'\')">🖨 打印小票</button>'+
     (o.hasWeight?'<button class="btn orange" style="flex:1" onclick="copyQuote('+i+')">📋 复制报价发微信</button>':'')+
-    (o.hasWeight&&o.status!=='已付款'?'<button class="btn" style="flex:1" onclick="markPaid('+i+')">✅ 标记已付款</button>':'')+
+    (o.status!=='已付款'&&o.status!=='已完成'?'<button class="btn" style="flex:1" onclick="markPaid('+i+')">✅ 标记已付款</button>':'')+
     '<button class="btn gray" style="flex:1" onclick="document.getElementById(\'viewModal\').remove()">关闭</button></div></div>';
   document.body.appendChild(box);
 }
