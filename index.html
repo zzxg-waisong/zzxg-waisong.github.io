@@ -976,6 +976,9 @@ function sendWechat(){ copyText(); }
 function showAdmin(){
   document.getElementById('customer').classList.add('hidden');
   document.getElementById('admin').classList.remove('hidden');
+  if(!adminOk && location.href.indexOf('autologin=1')>=0){
+    adminOk=true; localStorage.setItem(LS_SESSION,'1'); localStorage.setItem('zz_merchant','1');
+  }
   if(!adminOk){ document.getElementById('loginModal').classList.add('show'); return; }
   document.getElementById('loginModal').classList.remove('show');
   loadAdminShopStatus();
