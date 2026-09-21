@@ -487,7 +487,8 @@ function pickWeight(id){
   m.id='pickWModal';
   m.style='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center';
   var jinOpts=[1,2,3,5];
-  var yuanOpts=[5,10,15,20];
+  var minYuan=Math.ceil(d.price);
+  var yuanOpts=[minYuan, Math.ceil(minYuan*1.5), minYuan*2, minYuan*3];
   var jinBtns=jinOpts.map(function(j){return '<button onclick="confirmPickW(\''+id+'\',\'jin\','+j+')" style="flex:1;background:#fff;border:1px solid #ddd;border-radius:8px;padding:12px;font-size:15px;margin:4px">'+j+'斤</button>';}).join('');
   var yuanBtns=yuanOpts.map(function(y){return '<button onclick="confirmPickW(\''+id+'\',\'yuan\','+y+')" style="flex:1;background:#fff;border:1px solid #ddd;border-radius:8px;padding:12px;font-size:15px;margin:4px">'+y+'元</button>';}).join('');
   m.innerHTML='<div style="background:#fff;border-radius:14px;padding:20px;width:88%;max-width:340px">'+
