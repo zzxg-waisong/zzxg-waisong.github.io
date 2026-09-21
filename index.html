@@ -653,7 +653,7 @@ if(location.href.indexOf('autologin=1')>=0){
 function clearCart(){
   if(!cartList().length){ alert('购物车是空的'); return; }
   if(!confirm('确认清空购物车？')) return;
-  cart={}; save('zz_cart',cart); renderCartItems(); renderCartbar(); renderDishes(); closeDrawer();
+  cart={}; saveCart(); renderCartItems(); renderCartbar(); renderDishes(); closeDrawer();
 }
 function openCheckout(){
   if(!cartList().length){ alert('购物车是空的'); return; }
@@ -853,7 +853,7 @@ function showOutOfRange(){
 }
 function closeOutOfRange(){
   var m=document.getElementById('outOfRangeModal'); if(m) m.remove();
-  cart={}; save('zz_cart',cart); curCat='水果'; renderCats(); renderDishes(); updateCartBadge();
+  cart={}; saveCart(); curCat='水果'; renderCats(); renderDishes(); updateCartBadge();
   var d=document.getElementById('drawer'); if(d) d.style.display='none';
 }
 function submitOrder(){
