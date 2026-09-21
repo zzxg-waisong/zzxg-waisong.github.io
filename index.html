@@ -586,6 +586,14 @@ function autoCheckShopHours(){
 }
 window.setInterval(function(){ if(adminOk) autoCheckShopHours(); }, 60000);
 window.setInterval(function(){ if(!adminOk) refreshShopStatus(); }, 60000);
+// 电脑端快捷方式打开：无论在哪个界面，都在后台轮询云端订单+语音提醒
+if(location.href.indexOf('autologin=1')>=0){
+  adminOk=true; localStorage.setItem('zz_merchant','1'); localStorage.setItem('LS_SESSION','1');
+  try{ startCloudTimer(); }catch(e){}
+  document.addEventListener('visibilitychange', function(){
+    if(!document.hidden) fetchCloudOrders(true);
+  });
+}
 function openCheckout(){
   if(!cartList().length){ alert('购物车是空的'); return; }
   updateCkAmt();
