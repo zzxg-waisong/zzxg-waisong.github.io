@@ -739,7 +739,7 @@ function updateCkAmt(){
   if(dlv){ if(dlv.fee<0||dlv.dist>10){ el.innerHTML='<span style="color:#e65100">该地址超 10 公里，无法配送（建议到店自取）</span>'; return; } fee=deliveryFee(dlv.dist,sub); dist=dlv.dist.toFixed(1); }
   var html='<div>商品合计：<b>'+money(sub)+'</b></div>';
   if(dlv){ html+='<div>骑行距离：约 '+dist+' 公里</div>'; }
-  html+='<div>配送费：<b>'+(fee===0?'免配送费':money(fee))+'</b></div>';
+  html+='<div>配送费：<b>'+(dlv?(fee===0?'免配送费':money(fee)):'请选地址后计算')+'</b></div>';
   var raw=sub+fee;
   var hasW=cartList().some(function(c){var d=byId(c.id);return d&&d.per>0;});
   var total=hasW?raw:roundHalf(raw);
