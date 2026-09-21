@@ -700,16 +700,39 @@ function calcDelivery(){
       return j.geocodes[0].location.split(',');
     });
   }
+  function rideDist(origin, dest, cb){
+    fetch('https://restapi.amap.com/v4/direction/bicycling?origin='+origin+'&destination='+dest+'&key='+key)
+      .then(function(r){return r.json();})
+      .then(function(j2){
+        if(j2.errcode===0 && j2.data && j2.data.paths && j2.data.paths.length){
+          cb(j2.data.paths[0].distance/1000, false);
+        } else {
+          cb(null, true);
+        }
+      })
+      .catch(function(){ cb(null, true); });
+  }
   getDest().then(function(loc){
     var dest=loc[0]+','+loc[1];
     var origin=shopCfg.shopLng+','+shopCfg.shopLat;
-    return fetch('https://restapi.amap.com/v4/direction/bicycling?origin='+origin+'&destination='+dest+'&key='+key).then(function(r){return r.json();}).then(function(j2){
-      if(j2.errcode===0 && j2.data && j2.data.paths && j2.data.paths.length){
-        done(j2.data.paths[0].distance/1000);
-      } else {
-        fallback(loc);
-      }
-    }).catch(function(){ fallback(loc); });
+    rideDist(origin, dest, function(d, fail){
+      if(!fail){ done(d); return; }
+      // 重试一次
+      rideDist(origin, dest, function(d2, fail2){
+        if(!fail2){ done(d2); return; }
+        // 仍失败才用直线距离，并标注
+        var straight=distKm({lng:+loc[0],lat:+loc[1]},{lng:+shopCfg.shopLng,lat:+shopCfg.shopLat});
+        var sub=cartTotal();
+        var fee=deliveryFee(straight, sub);
+        window._delivery={dist:straight,fee:fee};
+        var h='🚴 骑行距离：约 '+straight.toFixed(1)+' 公里（直线估算，以实际为准）<br>';
+        if(fee<0) h+='<span style="color:#e53935">超出 10 公里配送范围</span>';
+        else if(fee===0) h+='<span style="color:#2e7d32">✔ 免配送费</span>';
+        else h+='<span style="color:#fb8c00">配送费：'+money(fee)+'</span>';
+        document.getElementById('deliveryBox').innerHTML=h;
+        if(typeof updateCkAmt==='function') updateCkAmt();
+      });
+    });
   }).catch(function(){});
 }
 (function(){ var a=document.getElementById('ckAddr'); if(a){ a.addEventListener('blur',function(){ setTimeout(calcDelivery,150); }); a.addEventListener('input',addrInput); } })();
