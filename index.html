@@ -1254,7 +1254,14 @@ function deleteCloudOrder(id){
     .then(function(r){ return r.json(); }).then(function(j){ if(j&&j.ok){ fetchCloudOrders(); } else { alert('删除失败'); } }).catch(function(){ alert('删除失败'); });
 }
 function renderOrders(){
+  var pending=(typeof cloudOrders!=='undefined'?cloudOrders:[]).filter(function(c){return c.status==='new'||c.status==='待称重'||c.status==='待付款';}).length;
+  var localPending=orders.filter(function(o){return o.status==='待称重'||o.status==='待付款';}).length;
+  var totalPending=pending+localPending;
   var html='<div class="panel"><h3>订单列表（'+orders.length+' 单）</h3>';
+  if(totalPending>0){
+    html+='<div style="background:#ffebee;border:2px solid #e53935;border-radius:8px;padding:10px;text-align:center;margin-bottom:12px">'+
+      '<span style="color:#e53935;font-weight:700;font-size:16px">🔔 待处理订单：'+totalPending+' 单</span></div>';
+  }
   html+='<div class="card" style="background:#e8f0fe;border:1px solid #c5d5f2;margin-bottom:12px">'+
     '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><b>📱 顾客手机下的单（云端）</b>'+
     '<button class="btn" style="background:#1a73e8;color:#fff" onclick="fetchCloudOrders()">🔄 刷新云端订单</button></div>'+
