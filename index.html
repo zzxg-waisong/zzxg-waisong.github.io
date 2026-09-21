@@ -483,6 +483,27 @@ function saveCart(){ try{ localStorage.setItem('fruit_cart', JSON.stringify(cart
 function addToCart(id){
   var d=byId(id);
   if(d&&d.cat==='半价'&&!canAddHalf(d)){ alert('第二杯半价只能选价格相同或更低的果汁哦~'); return; }
+  // 称重商品（除甘蔗外）：让顾客选按斤还是按金额
+  if(d&&d.per>0 && id!=='f_ganzhe'){
+    var mode=prompt('【'+d.name+'】'+d.price+'元/斤\n\n请输入要多少斤（例如：2）\n或输入要多少元（前面加￥，例如：￥10）','');
+    if(mode===null) return;
+    mode=String(mode).trim();
+    if(!mode){ alert('请输入数量'); return; }
+    if(!cart[id]) cart[id]={qty:0,note:''};
+    if(mode.charAt(0)==='￥'||mode.charAt(0)==='¥'){
+      var amt=parseFloat(mode.slice(1));
+      if(isNaN(amt)||amt<=0){ alert('金额无效'); return; }
+      cart[id].note='按金额'+amt+'元';
+      cart[id].qty=1;
+    } else {
+      var jin=parseFloat(mode);
+      if(isNaN(jin)||jin<=0){ alert('斤数无效'); return; }
+      cart[id].note='按斤'+jin+'斤';
+      cart[id].qty=1;
+    }
+    saveCart(); renderDishes(); renderCartbar();
+    return;
+  }
   if(!cart[id]) cart[id]={qty:0,note:''};
   cart[id].qty++; saveCart(); renderDishes(); renderCartbar();
 }
