@@ -349,13 +349,13 @@ function fillTimeOptions(){
   var s2=document.getElementById('ckTime2'); var s3=document.getElementById('ckTime3');
   if(!s2||!s3) return;
   var h2='<option value="">今天</option>';
-  for(var h=9;h<=21;h++){
+  for(var h=10;h<=19;h++){
     if(h<=curH) continue;  // 已过的不显示
     h2+='<option value="今天'+h+':00前送达">'+h+':00 前</option>';
   }
   s2.innerHTML=h2;
   var h3='<option value="">明天</option>';
-  for(var h=9;h<=21;h++){ h3+='<option value="明天'+h+':00前送达">'+h+':00 前</option>'; }
+  for(var h=10;h<=19;h++){ h3+='<option value="明天'+h+':00前送达">'+h+':00 前</option>'; }
   s3.innerHTML=h3;
 }
 function syncTime(){
