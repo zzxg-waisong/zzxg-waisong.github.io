@@ -602,7 +602,7 @@ function renderCartItems(){
     var isW=(d.per>0);
     var qtyHtml;
     if(isW){
-      qtyHtml='<div class="qty"><button onclick="changeQty(\''+c.id+'\',-1)" style="background:#eee;color:#666">删除</button></div>';
+      qtyHtml='<div class="qty" style="display:flex;gap:4px"><button onclick="changeQty(\''+c.id+'\',-1)" style="background:#eee;color:#666">删除</button><button onclick="pickWeight(\''+c.id+'\')" style="background:#fff3e0;color:#e65100">调整</button></div>';
     } else {
       qtyHtml='<div class="qty"><button onclick="changeQty(\''+c.id+'\',-1)">−</button><span>'+c.qty+'</span><button onclick="changeQty(\''+c.id+'\',1)">+</button></div>';
     }
