@@ -168,11 +168,14 @@ body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f6f7f8;c
       <label>外卖地址（输入关键词，从下方候选中点选可精确定位）</label><div class="wrap"><textarea id="ckAddr" rows="2" placeholder="输入小区/道路名，从候选点选"></textarea><div id="addrTips" style="display:none"></div><button class="btn" style="margin-top:6px;font-size:13px;padding:6px 10px" onclick="openMapPick()">📍 地图选点（点地图选位置）</button></div>
       <div id="deliveryBox" style="background:#f0f7f0;border-radius:8px;padding:10px;margin-top:8px;font-size:13px;line-height:1.8;display:none"></div>
       <label>配送时间</label>
-      <select id="ckTime">
-        <option value="尽快送达">尽快送达</option>
-        <optgroup label="今天"><option value="今天9:00前送达">9:00 前</option><option value="今天10:00前送达">10:00 前</option><option value="今天11:00前送达">11:00 前</option><option value="今天12:00前送达">12:00 前</option><option value="今天13:00前送达">13:00 前</option><option value="今天14:00前送达">14:00 前</option><option value="今天15:00前送达">15:00 前</option><option value="今天16:00前送达">16:00 前</option><option value="今天17:00前送达">17:00 前</option><option value="今天18:00前送达">18:00 前</option><option value="今天19:00前送达">19:00 前</option><option value="今天20:00前送达">20:00 前</option><option value="今天21:00前送达">21:00 前</option></optgroup>
-        <optgroup label="明天"><option value="明天9:00前送达">9:00 前</option><option value="明天10:00前送达">10:00 前</option><option value="明天11:00前送达">11:00 前</option><option value="明天12:00前送达">12:00 前</option><option value="明天13:00前送达">13:00 前</option><option value="明天14:00前送达">14:00 前</option><option value="明天15:00前送达">15:00 前</option><option value="明天16:00前送达">16:00 前</option><option value="明天17:00前送达">17:00 前</option><option value="明天18:00前送达">18:00 前</option><option value="明天19:00前送达">19:00 前</option><option value="明天20:00前送达">20:00 前</option><option value="明天21:00前送达">21:00 前</option></optgroup>
-      </select>
+      <div style="display:flex;gap:6px;align-items:center">
+        <select id="ckTime1" style="flex:1" onchange="syncTime()">
+          <option value="尽快送达">尽快送达</option>
+        </select>
+        <select id="ckTime2" style="flex:1" onchange="syncTime()"></select>
+        <select id="ckTime3" style="flex:1" onchange="syncTime()"></select>
+      </div>
+      <select id="ckTime" style="display:none"></select>
       <div style="font-size:12px;color:#999;margin-top:4px">📞 出发前电话联系您</div>
       <label>备注（可选）</label><input id="ckRemark" placeholder="例如：放门口 / 敲门">
       <div id="ckAmt" style="margin-top:12px;background:#fff8e1;border-radius:8px;padding:10px 12px;font-size:13px;line-height:1.9"></div>
@@ -339,6 +342,28 @@ function applyCloudMenu(arr){
   dishes=arr.filter(function(d){return d.cat!=='半价';});
   try{ localStorage.setItem(LS_DISHES, JSON.stringify(dishes)); }catch(e){}
   syncHalfPrice(); renderCats(); renderDishes(); renderCartbar();
+}
+function fillTimeOptions(){
+  var now=new Date();
+  var curH=now.getHours();
+  var s2=document.getElementById('ckTime2'); var s3=document.getElementById('ckTime3');
+  if(!s2||!s3) return;
+  var h2='<option value="">今天</option>';
+  for(var h=9;h<=21;h++){
+    if(h<=curH) continue;  // 已过的不显示
+    h2+='<option value="今天'+h+':00前送达">'+h+':00 前</option>';
+  }
+  s2.innerHTML=h2;
+  var h3='<option value="">明天</option>';
+  for(var h=9;h<=21;h++){ h3+='<option value="明天'+h+':00前送达">'+h+':00 前</option>'; }
+  s3.innerHTML=h3;
+}
+function syncTime(){
+  var v1=document.getElementById('ckTime1').value;
+  var v2=document.getElementById('ckTime2').value;
+  var v3=document.getElementById('ckTime3').value;
+  var sel=document.getElementById('ckTime');
+  if(v2){ sel.value=v2; } else if(v3){ sel.value=v3; } else { sel.value=v1; }
 }
 function loadCloud(){
   var now=Date.now();
@@ -656,7 +681,7 @@ function openCheckout(){
       .then(function(r){return r.json();})
       .then(function(j){ if(j&&j.open!=null){ shopOpen=!!j.open; renderShopBanner(); } }).catch(function(){}); }catch(e){}
   }
-  closeDrawer(); document.getElementById('checkoutModal').classList.add('show');
+  closeDrawer(); document.getElementById('checkoutModal').classList.add('show'); fillTimeOptions();
   window._delivery=null; document.getElementById('deliveryBox').style.display='none';
 }
 function distKm(a,b){
