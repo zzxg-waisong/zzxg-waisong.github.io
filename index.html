@@ -185,6 +185,7 @@ body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f6f7f8;c
         <option value="次日18:00-20:00">次日 18:00 - 20:00</option>
       </select>
       <label>备注（可选）</label><input id="ckRemark" placeholder="例如：放门口 / 敲门">
+      <div id="ckAmt" style="margin-top:12px;background:#fff8e1;border-radius:8px;padding:10px 12px;font-size:13px;line-height:1.9"></div>
       <div style="font-size:12px;color:#888;line-height:1.7;margin-top:12px;background:#fafafa;border-radius:6px;padding:8px 10px">🔒 您填写的称呼、电话、地址仅用于本次配送<br>💧 现榨果汁建议尽快饮用（2 小时内风味最佳）</div>
       <div style="display:flex;gap:8px;margin-top:16px">
         <button class="btn gray" style="flex:1" onclick="closeCheckout()">返回</button>
@@ -588,6 +589,7 @@ window.setInterval(function(){ if(adminOk) autoCheckShopHours(); }, 60000);
 window.setInterval(function(){ if(!adminOk) refreshShopStatus(); }, 60000);
 function openCheckout(){
   if(!cartList().length){ alert('购物车是空的'); return; }
+  updateCkAmt();
   // 同步查一次营业状态，避免打烊竞态
   var ck=document.getElementById('ckTime').value;
   if(!shopOpen && String(ck||'').indexOf('次日')!==0){
@@ -729,6 +731,22 @@ function confirmMapPick(){
   calcDelivery();
 }
 function closeCheckout(){ document.getElementById('checkoutModal').classList.remove('show'); }
+function updateCkAmt(){
+  var el=document.getElementById('ckAmt'); if(!el) return;
+  var sub=cartTotal();
+  var dlv=window._delivery;
+  var fee=0, dist='';
+  if(dlv){ if(dlv.fee<0||dlv.dist>10){ el.innerHTML='<span style="color:#e65100">该地址超 10 公里，无法配送（建议到店自取）</span>'; return; } fee=deliveryFee(dlv.dist,sub); dist=dlv.dist.toFixed(1); }
+  var html='<div>商品合计：<b>'+money(sub)+'</b></div>';
+  if(dlv){ html+='<div>骑行距离：约 '+dist+' 公里</div>'; }
+  html+='<div>配送费：<b>'+(fee===0?'免配送费':money(fee))+'</b></div>';
+  var raw=sub+fee;
+  var hasW=cartList().some(function(c){var d=byId(c.id);return d&&d.per>0;});
+  var total=hasW?raw:roundHalf(raw);
+  html+='<div style="border-top:1px dashed #ddd;margin-top:6px;padding-top:6px">应付合计：<b style="color:#d32f2f;font-size:16px">'+money(total)+'</b></div>';
+  if(sub<20){ html+='<div style="color:#e65100;font-size:12px;margin-top:4px">还差 '+money(20-sub)+' 起送（满 20 元起送）</div>'; }
+  el.innerHTML=html;
+}
 function submitOrder(){
   var name=document.getElementById('ckName').value.trim();
   var phone=document.getElementById('ckPhone').value.trim();
