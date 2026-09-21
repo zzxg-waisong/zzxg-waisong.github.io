@@ -152,6 +152,7 @@ body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f6f7f8;c
     <div id="cartItems"></div>
     <div style="margin-top:14px;display:flex;justify-content:space-between;align-items:center">
       <div style="font-size:15px;font-weight:700">合计：<span style="color:#e53935" id="drawerTotal">¥0</span></div>
+      <button class="btn gray" onclick="clearCart()" style="background:#eee;color:#666">清空</button>
       <button class="btn" onclick="openCheckout()">去结算</button>
     </div>
   </div>
@@ -648,6 +649,11 @@ if(location.href.indexOf('autologin=1')>=0){
   document.addEventListener('visibilitychange', function(){
     if(!document.hidden) fetchCloudOrders(true);
   });
+}
+function clearCart(){
+  if(!cartList().length){ alert('购物车是空的'); return; }
+  if(!confirm('确认清空购物车？')) return;
+  cart={}; save('zz_cart',cart); renderCartItems(); renderCartbar(); renderDishes();
 }
 function openCheckout(){
   if(!cartList().length){ alert('购物车是空的'); return; }
