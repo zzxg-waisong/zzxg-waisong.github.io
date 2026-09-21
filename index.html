@@ -872,9 +872,12 @@ function openResult(text, order, weighMode, paidDone){
   box.className='modal show'; box.id='resultModal';
   var inner='';
   if(weighMode){
-    inner='<p style="font-size:13px;color:#e65100;margin:10px 0;line-height:1.7;background:#fff8e1;padding:10px;border-radius:8px">⚖️ 本单为<b>称重结算</b>：金额为预估。店主称重后会<b>电话联系您确认实际金额</b>，确认后您再付款。<br>如需先沟通，请扫下方微信码加店主好友～</p>'+
-      '<div style="text-align:center;margin:10px 0"><img src="'+esc(payCfg.wxUrl||'微信二维码.png')+'" style="width:160px;border-radius:8px"><div style="font-size:12px;color:#888;margin-top:4px">加店主好友（称重后发报价）</div></div>'+
-      '<div style="display:flex;gap:8px"><button class="btn" style="flex:1" onclick="copyText()">复制订单</button></div>';
+    // 全屏等待页：不能关闭，自动轮询
+    inner='<p style="font-size:14px;color:#e65100;margin:16px 0;line-height:1.8;text-align:center">⚖️ 正在称重，约需 1 分钟<br><b style="color:#d32f2f">请停留在此页面，不要关闭</b><br>称重完成后自动显示实际金额</p>'+
+      '<div style="text-align:center;margin:16px 0;color:#888;font-size:13px">⏳ 称重中，请勿退出...</div>'+
+      '<div style="text-align:center;margin:10px 0"><img src="'+esc(payCfg.wxUrl||'微信二维码.png')+'" style="width:120px;border-radius:8px"><div style="font-size:12px;color:#888;margin-top:4px">加店主好友（可催单）</div></div>';
+    // 启动轮询
+    startWeighPoll(order);
   } else if(paidDone){
     inner='<p style="text-align:center;font-size:15px;color:#2e7d32;margin:10px 0;line-height:1.7">✅ 付款成功，订单已收到<br>我们会尽快为您配送，请保持电话畅通～</p>';
   } else {
@@ -888,6 +891,58 @@ function openResult(text, order, weighMode, paidDone){
     '<button class="btn gray" style="width:100%;margin-top:10px" onclick="document.getElementById(\'resultModal\').remove();window.location.hash=\'#/\';">完成</button></div>';
   document.body.appendChild(box);
   window._lastText=text;
+}
+var _weighTimer=null;
+function startWeighPoll(order){
+  stopWeighPoll();
+  _weighTimer=setInterval(function(){
+    try{
+      fetch(SB_URL+'/rest/v1/rpc/get_my_order',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({oid:order.id})})
+        .then(function(r){return r.json();})
+        .then(function(j){
+          if(!j) return;
+          var p=j.payload||j;
+          // 称重完成：状态变了，或有 weights，或 total 变了
+          var done = (p.status && p.status!=='待称重') || (p.weights && Object.keys(p.weights).length>0);
+          if(done){
+            stopWeighPoll();
+            showWeighedPay(p);
+          }
+        }).catch(function(){});
+    }catch(e){}
+  },3000);
+}
+function stopWeighPoll(){ if(_weighTimer){ clearInterval(_weighTimer); _weighTimer=null; } }
+function showWeighedPay(p){
+  var m=document.getElementById('resultModal'); if(m) m.remove();
+  var total=p.total||p.estTotal||0;
+  var box=document.createElement('div');
+  box.className='modal show'; box.id='weighedModal';
+  var itemsHtml='';
+  (p.items||[]).forEach(function(it){
+    var w=(p.weights||{})[it.id];
+    var line=it.name+' ×'+it.qty;
+    if(w && it.per>0) line+='（'+w+'斤）';
+    line+=' — ';
+    if(it.per>0 && w){ line+=money(it.per*w); } else { line+=money(it.price*it.qty); }
+    itemsHtml+='<div style="font-size:13px;padding:4px 0;border-bottom:1px dashed #eee">'+line+'</div>';
+  });
+  var html='<div class="box"><h3 style="text-align:center;color:#2e7d32">✅ 称重完成</h3>'+
+    '<div style="margin:10px 0">'+itemsHtml+'</div>'+
+    '<div style="font-size:13px;line-height:2">配送费：'+money(p.deliveryFee||0)+'<br>应付合计：<b style="color:#d32f2f;font-size:20px">'+money(total)+'</b></div>'+
+    '<button class="btn orange" style="width:100%;margin-top:12px" onclick="showWeighedPayGo()">去付款</button>'+
+    '<div style="text-align:center;margin-top:8px"><img src="'+esc(payCfg.wxUrl||'微信二维码.png')+'" style="width:100px;border-radius:8px"><div style="font-size:11px;color:#888">加店主好友</div></div></div>';
+  box.innerHTML=html;
+  document.body.appendChild(box);
+  window._weighedOrder=p;
+}
+function showWeighedPayGo(){
+  var p=window._weighedOrder; if(!p) return;
+  var m=document.getElementById('weighedModal'); if(m) m.remove();
+  document.getElementById('payAmt').textContent=money(p.total||p.estTotal||0);
+  document.getElementById('payImg').src=payCfg.payUrl||'收款码.png';
+  document.getElementById('wxImg').src=payCfg.wxUrl||'微信二维码.png';
+  document.getElementById('payModal').classList.add('show');
 }
 function copyText(){
   if(navigator.clipboard && navigator.clipboard.writeText){
