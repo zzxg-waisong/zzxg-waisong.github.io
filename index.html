@@ -497,9 +497,20 @@ function pickWeight(id){
     '<div style="display:flex;flex-wrap:wrap">'+jinBtns+'</div>'+
     '<div style="font-size:14px;color:#666;margin:12px 0 6px">按金额买</div>'+
     '<div style="display:flex;flex-wrap:wrap">'+yuanBtns+'</div>'+
+    '<div style="display:flex;margin-top:6px;gap:6px"><input id="customYuan_'+id+'" placeholder="自定义金额（元）" type="number" style="flex:1;border:1px solid #ddd;border-radius:8px;padding:10px;font-size:15px">'+
+    '<button onclick="confirmCustomYuan(\''+id+'\')" style="background:#fb8c00;color:#fff;border:none;border-radius:8px;padding:10px 18px;font-size:14px">确定</button></div>'+
     '<button onclick="this.parentElement.parentElement.remove()" style="width:100%;margin-top:14px;background:#eee;border:none;border-radius:8px;padding:10px;font-size:14px">取消</button>'+
     '</div>';
   document.body.appendChild(m);
+}
+function confirmCustomYuan(id){
+  var v=parseFloat(document.getElementById('customYuan_'+id).value);
+  if(isNaN(v)||v<=0){ alert('请输入有效金额'); return; }
+  if(!cart[id]) cart[id]={qty:0,note:''};
+  cart[id].note='按金额'+v+'元';
+  cart[id].qty=1;
+  saveCart(); renderDishes(); renderCartbar();
+  var m=document.getElementById('pickWModal'); if(m) m.remove();
 }
 function confirmPickW(id,mode,val){
   if(!cart[id]) cart[id]={qty:0,note:''};
