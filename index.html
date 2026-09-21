@@ -128,13 +128,12 @@ body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f6f7f8;c
   </div>
   <div id="shopBanner" style="display:none;padding:8px 14px;font-size:14px;font-weight:700;text-align:center"></div>
   <div class="ticker"><div class="tk">
-    <span>🔥 加微信好友，进群优惠多多</span>✦
-    <span>新客首单，立享5元优惠</span>✦
-    <span>3公里内 满20元 免配送费</span>✦
-    <span>3-5公里 3元/单 满30元 免配送费</span>✦
-    <span>5-10公里 每超1公里加2元</span>✦
-    <span>超10公里 建议到店自取</span>✦
-    <span>店址：城厢镇朝阳路16号附1号</span>
+    <span>🔥 新客首单，立享 5 元优惠</span>✦
+    <span>3 公里内 满 20 元 免配送费</span>✦
+    <span>3-5 公里 3 元 / 单 满 30 元 免配送费</span>✦
+    <span>超5公里 每公里 2 元</span>✦
+    <span>超10 公里 不配送</span>✦
+    <span>店址：城厢镇朝阳路 16 号附 1 号</span>
   </div></div>
   <div class="cats" id="cats"></div>
   </div>
@@ -747,6 +746,23 @@ function updateCkAmt(){
   if(sub<20){ html+='<div style="color:#e65100;font-size:12px;margin-top:4px">还差 '+money(20-sub)+' 起送（满 20 元起送）</div>'; }
   el.innerHTML=html;
 }
+function showOutOfRange(){
+  var old=document.getElementById('outOfRangeModal'); if(old) old.remove();
+  var m=document.createElement('div');
+  m.id='outOfRangeModal';
+  m.style='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center';
+  m.innerHTML='<div style="background:#fff;border-radius:14px;padding:24px;width:80%;max-width:320px;text-align:center">'+
+    '<div style="font-size:40px;margin-bottom:8px">🗺️</div>'+
+    '<div style="font-size:18px;font-weight:700;margin-bottom:8px">超出配送范围</div>'+
+    '<div style="font-size:14px;color:#666;line-height:1.6;margin-bottom:18px">抱歉，您的地址超出 10 公里配送范围，请就近购买～</div>'+
+    '<button onclick="closeOutOfRange()" style="background:#e53935;color:#fff;border:none;border-radius:8px;padding:10px 28px;font-size:15px;cursor:pointer">关闭</button></div>';
+  document.body.appendChild(m);
+}
+function closeOutOfRange(){
+  var m=document.getElementById('outOfRangeModal'); if(m) m.remove();
+  cart={}; save('zz_cart',cart); curCat='水果'; renderCats(); renderDishes(); updateCartBadge();
+  var d=document.getElementById('drawer'); if(d) d.style.display='none';
+}
 function submitOrder(){
   var name=document.getElementById('ckName').value.trim();
   var phone=document.getElementById('ckPhone').value.trim();
@@ -763,7 +779,7 @@ function submitOrder(){
   if(subtotal<20){ alert('满 20 元起送，当前还差 '+money(20-subtotal)+'，请再选购一些~'); return; }
   var dlv=window._delivery;
   var fee=0, dist='';
-  if(dlv){ if(dlv.fee<0 || dlv.dist>10){ alert('该地址超出 10 公里配送范围，暂无法下单（建议到店自取）'); return; } fee=deliveryFee(dlv.dist, subtotal); dist=dlv.dist.toFixed(1); }
+  if(dlv){ if(dlv.fee<0 || dlv.dist>10){ showOutOfRange(); return; } fee=deliveryFee(dlv.dist, subtotal); dist=dlv.dist.toFixed(1); }
   var items=list.map(function(c){ var d=byId(c.id); return {id:d.id, name:d.name, price:d.price, qty:c.qty, note:c.note, unit:d.unit, per:(d.per?d.per:0), cat:d.cat}; });
   var hasWeight=items.some(function(it){return it.per>0;});
   var rawTotal=subtotal+fee;
