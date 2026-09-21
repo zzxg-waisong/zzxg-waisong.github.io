@@ -167,22 +167,13 @@ body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f6f7f8;c
       <label>联系电话</label><input id="ckPhone" type="tel" placeholder="手机号">
       <label>外卖地址（输入关键词，从下方候选中点选可精确定位）</label><div class="wrap"><textarea id="ckAddr" rows="2" placeholder="输入小区/道路名，从候选点选"></textarea><div id="addrTips" style="display:none"></div><button class="btn" style="margin-top:6px;font-size:13px;padding:6px 10px" onclick="openMapPick()">📍 地图选点（点地图选位置）</button></div>
       <div id="deliveryBox" style="background:#f0f7f0;border-radius:8px;padding:10px;margin-top:8px;font-size:13px;line-height:1.8;display:none"></div>
-      <label>预送时间段</label>
+      <label>配送时间</label>
       <select id="ckTime">
         <option value="尽快送达">尽快送达</option>
-        <option value="10:00-11:00">10:00 - 11:00</option>
-        <option value="11:00-12:00">11:00 - 12:00</option>
-        <option value="12:00-13:00">12:00 - 13:00</option>
-        <option value="13:00-14:00">13:00 - 14:00</option>
-        <option value="14:00-15:00">14:00 - 15:00</option>
-        <option value="15:00-16:00">15:00 - 16:00</option>
-        <option value="16:00-17:00">16:00 - 17:00</option>
-        <option value="17:00-18:00">17:00 - 18:00</option>
-        <option value="18:00-19:00">18:00 - 19:00</option>
-        <option value="19:00-20:00">19:00 - 20:00</option>
-        <option value="次日10:00-12:00">次日 10:00 - 12:00</option>
-        <option value="次日14:00-17:00">次日 14:00 - 17:00</option>
-        <option value="次日18:00-20:00">次日 18:00 - 20:00</option>
+        <option value="今天稍晚">今天稍晚（1小时内）</option>
+        <option value="次日上午">明天上午（10:00-12:00）</option>
+        <option value="次日下午">明天下午（14:00-17:00）</option>
+        <option value="次日晚上">明天晚上（18:00-20:00）</option>
       </select>
       <label>备注（可选）</label><input id="ckRemark" placeholder="例如：放门口 / 敲门">
       <div id="ckAmt" style="margin-top:12px;background:#fff8e1;border-radius:8px;padding:10px 12px;font-size:13px;line-height:1.9"></div>
