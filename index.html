@@ -466,7 +466,7 @@ function renderDishes(){
     html+='<div class="dish">'+imgHtml+'<div class="info"><div class="name">'+esc(d.name)+'</div>'+
       '<div class="unit">'+esc(d.unit||'')+'</div>'+
       '<div class="price">'+(d.cat==='半价'?'<span style="background:#fb8c00;color:#fff;font-size:10px;padding:1px 5px;border-radius:3px;margin-right:4px;vertical-align:middle">半价</span>':'')+money(d.price)+'<small> / '+esc(d.unit||'份')+'</small></div></div>'+
-      '<div class="ctrl">'+(d.cat==='果汁'?'<input class="note" placeholder="口味/甜度/去冰" value="'+esc(c.note)+'" onchange="setNote(\''+d.id+'\',this.value)">':'')+
+      '<div class="ctrl">'+(d.cat==='果汁'?'<input class="note" placeholder="常温" value="'+esc(c.note)+'" onchange="setNote(\''+d.id+'\',this.value)">':'')+
       (['f_sanhongyou','f_maoshanwang','f_liyu_sy'].indexOf(d.id)>=0?'<div style="font-size:11px;color:#e65100;padding:2px 0">默认剥开，不剥请备注</div>':'')+
       (d.cat==='半价'?(canAddHalf(d)?'<button class="btn" style="background:#fb8c00" onclick="addToCart(\''+d.id+'\')">第二杯半价</button>':'<button class="btn" style="background:#ccc;cursor:not-allowed;color:#999" onclick="alert(\'需选一杯价格相同或更高的原价果汁解锁~\')">原价果汁解锁</button>'):'<button class="btn" onclick="addToCart(\''+d.id+'\')">加入购物车</button>')+
       '</div></div>';
