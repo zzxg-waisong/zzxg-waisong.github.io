@@ -507,22 +507,37 @@ function pickWeight(id){
   var m=document.createElement('div');
   m.id='pickWModal';
   m.style='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center';
-  var jinOpts=[1,2,3,5];
-  var minYuan=Math.max(5, Math.ceil(d.price));
-  var yuanOpts=[minYuan, Math.ceil(minYuan*1.5), minYuan*2, minYuan*3];
-  var jinBtns=jinOpts.map(function(j){return '<button onclick="confirmPickW(\''+id+'\',\'jin\','+j+')" style="flex:1;background:#fff;border:1px solid #ddd;border-radius:8px;padding:12px;font-size:15px;margin:4px">'+j+'斤</button>';}).join('');
-  var yuanBtns=yuanOpts.map(function(y){return '<button onclick="confirmPickW(\''+id+'\',\'yuan\','+y+')" style="flex:1;background:#fff;border:1px solid #ddd;border-radius:8px;padding:12px;font-size:15px;margin:4px">'+y+'元</button>';}).join('');
-  m.innerHTML='<div style="background:#fff;border-radius:14px;padding:20px;width:88%;max-width:340px">'+
-    '<div style="text-align:center;font-weight:700;font-size:17px;margin-bottom:4px">'+d.name+'</div>'+
-    '<div style="text-align:center;color:#999;font-size:13px;margin-bottom:14px">'+d.price+'元/斤</div>'+
-    '<div style="font-size:14px;color:#666;margin-bottom:6px">按重量买</div>'+
-    '<div style="display:flex;flex-wrap:wrap">'+jinBtns+'</div>'+
-    '<div style="font-size:14px;color:#666;margin:12px 0 6px">按金额买</div>'+
-    '<div style="display:flex;flex-wrap:wrap">'+yuanBtns+'</div>'+
-    '<div style="display:flex;margin-top:6px;gap:6px"><input id="customYuan_'+id+'" placeholder="自定义金额（元）" type="number" style="flex:1;border:1px solid #ddd;border-radius:8px;padding:10px;font-size:15px">'+
-    '<button onclick="confirmCustomYuan(\''+id+'\')" style="background:#fb8c00;color:#fff;border:none;border-radius:8px;padding:10px 18px;font-size:14px">确定</button></div>'+
-    '<button onclick="this.parentElement.parentElement.remove()" style="width:100%;margin-top:14px;background:#eee;border:none;border-radius:8px;padding:10px;font-size:14px">取消</button>'+
-    '</div>';
+  var inner;
+  if(id==='f_ganzhe'){
+    var heOpts=[1,2,3,5];
+    var heBtns=heOpts.map(function(h){return '<button onclick="confirmPickW(\''+id+'\',\'he\','+h+')" style="flex:1;background:#fff;border:1px solid #ddd;border-radius:8px;padding:14px;font-size:15px;margin:4px">'+h+'盒</button>';}).join('');
+    inner='<div style="background:#fff;border-radius:14px;padding:20px;width:88%;max-width:340px">'+
+      '<div style="text-align:center;font-weight:700;font-size:17px;margin-bottom:4px">'+d.name+'</div>'+
+      '<div style="text-align:center;color:#999;font-size:13px;margin-bottom:6px">'+d.price+'元/盒（去皮去节）</div>'+
+      '<div style="font-size:11px;color:#e65100;text-align:center;margin-bottom:12px">一盒约小根一根/大根大半根</div>'+
+      '<div style="font-size:14px;color:#666;margin-bottom:6px">要几盒</div>'+
+      '<div style="display:flex;flex-wrap:wrap">'+heBtns+'</div>'+
+      '<button onclick="this.parentElement.parentElement.remove()" style="width:100%;margin-top:14px;background:#eee;border:none;border-radius:8px;padding:10px;font-size:14px">取消</button>'+
+      '</div>';
+  } else {
+    var jinOpts=[1,2,3,5];
+    var minYuan=Math.max(5, Math.ceil(d.price));
+    var yuanOpts=[minYuan, Math.ceil(minYuan*1.5), minYuan*2, minYuan*3];
+    var jinBtns=jinOpts.map(function(j){return '<button onclick="confirmPickW(\''+id+'\',\'jin\','+j+')" style="flex:1;background:#fff;border:1px solid #ddd;border-radius:8px;padding:12px;font-size:15px;margin:4px">'+j+'斤</button>';}).join('');
+    var yuanBtns=yuanOpts.map(function(y){return '<button onclick="confirmPickW(\''+id+'\',\'yuan\','+y+')" style="flex:1;background:#fff;border:1px solid #ddd;border-radius:8px;padding:12px;font-size:15px;margin:4px">'+y+'元</button>';}).join('');
+    inner='<div style="background:#fff;border-radius:14px;padding:20px;width:88%;max-width:340px">'+
+      '<div style="text-align:center;font-weight:700;font-size:17px;margin-bottom:4px">'+d.name+'</div>'+
+      '<div style="text-align:center;color:#999;font-size:13px;margin-bottom:14px">'+d.price+'元/斤</div>'+
+      '<div style="font-size:14px;color:#666;margin-bottom:6px">按重量买</div>'+
+      '<div style="display:flex;flex-wrap:wrap">'+jinBtns+'</div>'+
+      '<div style="font-size:14px;color:#666;margin:12px 0 6px">按金额买</div>'+
+      '<div style="display:flex;flex-wrap:wrap">'+yuanBtns+'</div>'+
+      '<div style="display:flex;margin-top:6px;gap:6px"><input id="customYuan_'+id+'" placeholder="自定义金额（元）" type="number" style="flex:1;border:1px solid #ddd;border-radius:8px;padding:10px;font-size:15px">'+
+      '<button onclick="confirmCustomYuan(\''+id+'\')" style="background:#fb8c00;color:#fff;border:none;border-radius:8px;padding:10px 18px;font-size:14px">确定</button></div>'+
+      '<button onclick="this.parentElement.parentElement.remove()" style="width:100%;margin-top:14px;background:#eee;border:none;border-radius:8px;padding:10px;font-size:14px">取消</button>'+
+      '</div>';
+  }
+  m.innerHTML=inner;
   document.body.appendChild(m);
 }
 function confirmCustomYuan(id){
@@ -536,15 +551,16 @@ function confirmCustomYuan(id){
 }
 function confirmPickW(id,mode,val){
   if(!cart[id]) cart[id]={qty:0,note:''};
-  cart[id].note=mode==='jin'?('按斤'+val+'斤'):('按金额'+val+'元');
-  cart[id].qty=1;
+  if(mode==='he'){ cart[id].note=''; cart[id].qty=val; }
+  else if(mode==='jin'){ cart[id].note='按斤'+val+'斤'; cart[id].qty=1; }
+  else { cart[id].note='按金额'+val+'元'; cart[id].qty=1; }
   saveCart(); renderDishes(); renderCartbar();
   var m=document.getElementById('pickWModal'); if(m) m.remove();
 }
 function addToCart(id){
   var d=byId(id);
   if(d&&d.cat==='半价'&&!canAddHalf(d)){ alert('第二杯半价只能选价格相同或更低的果汁哦~'); return; }
-  if(d&&d.per>0 && id!=='f_ganzhe'){ pickWeight(id); return; }
+  if(d&&(d.per>0||id==='f_ganzhe')){ pickWeight(id); return; }
   if(!cart[id]) cart[id]={qty:0,note:''};
   cart[id].qty++; saveCart(); renderDishes(); renderCartbar();
 }
