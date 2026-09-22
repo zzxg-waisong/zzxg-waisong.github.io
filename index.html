@@ -2063,6 +2063,7 @@ function resetData(){
 }
 
 /* 初始化 */
+if(location.href.indexOf('autologin=1')<0 && location.hash.indexOf('#/admin')===0){ location.hash='#/'; }
 route();
 </script>
 </body>
