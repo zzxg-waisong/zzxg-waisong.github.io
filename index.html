@@ -1285,14 +1285,14 @@ function renderCloudOrder(c){
     '<div class="rowline"><span>商品</span><span>'+lines+'</span></div>'+
     (amt!==''?'<div class="rowline"><span>金额</span><span style="color:#e53935;font-weight:700">'+money(amt)+(p.newcust?'（已含新客-'+Number(p.discount||0).toFixed(2)+'元）':(p.hasWeight&&!p.weightTotal?'（预估）':''))+'</span></div>':'')+
     '<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">'+
-    (isNewCust?'<button class="btn" style="background:#ad1457;color:#fff" onclick="newCustCloudOrder('+c.id+')">🎁 新客优惠</button>':'')+
     (c.status==='new'?'<button class="btn" style="background:#1565c0;color:#fff" onclick="acceptCloudOrder('+c.id+')">✅ 接单</button>':'')+
-    '<button class="btn" style="background:#2e7d32;color:#fff" onclick="printCloudOrder('+c.id+')">🖨 打印</button>'+
+    (isNewCust?'<button class="btn" style="background:#ad1457;color:#fff" onclick="newCustCloudOrder('+c.id+')">🎁 新客优惠</button>':'')+
+    (p.hasWeight?'<button class="btn" style="background:#fb8c00" onclick="weighCloudModal('+c.id+')">⚖️ 称重结算</button>':'')+
+    (c.status!=='已付款'?'<button class="btn" style="background:#2e7d32;color:#fff" onclick="updateCloudStatus('+c.id+',\'已付款\')">✅ 标记已付款</button>':'')+
+    '<button class="btn" style="background:#555;color:#fff" onclick="printCloudOrder('+c.id+')">🖨 打印</button>'+
     '<button class="btn" onclick="navCloud('+c.id+')">高德导航</button>'+
     '<button class="btn orange" onclick="copyCloudAddr('+c.id+')">复制地址</button>'+
     '<button class="btn gray" onclick="copyCloudOrderText('+c.id+')">复制订单</button>'+
-    (p.hasWeight?'<button class="btn" style="background:#fb8c00" onclick="weighCloudModal('+c.id+')">⚖️ 称重结算</button>':'')+
-    (c.status!=='已付款'?'<button class="btn" style="background:#2e7d32;color:#fff" onclick="updateCloudStatus('+c.id+',\'已付款\')">✅ 标记已付款</button>':'')+
     (c.status!=='已完成'?'<button class="btn" onclick="updateCloudStatus('+c.id+',\'已完成\')">标记完成</button>':'')+
     '<button class="btn red" onclick="deleteCloudOrder('+c.id+')">删除</button>'+
     '</div>';
@@ -1420,10 +1420,11 @@ function renderOrders(){
       '<div class="rowline"><span>地址</span><span>'+esc(o.addr)+'</span></div>'+
       '<div class="rowline"><span>预送</span><span>'+esc(o.time)+' · '+esc(o.created)+'</span></div>'+
       '<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">'+
-      '<button class="btn" style="background:#2e7d32;color:#fff" onclick="printThis(\''+i+'\')">🖨 打印</button>'+
+      (o.status!=='已付款'&&o.status!=='已完成'?'<button class="btn" style="background:#2e7d32;color:#fff" onclick="markPaid(\''+i+'\')">✅ 标记已付款</button>':'')+
+      (o.hasWeight?'<button class="btn" style="background:#fb8c00" onclick="viewOrder(\''+i+'\')">⚖️ 称重结算</button>':'<button class="btn outline" onclick="viewOrder(\''+i+'\')">详情</button>')+
+      '<button class="btn" style="background:#555;color:#fff" onclick="printThis(\''+i+'\')">🖨 打印</button>'+
       '<button class="btn" onclick="navTo(\''+i+'\')">高德导航</button>'+
       '<button class="btn orange" onclick="copyAddr(\''+i+'\')">复制地址</button>'+
-      (o.hasWeight?'<button class="btn" style="background:#fb8c00" onclick="viewOrder(\''+i+'\')">⚖️ 称重结算</button>':'<button class="btn outline" onclick="viewOrder(\''+i+'\')">详情</button>')+
       '<button class="btn gray" onclick="copyOrderText(\''+i+'\')">复制订单</button>'+
       (o.status!=='已完成'?'<button class="btn" onclick="markDone(\''+i+'\')">标记完成</button>':'')+
       '<button class="btn red" onclick="delOrder(\''+i+'\')">删除</button></div></div>';
