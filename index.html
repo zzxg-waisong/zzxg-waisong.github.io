@@ -580,6 +580,15 @@ function addToCart(id){
   var d=byId(id);
   if(d&&d.cat==='半价'&&!canAddHalf(d)){ alert('第二杯半价只能选价格相同或更低的果汁哦~'); return; }
   if(d&&(d.per>0||id==='f_ganzhe')){ pickWeight(id); return; }
+  if(d&&d.cat==='果汁'){
+    var today=new Date().toDateString();
+    var triggered=localStorage.getItem('zz_half_'+today)==='1';
+    var hasJuiceAlready=cartList().some(function(c){var dd=byId(c.id);return dd&&dd.cat==='果汁';});
+    if(!triggered && !hasJuiceAlready){
+      localStorage.setItem('zz_half_'+today,'1');
+      showHalfPrompt();
+    }
+  }
   if(!cart[id]) cart[id]={qty:0,note:''};
   cart[id].qty++; saveCart(); renderDishes(); renderCartbar();
 }
