@@ -1278,9 +1278,12 @@ function renderCloudOrder(c){
   var amt=(p.weightTotal!=null&&p.weightTotal||p.total!=null)?cloudAmount(c):'';
   var isNewCust=!p.newcust && String(p.phone||'').trim() && cloudBalances[String(p.phone||'').trim()]>0;
   var created=(c.created_at||'').replace('T',' ').slice(0,19);
+  var phoneKey=String(p.phone||'').trim();
+  var custCount=cloudOrders.filter(function(x){ return String((x.payload||{}).phone||'').trim()===phoneKey; }).length;
+  var custTag = custCount===1 ? '🎁 新客首单' : ('第'+custCount+'次购买');
   return '<div class="card" style="background:#fff"><h3>云端#'+c.id+' <span class="badge '+stCls+'">'+esc(stTxt)+'</span></h3>'+
     '<div class="rowline"><span>下单时间</span><span>'+esc(created)+'</span></div>'+
-    '<div class="rowline"><span>顾客</span><span>'+esc(p.name||'')+' <b style="color:#c62828">'+esc(p.phone||'')+'</b></span></div>'+
+    '<div class="rowline"><span>顾客</span><span>'+esc(p.name||'')+' <b style="color:#c62828">'+esc(p.phone||'')+'</b> <span style="color:#ad1457;font-size:12px">'+custTag+'</span></span></div>'+
     (p.addr?'<div class="rowline"><span>地址</span><span>'+esc(p.addr)+'</span></div>':'')+
     (p.time?'<div class="rowline"><span>预送</span><span>'+esc(p.time)+'</span></div>':'')+
     '<div class="rowline"><span>商品</span><span>'+lines+'</span></div>'+
@@ -1334,6 +1337,20 @@ function copyCloudOrderText(id){
     (p.items||[]).map(function(it){ var amt2=(it.per>0&&p.weights&&p.weights[it.id])?(it.per*p.weights[it.id]):(it.price*it.qty); return '  '+it.name+((it.per>0&&p.weights&&p.weights[it.id])?('（称重'+p.weights[it.id]+'斤×'+it.per+'元/斤）'):(' ×'+it.qty))+'  '+money(amt2); }).join('\n')+
     '\n——————————————\n'+(p.newcust?'【新客优惠】-'+Number(p.discount||0).toFixed(2)+'\n':'')+(roundAmt>0?'【抹零】-'+money(roundAmt)+'\n':'')+'【应付合计】'+money(amt)+'\n【顾客】'+(p.name||'')+' '+(p.phone||'')+'\n【地址】'+(p.addr||'')+'\n【预送】'+(p.time||'')+'\n【状态】'+(c.status==='new'?'待处理':c.status);
   window._lastText=t; copyText();
+}
+function queryCustomer(){
+  var ph=document.getElementById('custQPhone').value.trim();
+  var out=document.getElementById('custQResult');
+  if(!ph){ out.textContent='请输入手机号'; return; }
+  var threeMonthsAgo=new Date(); threeMonthsAgo.setMonth(threeMonthsAgo.getMonth()-3);
+  var list=cloudOrders.filter(function(o){
+    var pp=(o.payload||{}).phone||'';
+    var ct=new Date(o.created_at||'');
+    return String(pp).trim()===ph && ct>=threeMonthsAgo;
+  });
+  var cnt=list.length;
+  var total=list.reduce(function(sum,o){ var a=cloudAmount(o); return sum+a; },0);
+  out.innerHTML='近3月：<b>'+cnt+'次</b>，合计 <b style="color:#e53935">'+money(total)+'</b> 元';
 }
 function addBalance(){
   var ph=(document.getElementById('addBalPhone').value||'').trim();
@@ -1407,6 +1424,12 @@ function renderOrders(){
       '<input id="addBalPhone" type="tel" maxlength="11" placeholder="手机号" style="flex:1;min-width:110px;border:1px solid #ddd;border-radius:6px;padding:6px;font-size:13px">'+
       '<input id="addBalAmt" type="number" min="0.5" step="0.5" placeholder="金额" style="width:64px;border:1px solid #ddd;border-radius:6px;padding:6px;font-size:13px">'+
       '<button class="btn" style="background:#ad1457;color:#fff;font-size:12px;padding:5px 12px" onclick="addBalance()">增加</button>'+
+    '</div>'+
+    '<div style="display:flex;gap:6px;margin:10px 0;flex-wrap:wrap;align-items:center;background:#fff8e1;border:1px solid #ffe082;border-radius:8px;padding:8px">'+
+      '<b style="font-size:13px">🔍 查客户</b>'+
+      '<input id="custQPhone" type="tel" maxlength="11" placeholder="手机号" style="flex:1;min-width:110px;border:1px solid #ddd;border-radius:6px;padding:6px;font-size:13px">'+
+      '<button class="btn" style="background:#f57c00;color:#fff;font-size:12px;padding:5px 12px" onclick="queryCustomer()">查询近3月</button>'+
+      '<span id="custQResult" style="font-size:13px;color:#333"></span>'+
     '</div>'+
     cloudOrders.map(renderCloudOrder).join('')+
     '</div>';
