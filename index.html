@@ -1222,7 +1222,7 @@ function updateCloudStatus(id,status){
   try{
     fetch(SB_URL+'/rest/v1/rpc/update_order_status',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({admin_pwd:pwd,order_id:id,status:status})})
       .then(function(r){ return r.json(); })
-      .then(function(j){ if(j && j.ok){ fetchCloudOrders(); } })
+      .then(function(j){ if(j && j.ok){ if(status==='已付款'){ try{ printCloudOrder(id); }catch(e){} } fetchCloudOrders(); } })
       .catch(function(){ alert('状态更新失败'); });
   }catch(e){}
 }
