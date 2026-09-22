@@ -1239,7 +1239,7 @@ function updateCloudStatus(id,status){
   try{
     fetch(SB_URL+'/rest/v1/rpc/update_order_status',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({admin_pwd:pwd,order_id:id,status:status})})
       .then(function(r){ return r.json(); })
-      .then(function(j){ if(j && j.ok){ if(status==='已付款'){ try{ printCloudOrder(id); }catch(e){} } fetchCloudOrders(); } })
+      .then(function(j){ if(j && j.ok){ // 已付款不自动打印，接单时才打印 fetchCloudOrders(); } })
       .catch(function(){ alert('状态更新失败'); });
   }catch(e){}
 }
@@ -1247,6 +1247,7 @@ function acceptCloudOrder(id){
   alarmOrder=null;
   if(alarmTimer){ clearInterval(alarmTimer); alarmTimer=null; }
   updateCloudStatus(id,'已接单');
+  try{ printCloudOrder(id); }catch(e){}
   try{ var _aa=new Audio('https://zzxg-waisong.github.io/voice_accepted.wav'); _aa.volume=Math.max(0,Math.min(1,parseInt(localStorage.getItem('zz_voice_vol')||'100',10)/100)); _aa.play(); }catch(e){}
 }
 function newCustCloudOrder(id){
@@ -1285,9 +1286,9 @@ function renderCloudOrder(c){
     '<div class="rowline"><span>商品</span><span>'+lines+'</span></div>'+
     (amt!==''?'<div class="rowline"><span>金额</span><span style="color:#e53935;font-weight:700">'+money(amt)+(p.newcust?'（已含新客-'+Number(p.discount||0).toFixed(2)+'元）':(p.hasWeight&&!p.weightTotal?'（预估）':''))+'</span></div>':'')+
     '<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">'+
+    (c.status!=='已付款'?'<button class="btn" style="background:#2e7d32;color:#fff" onclick="updateCloudStatus('+c.id+',\'已付款\')">✅ 标记已付款</button>':'')+
     (c.status==='new'?'<button class="btn" style="background:#1565c0;color:#fff" onclick="acceptCloudOrder('+c.id+')">✅ 接单</button>':'')+
     (isNewCust?'<button class="btn" style="background:#ad1457;color:#fff" onclick="newCustCloudOrder('+c.id+')">🎁 新客优惠</button>':'')+
-    (c.status!=='已付款'?'<button class="btn" style="background:#2e7d32;color:#fff" onclick="updateCloudStatus('+c.id+',\'已付款\')">✅ 标记已付款</button>':'')+
     (c.status!=='已完成'?'<button class="btn" onclick="updateCloudStatus('+c.id+',\'已完成\')">标记完成</button>':'')+
     '<button class="btn" style="background:#555;color:#fff" onclick="printCloudOrder('+c.id+')">🖨 打印</button>'+
     '<button class="btn" onclick="navCloud('+c.id+')">高德导航</button>'+
