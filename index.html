@@ -691,7 +691,17 @@ function addToCart(id){
   cart[id].qty++; saveCart(); renderDishes(); renderCartbar();
 }
 function setNote(id,val){ if(!cart[id]) cart[id]={qty:0,note:''}; cart[id].note=val; saveCart(); }
-function changeQty(id,delta){ if(!cart[id]) cart[id]={qty:0,note:''}; cart[id].qty+=delta; if(cart[id].qty<=0) delete cart[id]; var d=byId(id); if(d&&d.cat==='果汁'&&delta<0){ fixHalfCart(); } saveCart(); renderCartItems(); renderCartbar(); renderDishes(); }
+function changeQty(id,delta,note){
+  // 找key：先试直接id，再试id_note
+  var key=id;
+  if(!cart[key] && note!==undefined) key=id+'_'+note;
+  if(!cart[key]){ for(var k in cart){ if(k.indexOf(id+'_')===0){ key=k; break; } } }
+  if(!cart[key]) cart[key]={qty:0,note:note||''};
+  cart[key].qty+=delta;
+  if(cart[key].qty<=0) delete cart[key];
+  var d=byId(id); if(d&&d.cat==='果汁'&&delta<0){ fixHalfCart(); }
+  saveCart(); renderCartItems(); renderCartbar(); renderDishes();
+}
 function cartList(){ var r=[]; for(var key in cart){ if(cart[key].qty>0){ var id=key.split('_')[0]; r.push({id:id,qty:cart[key].qty,note:cart[key].note}); } } return r; }
 function juiceCount(){ var n=0; cartList().forEach(function(c){ var d=byId(c.id); if(d&&d.cat==='果汁') n+=c.qty; }); return n; }
 function halfCount(){ var n=0; cartList().forEach(function(c){ var d=byId(c.id); if(d&&d.cat==='半价') n+=c.qty; }); return n; }
@@ -750,7 +760,7 @@ function renderCartItems(){
     if(isW){
       qtyHtml='<div style="display:flex;gap:6px;flex-shrink:0;width:max-content"><button onclick="changeQty(\''+c.id+'\',-1)" style="width:auto!important;height:auto!important;border-radius:16px;background:#eee;color:#666;padding:6px 14px;font-size:13px;border:none;white-space:nowrap">删除</button><button onclick="pickWeight(\''+c.id+'\')" style="width:auto!important;height:auto!important;border-radius:16px;background:#fff3e0;color:#e65100;padding:6px 14px;font-size:13px;border:1px solid #ffcc80;white-space:nowrap">调整</button></div>';
     } else {
-      qtyHtml='<div class="qty"><button onclick="changeQty(\''+c.id+'\',-1)">−</button><span>'+c.qty+'</span><button onclick="changeQty(\''+c.id+'\',1)">+</button></div>';
+      qtyHtml='<div class="qty"><button onclick="changeQty(\''+c.id+'\',-1,\''+(c.note||'')+'\')">−</button><span>'+c.qty+'</span><button onclick="changeQty(\''+c.id+'\',1,\''+(c.note||'')+'\')">+</button></div>';
     }
     html+='<div class="cart-item"><div class="n">'+esc(d.name)+
       (c.note?'<small>'+esc(c.note)+'</small>':'')+'</div>'+
