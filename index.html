@@ -692,17 +692,28 @@ function addToCart(id){
 }
 function setNote(id,val){ if(!cart[id]) cart[id]={qty:0,note:''}; cart[id].note=val; saveCart(); }
 function changeQty(id,delta,note){
-  // 找key：先试直接id，再试id_note
   var key=id;
-  if(!cart[key] && note!==undefined) key=id+'_'+note;
-  if(!cart[key]){ for(var k in cart){ if(k.indexOf(id+'_')===0){ key=k; break; } } }
+  if(note!==undefined && note) key=id+'_'+note;
+  if(!cart[key]){ for(var k in cart){ if(k.indexOf(id+'_')===0 || k===id){ key=k; break; } } }
   if(!cart[key]) cart[key]={qty:0,note:note||''};
   cart[key].qty+=delta;
   if(cart[key].qty<=0) delete cart[key];
   var d=byId(id); if(d&&d.cat==='果汁'&&delta<0){ fixHalfCart(); }
   saveCart(); renderCartItems(); renderCartbar(); renderDishes();
 }
-function cartList(){ var r=[]; for(var key in cart){ if(cart[key].qty>0){ var id=key.split('_')[0]; r.push({id:id,qty:cart[key].qty,note:cart[key].note}); } } return r; }
+function cartList(){
+  var r=[];
+  for(var key in cart){
+    if(cart[key].qty>0){
+      // note是最后一个_后面的部分，前面是商品id
+      var idx=key.lastIndexOf('_');
+      var id=idx>0?key.substring(0,idx):key;
+      var note=idx>0?key.substring(idx+1):(cart[key].note||'');
+      r.push({id:id,qty:cart[key].qty,note:note});
+    }
+  }
+  return r;
+}
 function juiceCount(){ var n=0; cartList().forEach(function(c){ var d=byId(c.id); if(d&&d.cat==='果汁') n+=c.qty; }); return n; }
 function halfCount(){ var n=0; cartList().forEach(function(c){ var d=byId(c.id); if(d&&d.cat==='半价') n+=c.qty; }); return n; }
 function maxJuicePrice(){
