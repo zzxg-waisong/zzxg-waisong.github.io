@@ -376,9 +376,9 @@ function syncTime(){
   if(v2){ sel.value=v2; active=s2; } else if(v3){ sel.value=v3; active=s3; } else { sel.value=v1; active=s1; }
   if(active && active.value){ active.style.background='#fff3e0'; active.style.borderColor='#fb8c00'; active.style.color='#e65100'; active.style.fontWeight='700'; }
 }
-function loadCloud(){
+function loadCloud(force){
   var now=Date.now();
-  if(now-_lastLoad<30000) return;
+  if(!force && now-_lastLoad<30000) return;
   _lastLoad=now;
   fetch(SB_URL+'/rest/v1/rpc/get_menu',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:'{}'})
     .then(function(r){ return r.json(); })
@@ -468,7 +468,7 @@ function syncHalfPrice(){
 function renderCats(){
   var box=document.getElementById('cats'); var html='';
   var cs=cats();
-  if(!cs.length){ box.innerHTML='<div style="padding:14px;text-align:center;color:#999;font-size:14px">⏳ 正在加载菜单…<br><button onclick="loadCloud()" style="margin-top:10px;background:#fb8c00;color:#fff;border:none;border-radius:6px;padding:8px 16px;font-size:14px">点我刷新</button></div>'; return; }
+  if(!cs.length){ box.innerHTML='<div style="padding:14px;text-align:center;color:#999;font-size:14px">⏳ 正在加载菜单…<br><button onclick="loadCloud(true)" style="margin-top:10px;background:#fb8c00;color:#fff;border:none;border-radius:6px;padding:8px 16px;font-size:14px">点我刷新</button></div>'; return; }
   cs.forEach(function(c){ html+='<div class="cat'+(c===curCat?' on':'')+'" onclick="setCat(\''+c+'\')">'+catLabel(c)+'</div>'; });
   box.innerHTML=html;
 }
