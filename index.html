@@ -788,7 +788,7 @@ function openCheckout(){
       .then(function(r){return r.json();})
       .then(function(j){ if(j&&j.open!=null){ shopOpen=!!j.open; renderShopBanner(); } }).catch(function(){}); }catch(e){}
   }
-  closeDrawer(); document.getElementById('checkoutModal').classList.add('show'); fillTimeOptions();
+  closeDrawer(); document.getElementById('checkoutModal').classList.add('show'); fillTimeOptions(); hlTimeInit();
   window._delivery=null; document.getElementById('deliveryBox').style.display='none';
 }
 function distKm(a,b){
