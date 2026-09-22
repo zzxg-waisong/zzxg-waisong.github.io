@@ -548,7 +548,7 @@ function closeHalfPrompt(add){
 }
 function showPeelDlg(d){
   var old=document.getElementById('peelModal'); if(old) old.remove();
-  var html='<div class="modal show" style="z-index:9999"><div style="background:#fff;border-radius:14px;padding:20px;width:90%;max-width:360px">'+
+  var html='<div class="modal show" style="z-index:9999;display:flex;align-items:center;justify-content:center"><div style="background:#fff;border-radius:14px;padding:20px;width:90%;max-width:360px">'+
     '<h3 style="margin-bottom:4px">'+esc(d.name)+'</h3>'+
     '<div style="color:#e65100;font-size:18px;font-weight:900;margin-bottom:16px">¥'+d.price+'/个</div>'+
     '<div style="display:flex;gap:10px;margin-bottom:16px">'+
