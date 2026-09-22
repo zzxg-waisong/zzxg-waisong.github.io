@@ -380,10 +380,18 @@ function loadCloud(force){
   var now=Date.now();
   if(!force && now-_lastLoad<30000) return;
   _lastLoad=now;
-  fetch(SB_URL+'/rest/v1/rpc/get_menu',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:'{}'})
-    .then(function(r){ return r.json(); })
+  // 先读GitHub的dishes.json（快，同域名）
+  fetch('dishes.json?v='+Date.now(), {cache:'no-store'})
+    .then(function(r){ if(!r.ok) throw 0; return r.json(); })
     .then(function(arr){ applyCloudMenu(arr); })
-    .catch(function(){ loadCloudFallback(); });
+    .catch(function(){})
+    .finally(function(){
+      // 再读Supabase备份
+      fetch(SB_URL+'/rest/v1/rpc/get_menu',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:'{}'})
+        .then(function(r){ return r.json(); })
+        .then(function(arr){ if(Array.isArray(arr)&&arr.length) applyCloudMenu(arr); })
+        .catch(function(){});
+    });
 }
 function loadCloudFallback(){
   fetch('dishes.json?v='+Date.now(), {cache:'no-store'})
