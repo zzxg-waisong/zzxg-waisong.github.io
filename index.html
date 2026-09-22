@@ -581,12 +581,35 @@ function addToCart(id){
   if(d&&d.cat==='半价'&&!canAddHalf(d)){ alert('第二杯半价只能选价格相同或更低的果汁哦~'); return; }
   if(d&&(d.per>0||id==='f_ganzhe')){ pickWeight(id); return; }
   if(d&&d.cat==='果汁'){
-    var today=new Date().toDateString();
-    var triggered=localStorage.getItem('zz_half_'+today)==='1';
-    var hasJuiceAlready=cartList().some(function(c){var dd=byId(c.id);return dd&&dd.cat==='果汁';});
-    if(!triggered && !hasJuiceAlready){
-      localStorage.setItem('zz_half_'+today,'1');
-      showHalfPrompt();
+    var ph=localStorage.getItem('zz_my_phone')||'';
+    if(ph && /^1\d{10}$/.test(ph)){
+      // 有手机号，查云端今天是否首单
+      var todayStr=new Date().toDateString();
+      var triggered=localStorage.getItem('zz_half_'+ph+'_'+todayStr)==='1';
+      var hasJuiceAlready=cartList().some(function(c){var dd=byId(c.id);return dd&&dd.cat==='果汁';});
+      if(!triggered && !hasJuiceAlready){
+        // 查云端今天该手机号有没有订单
+        fetch(SB_URL+'/rest/v1/orders?select=created_at&phone=eq.'+ph+'&created_at=gte.'+new Date().toISOString().slice(0,10),{headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY}})
+          .then(function(r){return r.json();})
+          .then(function(j){
+            if(Array.isArray(j)&&j.length===0){
+              // 今天首单，弹提示
+              localStorage.setItem('zz_half_'+ph+'_'+todayStr,'1');
+              showHalfPrompt();
+            } else {
+              localStorage.setItem('zz_half_'+ph+'_'+todayStr,'1');
+            }
+          }).catch(function(){});
+      }
+    } else {
+      // 没手机号，用本地判断
+      var today=new Date().toDateString();
+      var triggered=localStorage.getItem('zz_half_local_'+today)==='1';
+      var hasJuiceAlready=cartList().some(function(c){var dd=byId(c.id);return dd&&dd.cat==='果汁';});
+      if(!triggered && !hasJuiceAlready){
+        localStorage.setItem('zz_half_local_'+today,'1');
+        showHalfPrompt();
+      }
     }
   }
   if(!cart[id]) cart[id]={qty:0,note:''};
@@ -929,7 +952,7 @@ function closeOutOfRange(){
 }
 function submitOrder(){
   var name=document.getElementById('ckName').value.trim();
-  var phone=document.getElementById('ckPhone').value.trim();
+  var phone=document.getElementById('ckPhone').value.trim(); localStorage.setItem('zz_my_phone',phone);
   var addr=document.getElementById('ckAddr').value.trim();
   var time=document.getElementById('ckTime').value;
   if(!shopOpen && String(time||'').indexOf('次日')!==0){ alert('本店已打烊，暂不接即时单。如需次日配送，请选择「次日」时间段，或明天营业后再下单。'); return; }
