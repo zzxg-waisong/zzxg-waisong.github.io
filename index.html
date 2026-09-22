@@ -798,7 +798,7 @@ function distKm(a,b){
 }
 function deliveryFee(dist, subtotal){ if(dist<=3) return 0; if(dist<=5) return (subtotal>=30?0:3); if(dist<=10) return 3+Math.ceil((dist-5))*2; return -1; }
 function calcDelivery(){
-  var addr=document.getElementById('ckAddr').value.trim();
+  var addr=document.getElementById('ckAddr').value.trim(); var detail=document.getElementById('ckAddrDetail')?document.getElementById('ckAddrDetail').value.trim():''; if(detail) addr+=' '+detail;
   var box=document.getElementById('deliveryBox');
   if(!addr){ box.style.display='none'; window._delivery=null; return; }
   box.style.display='block';
