@@ -684,7 +684,10 @@ function renderCartbar(){
   var list=cartList(), n=0; list.forEach(function(c){n+=c.qty;});
   document.getElementById('cartbar').classList.toggle('hidden', n===0);
   document.getElementById('cartCount').textContent=n;
-  document.getElementById('cartTotal').textContent=money(cartTotal());
+  var sub=cartTotal();
+  var el=document.getElementById('cartbar');
+  if(sub<20){ el.style.background='#c62828'; document.getElementById('cartTotal').textContent=money(sub)+' (满20起送)'; }
+  else { el.style.background='#2e7d32'; document.getElementById('cartTotal').textContent=money(sub); }
 }
 function openDrawer(){ renderCartItems(); document.getElementById('drawer').classList.add('show'); }
 function closeDrawer(){ document.getElementById('drawer').classList.remove('show'); }
