@@ -565,11 +565,11 @@ function confirmPeel(id){
   var val=document.querySelector('input[name=peel]:checked');
   var note=val?val.value:'';
   var d=byId(id); if(!d) return;
-  var item={id:id,qty:1,note:note};
-  var cart=load('fruit_cart',[]);
-  var ex=cart.find(function(c){return c.id===id && c.note===note;});
-  if(ex) ex.qty++; else cart.push(item);
-  save('fruit_cart',cart);
+  // cart是对象格式 {id: {qty,note}}
+  var key=id+'_'+note;
+  if(cart[key]) cart[key].qty++;
+  else cart[key]={qty:1,note:note};
+  saveCart();
   document.getElementById('peelModal').remove();
   renderCartbar();
   updateBadge();
