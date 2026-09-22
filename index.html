@@ -1921,6 +1921,7 @@ function saveDish(id){
   save(LS_DISHES,dishes); syncHalfPrice(); document.getElementById('dishModal').remove(); renderAdmin(); renderCats(); renderDishes();
 }
 function delDish(id){ if(confirm('确认删除该菜品？')){ dishes=dishes.filter(function(d){return d.id!==id;}); save(LS_DISHES,dishes); syncHalfPrice(); renderAdmin(); renderCats(); renderDishes(); } }
+function sortDishes(){ dishes=groupSort(dishes); save(LS_DISHES,dishes); renderAdmin(); renderCats(); renderDishes(); }
 
 function renderPayAdmin(){
   var html='<div class="panel"><h3>收款码设置</h3>'+
