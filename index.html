@@ -418,7 +418,11 @@ function cloudPull(){
     .catch(function(e){ setCloudStatus('❌ '+e.message); });
 }
 
-var dishes = load(LS_DISHES, null); if(!dishes||!dishes.length) dishes=defaultDishes(); syncHalfPrice();
+var dishes = load(LS_DISHES, null);
+if(!dishes||!dishes.length) dishes=defaultDishes();
+syncHalfPrice();
+// 后台异步拉云端菜单，拉到了就更新
+setTimeout(function(){ loadCloud(); }, 500);
 var orders = load(LS_ORDERS, []);
 var payCfg = load(LS_PAY, {payUrl:'收款码.png', wxUrl:'微信二维码.png'});
 var shopCfg = load(LS_SHOP, {address:'', amapKey:'17e56cae3aca57e9862453d89791043c', shopLat:'30.856438', shopLng:'104.323828', jskey:'0d47ebe194506326a62c092365563bf4', jscode:'edf199ba7acbb15a4b446f525976876c'});
