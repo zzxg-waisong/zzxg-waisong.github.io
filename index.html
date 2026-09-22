@@ -117,7 +117,7 @@ body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f6f7f8;c
   <div class="topbar">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
       <div>
-        <h1 id="brandLogo" onclick="secretClick()">🍉 榨榨鲜果</h1>
+        <h1 id="brandLogo" onmousedown="secretDown()" onmouseup="secretUp()" ontouchstart="secretDown()" ontouchend="secretUp()">🍉 榨榨鲜果</h1>
         <p>新鲜水果 · 鲜果现榨 · 不加糖 · 无科技</p>
       </div>
       <div style="display:flex;flex-direction:column;gap:6px;align-items:stretch">
@@ -1121,13 +1121,9 @@ function showAdmin(){
   renderAdmin();
   startCloudTimer();
 }
-var _clicks=[];
-function secretClick(){
-  var now=Date.now();
-  _clicks.push(now);
-  if(_clicks.length>3) _clicks=_clicks.slice(-3);
-  if(_clicks.length===3 && (_clicks[2]-_clicks[0])<1000){ location.hash='#/admin'; _clicks=[]; }
-}
+var _pressTimer=null;
+function secretDown(){ _pressTimer=setTimeout(function(){ location.hash='#/admin'; },1000); }
+function secretUp(){ if(_pressTimer){ clearTimeout(_pressTimer); _pressTimer=null; } }
 function backToShop(){ location.hash='#/'; }
 function adminLogin(){
   var pwd=document.getElementById('adminPwd').value;
