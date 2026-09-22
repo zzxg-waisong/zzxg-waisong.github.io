@@ -415,7 +415,7 @@ var dishes = load(LS_DISHES, null); if(!dishes||!dishes.length) dishes=defaultDi
 var orders = load(LS_ORDERS, []);
 var payCfg = load(LS_PAY, {payUrl:'收款码.png', wxUrl:'微信二维码.png'});
 var shopCfg = load(LS_SHOP, {address:'', amapKey:'17e56cae3aca57e9862453d89791043c', shopLat:'30.856438', shopLng:'104.323828', jskey:'0d47ebe194506326a62c092365563bf4', jscode:'edf199ba7acbb15a4b446f525976876c'});
-var adminOk = localStorage.getItem(LS_SESSION)==='1';
+var adminOk = (location.href.indexOf('autologin=1')>=0 && localStorage.getItem(LS_SESSION)==='1');
 var cloudCfg = load(LS_CLOUD, {token:'', repo:'zzxg-waisong/zzxg-waisong.github.io'});
 var cart = load('fruit_cart', {});   // id -> {qty,note}（刷新不丢）
 var curCat = '水果'; var adminDishCat = '水果'; var dishSort = 'default';
