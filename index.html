@@ -449,7 +449,7 @@ function showCustomer(){
   renderCats(); renderDishes(); renderCartbar();
   loadCloud();
 }
-function cats(){ var order=['水果','打折','果汁','半价'], c=[]; order.forEach(function(cat){ if(dishes.some(function(d){return d.on && d.cat===cat;})) c.push(cat); }); return c; }
+function cats(){ var order=['水果','打折','果汁','半价'], c=[]; order.forEach(function(cat){ if(cat==='半价' && !halfEnabled) return; if(dishes.some(function(d){return d.on && d.cat===cat;})) c.push(cat); }); return c; }
 function catLabel(c){ return c==='水果'?'新鲜水果':(c==='果汁'?'现榨果汁':(c==='打折'?'打折水果':(c==='半价'?'第二杯半价':c))); }
 /* 第二杯半价：从现榨果汁自动同步生成，价格自动×0.5 */
 function syncHalfPrice(){
@@ -501,6 +501,25 @@ function renderDishes(){
 }
 function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function saveCart(){ try{ localStorage.setItem('fruit_cart', JSON.stringify(cart)); }catch(e){} }
+var halfEnabled=false;
+function showHalfPrompt(){
+  var m=document.createElement('div');
+  m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center';
+  m.innerHTML='<div style="background:#fff;border-radius:14px;padding:20px;width:85%;max-width:320px">'+
+    '<div style="text-align:center;font-size:16px;font-weight:700;margin-bottom:10px">🎁 第二杯半价</div>'+
+    '<div style="text-align:center;color:#666;font-size:14px;margin-bottom:16px">要不要再带一杯？第二杯半价更划算</div>'+
+    '<div style="display:flex;gap:8px">'+
+    '<button onclick="closeHalfPrompt(true)" style="flex:1;background:#fb8c00;color:#fff;border:none;border-radius:8px;padding:12px;font-size:15px">加一杯</button>'+
+    '<button onclick="closeHalfPrompt(false)" style="flex:1;background:#eee;color:#666;border:none;border-radius:8px;padding:12px;font-size:15px">不加</button>'+
+    '</div></div>';
+  m.id='halfPrompt';
+  document.body.appendChild(m);
+}
+function closeHalfPrompt(add){
+  var m=document.getElementById('halfPrompt'); if(m) m.remove();
+  if(add){ halfEnabled=true; alert('已开启第二杯半价，去选一杯吧~'); }
+  renderCats(); renderDishes();
+}
 function pickWeight(id){
   var d=byId(id); if(!d) return;
   var old=document.getElementById('pickWModal'); if(old) old.remove();
