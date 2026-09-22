@@ -1321,6 +1321,12 @@ function placeCloudOrder(o){
   }catch(e){}
 }
 function fetchCloudOrders(silent){
+  // 输入框聚焦时跳过刷新，避免输入被清掉
+  var ae=document.activeElement;
+  if(ae && (ae.tagName==='INPUT'||ae.tagName==='TEXTAREA') && ae.type!=='button'){
+    setTimeout(function(){ fetchCloudOrders(silent); }, 1000);
+    return;
+  }
   var pwd=localStorage.getItem(LS_CLOUDPWD)||'1986shenhu';
   try{
     fetch(SB_URL+'/rest/v1/rpc/get_orders',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({admin_pwd:pwd})})
