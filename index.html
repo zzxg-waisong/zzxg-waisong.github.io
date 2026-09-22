@@ -1291,7 +1291,7 @@ function fetchCloudOrders(silent){
         if(!Array.isArray(j)){ if(!silent) alert('云端订单拉取失败（密码错误或网络问题）'); return; }
         var fresh=[];
         if(Object.keys(cloudSeen).length>0){
-          j.forEach(function(c){ if(!cloudSeen[c.id] && c.status==='new' && !localAlarmed[(c.payload||{}).id]) fresh.push(c.id); });
+          j.forEach(function(c){ if(!cloudSeen[c.id] && c.status==='new' && c.status!=='deleted' && !localAlarmed[(c.payload||{}).id]) fresh.push(c.id); });
         }
         j.forEach(function(c){ cloudSeen[c.id]=1; });
         try{ localStorage.setItem('zz_cloud_seen',JSON.stringify(cloudSeen)); }catch(e){}
@@ -1528,16 +1528,52 @@ function confirmCloudWeight(id){
     .catch(function(){ alert('称重保存失败，请检查网络'); });
 }
 function deleteCloudOrder(id){
-  if(!confirm('确认删除云端订单 #'+id+'？')) return;
+  if(!confirm('确认删除订单 #'+id+'？\n删除后不提示，可在「已删订单」里恢复或彻底清理。')) return;
+  var pwd=localStorage.getItem(LS_CLOUDPWD)||'1986shenhu';
+  // 标记为已删除，不真删
+  fetch(SB_URL+'/rest/v1/rpc/update_order_status',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({admin_pwd:pwd,order_id:id,new_status:'deleted'})})
+    .then(function(r){ return r.json(); }).then(function(j){ if(j&&j.ok){ fetchCloudOrders(); } else { alert('删除失败'); } }).catch(function(){ alert('删除失败'); });
+}
+function showDeletedOrders(){
+  var del=(typeof cloudOrders!=='undefined'?cloudOrders:[]).filter(function(c){return c.status==='deleted';});
+  var html='<div style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center"><div style="background:#fff;border-radius:14px;padding:20px;width:90%;max-width:400px;max-height:80vh;overflow:auto">';
+  html+='<h3 style="margin-bottom:12px">已删订单（'+del.length+'单）</h3>';
+  if(!del.length) html+='<div style="text-align:center;color:#999;padding:20px">没有已删订单</div>';
+  del.forEach(function(c){
+    var p=c.payload||{};
+    html+='<div style="border:1px solid #eee;border-radius:8px;padding:10px;margin-bottom:8px">'+
+      '<div><b>'+esc(p.name||'')+'</b> '+esc(p.phone||'')+'</div>'+
+      '<div style="font-size:12px;color:#666">'+(p.created||'')+'</div>'+
+      '<div style="margin-top:6px"><button onclick="purgeOrder(\''+c.id+'\')" style="background:#e53935;color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:12px">彻底删除</button></div>'+
+    '</div>';
+  });
+  if(del.length) html+='<button onclick="clearAllDeleted()" style="width:100%;background:#e53935;color:#fff;border:none;border-radius:8px;padding:10px;margin-top:8px">全部清理</button>';
+  html+='<button onclick="document.getElementById(\'deletedModal\').remove()" style="width:100%;background:#eee;border:none;border-radius:8px;padding:10px;margin-top:8px">关闭</button>';
+  html+='</div></div>';
+  var m=document.createElement('div'); m.id='deletedModal'; m.innerHTML=html; document.body.appendChild(m);
+}
+function purgeOrder(id){
+  if(!confirm('确认彻底删除订单 #'+id+'？不可恢复。')) return;
   var pwd=localStorage.getItem(LS_CLOUDPWD)||'1986shenhu';
   fetch(SB_URL+'/rest/v1/rpc/delete_order',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({admin_pwd:pwd,order_id:id})})
-    .then(function(r){ return r.json(); }).then(function(j){ if(j&&j.ok){ fetchCloudOrders(); } else { alert('删除失败'); } }).catch(function(){ alert('删除失败'); });
+    .then(function(r){ return r.json(); }).then(function(j){ if(j&&j.ok){ document.getElementById('deletedModal').remove(); fetchCloudOrders(); showDeletedOrders(); } else { alert('删除失败'); } }).catch(function(){ alert('删除失败'); });
+}
+function clearAllDeleted(){
+  var del=(typeof cloudOrders!=='undefined'?cloudOrders:[]).filter(function(c){return c.status==='deleted';});
+  if(!del.length) return;
+  if(!confirm('确认彻底清理全部 '+del.length+' 单已删订单？不可恢复。')) return;
+  var pwd=localStorage.getItem(LS_CLOUDPWD)||'1986shenhu';
+  var done=0;
+  del.forEach(function(c){
+    fetch(SB_URL+'/rest/v1/rpc/delete_order',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({admin_pwd:pwd,order_id:c.id})})
+      .then(function(){ done++; if(done===del.length){ document.getElementById('deletedModal').remove(); fetchCloudOrders(); alert('已清理'); } }).catch(function(){ done++; });
+  });
 }
 function renderOrders(){
   var pending=(typeof cloudOrders!=='undefined'?cloudOrders:[]).filter(function(c){return c.status==='new'||c.status==='待称重'||c.status==='待付款';}).length;
   var localPending=orders.filter(function(o){return o.status==='待称重'||o.status==='待付款';}).length;
   var totalPending=pending+localPending;
-  var html='<div class="panel"><h3>订单列表（'+orders.length+' 单）</h3>';
+  var html='<div class="panel"><h3>订单列表（'+orders.length+' 单）</h3><button onclick="showDeletedOrders()" style="background:#999;color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:12px;float:right">已删订单</button>';
   if(totalPending>0){
     html+='<div style="background:#ffebee;border:2px solid #e53935;border-radius:8px;padding:10px;text-align:center;margin-bottom:12px">'+
       '<span style="color:#e53935;font-weight:700;font-size:16px">🔔 待处理订单：'+totalPending+' 单</span></div>';
