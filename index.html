@@ -692,7 +692,7 @@ function addToCart(id){
 }
 function setNote(id,val){ if(!cart[id]) cart[id]={qty:0,note:''}; cart[id].note=val; saveCart(); }
 function changeQty(id,delta){ if(!cart[id]) cart[id]={qty:0,note:''}; cart[id].qty+=delta; if(cart[id].qty<=0) delete cart[id]; var d=byId(id); if(d&&d.cat==='果汁'&&delta<0){ fixHalfCart(); } saveCart(); renderCartItems(); renderCartbar(); renderDishes(); }
-function cartList(){ var r=[]; for(var id in cart){ if(cart[id].qty>0) r.push({id:id,qty:cart[id].qty,note:cart[id].note}); } return r; }
+function cartList(){ var r=[]; for(var key in cart){ if(cart[key].qty>0){ var id=key.split('_')[0]; r.push({id:id,qty:cart[key].qty,note:cart[key].note}); } } return r; }
 function juiceCount(){ var n=0; cartList().forEach(function(c){ var d=byId(c.id); if(d&&d.cat==='果汁') n+=c.qty; }); return n; }
 function halfCount(){ var n=0; cartList().forEach(function(c){ var d=byId(c.id); if(d&&d.cat==='半价') n+=c.qty; }); return n; }
 function maxJuicePrice(){
