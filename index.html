@@ -468,7 +468,7 @@ function syncHalfPrice(){
 function renderCats(){
   var box=document.getElementById('cats'); var html='';
   var cs=cats();
-  if(!cs.length){ box.innerHTML='<div style="padding:14px;text-align:center;color:#999;font-size:14px">本店菜单更新中，敬请期待～</div>'; return; }
+  if(!cs.length){ box.innerHTML='<div style="padding:14px;text-align:center;color:#999;font-size:14px">⏳ 正在加载菜单…<br><button onclick="loadCloud()" style="margin-top:10px;background:#fb8c00;color:#fff;border:none;border-radius:6px;padding:8px 16px;font-size:14px">点我刷新</button></div>'; return; }
   cs.forEach(function(c){ html+='<div class="cat'+(c===curCat?' on':'')+'" onclick="setCat(\''+c+'\')">'+catLabel(c)+'</div>'; });
   box.innerHTML=html;
 }
