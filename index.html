@@ -1231,8 +1231,13 @@ var adminTab='orders';
 function placeCloudOrder(o){
   if(!window.SB_URL) return;
   try{
-    fetch(SB_URL+'/rest/v1/rpc/place_order',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({payload:{id:o.id,items:o.items,hasWeight:o.hasWeight,weights:o.weights||{},subtotal:o.subtotal,deliveryFee:o.deliveryFee,dist:o.dist,total:o.total,estTotal:o.estTotal,name:o.name,phone:o.phone,addr:o.addr,time:o.time,remark:o.remark,created:o.created,status:o.status,weightTotal:o.weightTotal||0}})})
-      .then(function(r){ if(!r.ok) throw 0; }).catch(function(){});
+    fetch(SB_URL+'/rest/v1/rpc/place_order',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({payload:{id:o.id,items:o.items,hasWeight:o.hasWeight,weights:o.weights||{},subtotal:o.subtotal,deliveryFee:o.deliveryFee,dist:o.dist,total:o.total,estTotal:o.estTotal,name:o.name,phone:o.phone,addr:o.addr,time:o.time,remark:o.remark,created:o.created,status:o.status,weightTotal:o.weightTotal||0,newcust:o.newcust||false,discount:o.discount||0}})})
+      .then(function(r){ if(!r.ok) throw 0; 
+        // 新客优惠自动扣余额
+        if(o.newcust && o.discount>0){
+          fetch(SB_URL+'/rest/v1/rpc/apply_newcust',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({admin_pwd:'1986shenhu',order_id:o.id,min_free:0})}).then(function(){}).catch(function(){});
+        }
+      }).catch(function(){});
   }catch(e){}
 }
 function fetchCloudOrders(silent){
