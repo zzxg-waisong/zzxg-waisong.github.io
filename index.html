@@ -1616,10 +1616,10 @@ function confirmCloudWeight(id){
     .catch(function(){ alert('称重保存失败，请检查网络'); });
 }
 function deleteCloudOrder(id){
-  if(!confirm('确认删除订单 #'+id+'？\n删除后不提示，可在「已删订单」里恢复或彻底清理。')) return;
+  if(!confirm('确认删除订单 #'+id+'？\n删除后不再语音提醒。')) return;
   var pwd=localStorage.getItem(LS_CLOUDPWD)||'1986shenhu';
-  // 标记为已删除，不真删
-  fetch(SB_URL+'/rest/v1/rpc/update_order_status',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({admin_pwd:pwd,order_id:id,new_status:'deleted'})})
+  // 直接物理删除
+  fetch(SB_URL+'/rest/v1/rpc/delete_order',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({admin_pwd:pwd,order_id:id})})
     .then(function(r){ return r.json(); }).then(function(j){ if(j&&j.ok){ fetchCloudOrders(); } else { alert('删除失败'); } }).catch(function(){ alert('删除失败'); });
 }
 function showDeletedOrders(){
