@@ -165,7 +165,7 @@ body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f6f7f8;c
     <div class="form" style="padding:0">
       <label>您的称呼</label><input id="ckName" placeholder="例如：王女士">
       <label>联系电话</label><input id="ckPhone" type="tel" placeholder="手机号">
-      <label>外卖地址（输入关键词，从下方候选中点选可精确定位）</label><div class="wrap"><textarea id="ckAddr" rows="2" placeholder="输入小区/道路名，从候选点选"></textarea><div id="addrTips" style="display:none"></div><button class="btn" style="margin-top:6px;font-size:13px;padding:6px 10px" onclick="openMapPick()">📍 地图选点（点地图选位置）</button></div>
+      <label>外卖地址（输入关键词，从下方候选中点选可精确定位）</label><div class="wrap"><textarea id="ckAddr" rows="2" placeholder="输入小区/道路名，从候选点选"></textarea><div id="addrTips" style="display:none"></div><button class="btn" style="margin-top:6px;font-size:13px;padding:6px 10px" onclick="openMapPick()" style="background:#666;color:#fff">📍 地图选点（点地图选位置）</button></div>
       <div id="deliveryBox" style="background:#f0f7f0;border-radius:8px;padding:10px;margin-top:8px;font-size:13px;line-height:1.8;display:none"></div>
       <label>配送时间</label>
       <div style="display:flex;gap:6px;align-items:center">
@@ -461,6 +461,12 @@ function route(){
 window.addEventListener('hashchange', route);
 
 /* ==================== 顾客端 ==================== */
+function hlTimeInit(){
+  ['ckTime1','ckTime2','ckTime3'].forEach(function(id){
+    var x=document.getElementById(id);
+    if(x && x.value){ x.style.border='2px solid #fb8c00'; }
+  });
+}
 function showCustomer(){
   document.getElementById('admin').classList.add('hidden');
   document.getElementById('customer').classList.remove('hidden');
