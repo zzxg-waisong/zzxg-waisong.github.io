@@ -629,7 +629,7 @@ function confirmPickW(id,mode,val){
 function addToCart(id){
   var d=byId(id);
   // 柚类弹剥开选项
-  if(id.indexOf('sanhong')>=0 || id.indexOf('maoshanwang')>=0 || id.indexOf('liyu')>=0){ showPeelDlg(d); return; }
+  if(d && d.name && d.name.indexOf('柚')>=0){ showPeelDlg(d); return; }
   if(d&&d.cat==='半价'&&!canAddHalf(d)){ alert('第二杯半价只能选价格相同或更低的果汁哦~'); return; }
   if(d&&(d.per>0||id==='f_ganzhe')){ pickWeight(id); return; }
   if(d&&d.cat==='果汁'){
@@ -1288,7 +1288,7 @@ function adminLogin(){
   }
   else alert('密码错误');
 }
-function adminLogout(){ adminOk=false; localStorage.setItem(LS_SESSION,'0'); stopCloudTimer(); var c=document.getElementById('customer'); if(c) c.classList.remove('hidden'); var a=document.getElementById('admin'); if(a) a.classList.add('hidden'); }
+function adminLogout(){ adminOk=false; localStorage.setItem(LS_SESSION,'0'); stopCloudTimer(); window.close(); }
 function adminRefresh(){
   cloudPull();
 }
