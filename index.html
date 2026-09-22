@@ -800,6 +800,8 @@ function distKm(a,b){
 function deliveryFee(dist, subtotal){ if(dist<=3) return 0; if(dist<=5) return (subtotal>=30?0:3); if(dist<=10) return 3+Math.ceil((dist-5))*2; return -1; }
 function calcDelivery(){
   var addr=document.getElementById('ckAddr').value.trim(); var detail=document.getElementById('ckAddrDetail')?document.getElementById('ckAddrDetail').value.trim():''; if(detail) addr+=' '+detail;
+  // 下单后保存客户信息，下次自动填充
+  try{ localStorage.setItem('zz_cust_'+phone, JSON.stringify({name:name,addr:addr,detail:detail})); }catch(e){}
   var box=document.getElementById('deliveryBox');
   if(!addr){ box.style.display='none'; window._delivery=null; return; }
   box.style.display='block';
@@ -1000,6 +1002,9 @@ function submitOrder(){
   var time=document.getElementById('ckTime').value;
   if(!shopOpen && String(time||'').indexOf('次日')!==0){ alert('本店已打烊，暂不接即时单。如需次日配送，请选择「次日」时间段，或明天营业后再下单。'); return; }
   var remark=document.getElementById('ckRemark').value.trim();
+  // 自动填充上次客户信息
+  var saved=localStorage.getItem('zz_cust_'+phone);
+  if(saved){ try{ var s2=JSON.parse(saved); if(s2.name&&!name) document.getElementById('ckName').value=s2.name; if(s2.addr&&!addr) document.getElementById('ckAddr').value=s2.addr; if(s2.detail&&document.getElementById('ckAddrDetail')&&!detail) document.getElementById('ckAddrDetail').value=s2.detail; }catch(e){} }
   if(!name){ alert('请填写称呼'); return; }
   if(!/^1\d{10}$/.test(phone) && phone.length<7){ alert('请填写正确的联系电话'); return; }
   if(!addr){ alert('请填写外卖地址（可手动输入，或从下方候选点选）'); return; }
