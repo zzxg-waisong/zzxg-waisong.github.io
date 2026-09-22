@@ -122,7 +122,7 @@ body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f6f7f8;c
       </div>
       <div style="display:flex;flex-direction:column;gap:6px;align-items:stretch">
       <button class="admin-entry" style="color:#e65100" onclick="openPromo()">🎁 优惠</button>
-      <button class="admin-entry" style="opacity:.45;font-size:11px;padding:4px 8px" onclick="location.hash='#/admin'">🔒 后台</button>
+      
     </div>
     </div>
   </div>
@@ -1120,6 +1120,13 @@ function showAdmin(){
   loadAdminShopStatus();
   renderAdmin();
   startCloudTimer();
+}
+var _clicks=[];
+function secretClick(){
+  var now=Date.now();
+  _clicks.push(now);
+  if(_clicks.length>3) _clicks=_clicks.slice(-3);
+  if(_clicks.length===3 && (_clicks[2]-_clicks[0])<1000){ location.hash='#/admin'; _clicks=[]; }
 }
 function backToShop(){ location.hash='#/'; }
 function adminLogin(){
