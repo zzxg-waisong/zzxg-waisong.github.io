@@ -177,7 +177,7 @@ body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f6f7f8;c
       </div>
       <select id="ckTime" style="display:none"></select>
       <div style="font-size:12px;color:#999;margin-top:4px">📞 出发前电话联系您</div>
-      <label>备注（可选）</label><input id="ckRemark" placeholder="例如：放门口 / 敲门">
+      <label>备注（可选）</label><input id="ckRemark" placeholder="选填，例如：放门口 / 敲门 / 不要蒜">
       <div id="ckAmt" style="margin-top:12px;background:#fff8e1;border-radius:8px;padding:10px 12px;font-size:13px;line-height:1.9"></div>
       <div style="font-size:12px;color:#888;line-height:1.7;margin-top:12px;background:#fafafa;border-radius:6px;padding:8px 10px">🔒 您填写的称呼、电话、地址仅用于本次配送<br>💧 现榨果汁建议尽快饮用（2 小时内风味最佳）</div>
       <div style="display:flex;gap:8px;margin-top:16px">
@@ -952,6 +952,20 @@ function updateCkAmt(){
   var fee=0, dist='';
   if(dlv){ if(dlv.fee<0||dlv.dist>10){ el.innerHTML='<span style="color:#e65100">该地址超 10 公里，无法配送（建议到店自取）</span>'; return; } fee=deliveryFee(dlv.dist,sub); dist=dlv.dist.toFixed(1); }
   var html='<div>商品合计：<b>'+money(sub)+'</b></div>';
+  // 新客优惠提示
+  var ph=document.getElementById('ckPhone').value.trim();
+  if(ph && /^1\d{10}$/.test(ph)){
+    fetch(SB_URL+'/rest/v1/rpc/get_balance_public',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({phone:ph})})
+      .then(function(r){return r.json();})
+      .then(function(j){
+        if(j && j.balance>=4.999){
+          var el2=document.getElementById('ckAmt');
+          if(el2 && el2.innerHTML.indexOf('新客优惠')<0){
+            el2.innerHTML+='<div style="color:#2e7d32;font-size:12px;margin-top:4px">🎁 您是新客，立享5元优惠（点右上角优惠按钮使用）</div>';
+          }
+        }
+      }).catch(function(){});
+  }
   if(dlv){ html+='<div>骑行距离：约 '+dist+' 公里</div>'; }
   html+='<div>配送费：<b>'+(dlv?(fee===0?'免配送费':money(fee)):'请选地址后计算')+'</b></div>';
   var raw=sub+fee;
