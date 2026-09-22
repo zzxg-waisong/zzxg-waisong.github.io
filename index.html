@@ -169,11 +169,11 @@ body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f6f7f8;c
       <div id="deliveryBox" style="background:#f0f7f0;border-radius:8px;padding:10px;margin-top:8px;font-size:13px;line-height:1.8;display:none"></div>
       <label>配送时间</label>
       <div style="display:flex;gap:6px;align-items:center">
-        <select id="ckTime1" style="flex:1" onchange="syncTime()">
+        <select id="ckTime1" style="flex:1;border:2px solid #ccc" onchange="syncTime();hlTime(this)">
           <option value="尽快送达">尽快送达</option>
         </select>
-        <select id="ckTime2" style="flex:1" onchange="syncTime()"></select>
-        <select id="ckTime3" style="flex:1" onchange="syncTime()"></select>
+        <select id="ckTime2" style="flex:1;border:2px solid #ccc" onchange="syncTime();hlTime(this)"></select>
+        <select id="ckTime3" style="flex:1;border:2px solid #ccc" onchange="syncTime();hlTime(this)"></select>
       </div>
       <select id="ckTime" style="display:none"></select>
       <div style="font-size:12px;color:#999;margin-top:4px">📞 出发前电话联系您</div>
@@ -358,6 +358,13 @@ function fillTimeOptions(){
   for(var h=10;h<=19;h++){ h3+='<option value="明天'+h+':00前送达">'+h+':00 前</option>'; }
   s3.innerHTML=h3;
 }
+function hlTime(el){
+  ['ckTime1','ckTime2','ckTime3'].forEach(function(id){
+    var x=document.getElementById(id);
+    if(x) x.style.border='2px solid #ccc';
+  });
+  el.style.border='2px solid #fb8c00';
+}
 function syncTime(){
   var s1=document.getElementById('ckTime1');
   var s2=document.getElementById('ckTime2');
@@ -517,7 +524,7 @@ function showHalfPrompt(){
 }
 function closeHalfPrompt(add){
   var m=document.getElementById('halfPrompt'); if(m) m.remove();
-  if(add){ halfEnabled=true; alert('已开启第二杯半价，去选一杯吧~'); }
+  if(add){ halfEnabled=true; }
   renderCats(); renderDishes();
 }
 function pickWeight(id){
@@ -565,7 +572,7 @@ function confirmCustomYuan(id){
   if(!cart[id]) cart[id]={qty:0,note:''};
   cart[id].note='按金额'+v+'元';
   cart[id].qty=1;
-  saveCart(); renderDishes(); renderCartbar();
+  saveCart(); renderDishes(); renderCartbar(); renderCartItems(); openDrawer();
   var m=document.getElementById('pickWModal'); if(m) m.remove();
 }
 function confirmPickW(id,mode,val){
