@@ -549,10 +549,18 @@ function closeHalfPrompt(add){
 function showPeelDlg(d){
   var old=document.getElementById('peelModal'); if(old) old.remove();
   var html='<div class="modal show" style="z-index:9999"><div style="background:#fff;border-radius:14px;padding:20px;width:90%;max-width:360px">'+
-    '<h3 style="margin-bottom:12px">'+esc(d.name)+'</h3>'+
+    '<h3 style="margin-bottom:4px">'+esc(d.name)+'</h3>'+
+    '<div style="color:#e65100;font-size:18px;font-weight:900;margin-bottom:16px">¥'+d.price+'/个</div>'+
     '<div style="display:flex;gap:10px;margin-bottom:16px">'+
       '<label style="flex:1;text-align:center;padding:12px;border:2px solid #ddd;border-radius:10px;cursor:pointer"><input type="radio" name="peel" value="剥开" checked style="margin-bottom:4px">剥开</label>'+
       '<label style="flex:1;text-align:center;padding:12px;border:2px solid #ddd;border-radius:10px;cursor:pointer"><input type="radio" name="peel" value="不剥开" style="margin-bottom:4px">不剥开</label>'+
+    '</div>'+
+    '<div style="font-size:13px;color:#666;margin-bottom:8px">购买数量</div>'+
+    '<div style="display:flex;gap:8px;margin-bottom:16px">'+
+      '<button onclick="peelQty(1)" style="flex:1;padding:12px;border:2px solid #2e7d32;background:#e8f5e9;border-radius:10px;font-size:16px;font-weight:900">1个</button>'+
+      '<button onclick="peelQty(2)" style="flex:1;padding:12px;border:2px solid #ddd;background:#fff;border-radius:10px;font-size:16px;font-weight:900">2个</button>'+
+      '<button onclick="peelQty(3)" style="flex:1;padding:12px;border:2px solid #ddd;background:#fff;border-radius:10px;font-size:16px;font-weight:900">3个</button>'+
+      '<button onclick="peelQty(5)" style="flex:1;padding:12px;border:2px solid #ddd;background:#fff;border-radius:10px;font-size:16px;font-weight:900">5个</button>'+
     '</div>'+
     '<div style="display:flex;gap:10px">'+
       '<button class="btn" style="flex:1" onclick="confirmPeel(\''+d.id+'\')">加入购物车</button>'+
@@ -560,15 +568,26 @@ function showPeelDlg(d){
     '</div>'+
   '</div></div>';
   var m=document.createElement('div'); m.innerHTML=html; m.id='peelModal'; document.body.appendChild(m);
+  window._peelQty=1;
+}
+function peelQty(n){
+  window._peelQty=n;
+  var btns=document.querySelectorAll('#peelModal button');
+  btns.forEach(function(b,i){
+    if(i<4){
+      if((i+1)===n || (i===3 && n===5)){ b.style.borderColor='#2e7d32'; b.style.background='#e8f5e9'; }
+      else { b.style.borderColor='#ddd'; b.style.background='#fff'; }
+    }
+  });
 }
 function confirmPeel(id){
   var val=document.querySelector('input[name=peel]:checked');
   var note=val?val.value:'';
   var d=byId(id); if(!d) return;
-  // cart是对象格式 {id: {qty,note}}
+  var qty=window._peelQty||1;
   var key=id+'_'+note;
-  if(cart[key]) cart[key].qty++;
-  else cart[key]={qty:1,note:note};
+  if(cart[key]) cart[key].qty+=qty;
+  else cart[key]={qty:qty,note:note};
   saveCart();
   document.getElementById('peelModal').remove();
   renderCartbar();
