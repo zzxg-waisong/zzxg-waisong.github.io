@@ -436,7 +436,7 @@ function p2(x){return (x<10?'0':'')+x;}
 /* ==================== 路由 ==================== */
 function route(){
   var h=location.hash||'#/';
-  if(h.indexOf('#/admin')===0){ showAdmin(); }
+  if(h.indexOf('#/admin')===0){ if(location.href.indexOf('autologin=1')<0){ location.hash='#/'; return; } showAdmin(); }
   else { stopCloudTimer(); showCustomer(); }
 }
 window.addEventListener('hashchange', route);
