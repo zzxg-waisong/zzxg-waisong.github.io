@@ -988,6 +988,7 @@ function submitOrder(){
   if(autoAlarm && localStorage.getItem('zz_merchant')){ try{ var _la=new Audio('https://zzxg-waisong.github.io/voice_new_order.wav'); _la.volume=Math.max(0,Math.min(1,parseInt(localStorage.getItem('zz_voice_vol')||'100',10)/100)); _la.play(); }catch(e){} }
   try{ placeCloudOrder(order); }catch(e){}
   cart={}; saveCart(); renderDishes(); renderCartbar(); closeCheckout();
+  if(newcust){ localStorage.removeItem('zz_use_newcust_'+phone); }
   curOrder=order; showPay(order);
 }
 function showPay(order){
