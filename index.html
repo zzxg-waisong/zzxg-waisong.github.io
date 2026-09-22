@@ -547,13 +547,17 @@ function closeHalfPrompt(add){
   renderCats(); renderDishes();
 }
 function showPeelDlg(d){
+  var old=document.getElementById('peelModal'); if(old) old.remove();
   var html='<div class="modal show" style="z-index:9999"><div style="background:#fff;border-radius:14px;padding:20px;width:90%;max-width:360px">'+
     '<h3 style="margin-bottom:12px">'+esc(d.name)+'</h3>'+
     '<div style="display:flex;gap:10px;margin-bottom:16px">'+
       '<label style="flex:1;text-align:center;padding:12px;border:2px solid #ddd;border-radius:10px;cursor:pointer"><input type="radio" name="peel" value="剥开" checked style="margin-bottom:4px">剥开</label>'+
       '<label style="flex:1;text-align:center;padding:12px;border:2px solid #ddd;border-radius:10px;cursor:pointer"><input type="radio" name="peel" value="不剥开" style="margin-bottom:4px">不剥开</label>'+
     '</div>'+
-    '<button class="btn" style="width:100%" onclick="confirmPeel(\''+d.id+'\')">确定加入购物车</button>'+
+    '<div style="display:flex;gap:10px">'+
+      '<button class="btn" style="flex:1" onclick="confirmPeel(\''+d.id+'\')">加入购物车</button>'+
+      '<button class="btn gray" style="flex:1" onclick="document.getElementById(\'peelModal\').remove()">取消</button>'+
+    '</div>'+
   '</div></div>';
   var m=document.createElement('div'); m.innerHTML=html; m.id='peelModal'; document.body.appendChild(m);
 }
