@@ -1243,7 +1243,7 @@ function showAdmin(){
 var _pressTimer=null;
 function secretDown(){ _pressTimer=setTimeout(function(){ location.hash='#/admin'; },1000); }
 function secretUp(){ if(_pressTimer){ clearTimeout(_pressTimer); _pressTimer=null; } }
-function backToShop(){ location.hash='#/'; }
+function backToShop(){ stopCloudTimer(); var c=document.getElementById('customer'); if(c) c.classList.remove('hidden'); var a=document.getElementById('admin'); if(a) a.classList.add('hidden'); }
 function adminLogin(){
   var pwd=document.getElementById('adminPwd').value;
   var stored=localStorage.getItem(LS_PWD)||'1986shenhu';
@@ -1262,7 +1262,7 @@ function adminLogin(){
   }
   else alert('密码错误');
 }
-function adminLogout(){ adminOk=false; localStorage.setItem(LS_SESSION,'0'); stopCloudTimer(); location.hash='#/'; }
+function adminLogout(){ adminOk=false; localStorage.setItem(LS_SESSION,'0'); stopCloudTimer(); var c=document.getElementById('customer'); if(c) c.classList.remove('hidden'); var a=document.getElementById('admin'); if(a) a.classList.add('hidden'); }
 function adminRefresh(){
   cloudPull();
 }
