@@ -1575,8 +1575,8 @@ function renderCloudOrder(c){
     '<button class="btn" style="background:#555;color:#fff" onclick="printCloudOrder('+c.id+')">🖨 打印</button>'+
     '<button class="btn" onclick="navCloud('+c.id+')">高德导航</button>'+
     '<button class="btn orange" onclick="copyCloudAddr('+c.id+')">复制地址</button>'+
+    (c.status!=='已完成'?'<button class="btn" onclick="updateCloudStatus('+c.id+',\'已完成\')">标记完成</button>':'')+
     '<button class="btn red" onclick="deleteCloudOrder('+c.id+')">删除</button>'+
-    (c.status!=='已完成'?'<button class="btn" onclick="updateCloudStatus('+c.id+',''已完成'')">标记完成</button>':'')+
     '</div>';
 }
 function printCloudOrder(id){
