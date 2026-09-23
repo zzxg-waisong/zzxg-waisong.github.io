@@ -539,6 +539,37 @@ function closeHalfPrompt(add){
   if(add){ halfEnabled=true; }
   renderCats(); renderDishes();
 }
+function showCountDlg(d){
+  var old=document.getElementById(\"peelModal\"); if(old) old.remove();
+  var html=\"<div class=\\\"modal show\\\" style=\\\"z-index:9999;display:flex;align-items:center;justify-content:center\\\"><div style=\\\"background:#fff;border-radius:14px;padding:20px;width:90%;max-width:360px\\\">\"+
+    \"<h3 style=\\\"margin-bottom:4px\\\">\"+esc(d.name)+\"</h3>\"+
+    \"<div style=\\\"color:#e65100;font-size:18px;font-weight:900;margin-bottom:16px\\\">¥\"+d.price+\"/个</div>\"+
+    \"<div style=\\\"font-size:13px;color:#666;margin-bottom:8px\\\">购买数量</div>\"+
+    \"<div style=\\\"display:flex;gap:8px;margin-bottom:16px\\\">\"+
+      \"<button onclick=\\\"countQty(1)\\\" style=\\\"flex:1;padding:12px;border:2px solid #2e7d32;background:#e8f5e9;border-radius:10px;font-size:16px;font-weight:900\\\">1个</button>\"+
+      \"<button onclick=\\\"countQty(2)\\\" style=\\\"flex:1;padding:12px;border:2px solid #ddd;background:#fff;border-radius:10px;font-size:16px;font-weight:900\\\">2个</button>\"+
+      \"<button onclick=\\\"countQty(3)\\\" style=\\\"flex:1;padding:12px;border:2px solid #ddd;background:#fff;border-radius:10px;font-size:16px;font-weight:900\\\">3个</button>\"+
+      \"<button onclick=\\\"countQty(5)\\\" style=\\\"flex:1;padding:12px;border:2px solid #ddd;background:#fff;border-radius:10px;font-size:16px;font-weight:900\\\">5个</button>\"+
+    \"</div>\"+
+    \"<div style=\\\"display:flex;gap:10px\\\">\"+
+      \"<button class=\\\"btn\\\" style=\\\"flex:1\\\" onclick=\\\"confirmCount(\x27\"+d.id+\"\x27)\\\">加入购物车</button>\"+
+      \"<button class=\\\"btn gray\\\" style=\\\"flex:1\\\" onclick=\\\"document.getElementById(\x27peelModal\x27).remove()\\\">取消</button>\"+
+    \"</div>\"+
+  \"</div></div>\";
+  document.body.insertAdjacentHTML(\"beforeend\", html);
+  window._curCount=1; window._countId=d.id;
+}
+function countQty(n){
+  window._curCount=n;
+  document.querySelectorAll(\"#peelModal button\").forEach(function(b,i){ if(i<4){ b.style.background=(i==n-1)?\"#e8f5e9\":\"#fff\"; b.style.borderColor=(i==n-1)?\"#2e7d32\":\"#ddd\"; }});
+}
+function confirmCount(id){
+  cart[id]={qty:window._curCount,note:\"\"};
+  saveCart(); renderDishes(); renderCartbar(); renderCartItems();
+  document.getElementById(\"peelModal\").remove();
+  openDrawer();
+}
+
 function showPeelDlg(d){
   var old=document.getElementById('peelModal'); if(old) old.remove();
   var html='<div class="modal show" style="z-index:9999;display:flex;align-items:center;justify-content:center"><div style="background:#fff;border-radius:14px;padding:20px;width:90%;max-width:360px">'+
@@ -618,7 +649,6 @@ function pickWeight(id){
       '<button onclick="this.parentElement.parentElement.remove()" style="width:100%;margin-top:14px;background:#eee;border:none;border-radius:8px;padding:10px;font-size:14px">取消</button>'+
       '</div>';
   } else {
-      qtyHtml='<div style="display:flex;gap:6px;flex-shrink:0;width:max-content"><button onclick="changeQty(\''+c.id+'\',-999,\''+(c.note||'')+'\')" style="width:auto!important;height:auto!important;border-radius:16px;background:#eee;color:#666;padding:6px 14px;font-size:13px;border:none;white-space:nowrap">删除</button><button onclick="adjustItem(\''+c.id+'\',\''+(c.note||'')+'\')" style="width:auto!important;height:auto!important;border-radius:16px;background:#fff3e0;color:#e65100;padding:6px 14px;font-size:13px;border:1px solid #ffcc80;white-space:nowrap">调整</button></div>';
     var minYuan=Math.max(5, Math.ceil(d.price));
     var yuanOpts=[minYuan, Math.ceil(minYuan*1.5), minYuan*2, minYuan*3];
     var jinBtns=jinOpts.map(function(j){return '<button onclick="confirmPickW(\''+id+'\',\'jin\','+j+')" style="flex:1;background:#fff;border:1px solid #ddd;border-radius:8px;padding:12px;font-size:15px;margin:4px">'+j+'斤</button>';}).join('');
@@ -660,6 +690,8 @@ function addToCart(id){
   var d=byId(id);
   // 柚类弹剥开选项
   if(d && d.name && d.name.indexOf('柚')>=0){ showPeelDlg(d); return; }
+  // 按个卖的商品弹数量选择
+  if(d && !d.per && id!=='f_ganzhe' && d.cat!=='果汁' && d.cat!=='半价'){ showCountDlg(d); return; }
   if(d&&d.cat==='半价'&&!canAddHalf(d)){ alert('第二杯半价只能选价格相同或更低的果汁哦~'); return; }
   if(d&&(d.per>0||id==='f_ganzhe')){ pickWeight(id); return; }
   if(d&&d.cat==='果汁'){
