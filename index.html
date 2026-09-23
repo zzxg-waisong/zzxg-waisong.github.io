@@ -729,6 +729,8 @@ function addToCart(id){
     }
   }
   if(!cart[id]) cart[id]={qty:0,note:''};
+  var d2=byId(id);
+  if(d2 && d2.cat==='果汁' && !halfEnabled){ halfEnabled=true; renderCats(); }
   cart[id].qty++; saveCart(); renderDishes(); renderCartbar();
 }
 function setNote(id,val){ if(!cart[id]) cart[id]={qty:0,note:''}; cart[id].note=val; saveCart(); }
