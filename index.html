@@ -1554,7 +1554,7 @@ function loadMoreCloudOrders(){
 function renderCloudOrder(c){
   var p=c.payload||{};
   var items=p.items||[];
-  var lines=items.map(function(it){ return esc((it.name||''))+(it.qty!=null?' x'+it.qty:'')+((it.per>0&&p.weights&&p.weights[it.id])?'（称重'+p.weights[it.id]+'斤）':''); }).join('<br>')||'（无商品）';
+  var lines=items.map(function(it){ return esc((it.name||''))+(it.qty!=null?' x'+it.qty+(it.unit?it.unit:''):'')+((it.per>0&&p.weights&&p.weights[it.id])?'（称重'+p.weights[it.id]+'斤）':''); }).join('<br>')||'（无商品）';
   var stCls=c.status==='已完成'?'off':(c.status==='已付款'?'paid':(c.status==='已称重'?'weigh':(c.status==='已接单'?'paid':'new')));
   var stTxt=(c.status==='new')?'待处理':c.status;
   var amt=(p.weightTotal!=null&&p.weightTotal||p.total!=null)?cloudAmount(c):'';
@@ -1588,7 +1588,7 @@ function printCloudOrder(id){
     var sub=0, extra='';
     if(it.per>0 && p.weights && p.weights[it.id]){ var w=p.weights[it.id]; sub=it.per*w; extra='（称重'+w+'斤×'+it.per+'元/斤）'; }
     else sub=it.price*it.qty;
-    return (it.name||'')+extra+' x'+(it.qty!=null?it.qty:'')+' ¥'+sub.toFixed(2);
+    return (it.name||'')+' x'+(it.qty!=null?it.qty:'')+(it.unit?it.unit:'')+' ¥'+sub.toFixed(2);
   });
   var note='';
   if(p.remark){ var rm=String(p.remark).trim(); if(rm && !/^https?:\/\/|\.github\.io|\.edgeone\.dev|uri\.amap\.com/i.test(rm)) note=rm; }
