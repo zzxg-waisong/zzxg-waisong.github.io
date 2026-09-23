@@ -586,6 +586,19 @@ function confirmPeel(id){
   renderCartbar();
   updateBadge();
 }
+function adjustItem(id, note){
+  var d=byId(id); if(!d) return;
+  if(d.name.indexOf("柚")>=0){ showPeelDlg(id); return; }
+  var key = note ? id+"_"+note : id;
+  var cur = cart[key] ? cart[key].qty : 1;
+  var v = prompt("当前数量："+cur+" 请输入新数量（个）：", cur);
+  if(v===null) return;
+  v = parseInt(v,10);
+  if(isNaN(v) || v<1){ alert("数量至少1个"); return; }
+  cart[key] = {qty:v, note:note};
+  saveCart(); renderDishes(); renderCartItems(); renderCartbar();
+}
+
 function pickWeight(id){
   var d=byId(id); if(!d) return;
   var old=document.getElementById('pickWModal'); if(old) old.remove();
@@ -605,7 +618,7 @@ function pickWeight(id){
       '<button onclick="this.parentElement.parentElement.remove()" style="width:100%;margin-top:14px;background:#eee;border:none;border-radius:8px;padding:10px;font-size:14px">取消</button>'+
       '</div>';
   } else {
-    var jinOpts=[1,2,3,5];
+      qtyHtml='<div style="display:flex;gap:6px;flex-shrink:0;width:max-content"><button onclick="changeQty(\''+c.id+'\',-999,\''+(c.note||'')+'\')" style="width:auto!important;height:auto!important;border-radius:16px;background:#eee;color:#666;padding:6px 14px;font-size:13px;border:none;white-space:nowrap">删除</button><button onclick="adjustItem(\''+c.id+'\',\''+(c.note||'')+'\')" style="width:auto!important;height:auto!important;border-radius:16px;background:#fff3e0;color:#e65100;padding:6px 14px;font-size:13px;border:1px solid #ffcc80;white-space:nowrap">调整</button></div>';
     var minYuan=Math.max(5, Math.ceil(d.price));
     var yuanOpts=[minYuan, Math.ceil(minYuan*1.5), minYuan*2, minYuan*3];
     var jinBtns=jinOpts.map(function(j){return '<button onclick="confirmPickW(\''+id+'\',\'jin\','+j+')" style="flex:1;background:#fff;border:1px solid #ddd;border-radius:8px;padding:12px;font-size:15px;margin:4px">'+j+'斤</button>';}).join('');
