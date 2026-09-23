@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -154,6 +154,7 @@ body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f6f7f8;c
       <div style="font-size:15px;font-weight:700">合计：<span style="color:#e53935" id="drawerTotal">¥0</span></div>
       <button class="btn gray" onclick="clearCart()" style="background:#eee;color:#666">清空</button>
       <button class="btn" onclick="openCheckout()">去结算</button>
+      <button class="btn gray" onclick="closeDrawer()" style="background:#eee;color:#666">继续购物</button>
     </div>
   </div>
 </div>
@@ -638,7 +639,8 @@ function confirmPickW(id,mode,val){
   if(mode==='he'){ cart[id].note=''; cart[id].qty=val; }
   else if(mode==='jin'){ cart[id].note='按斤'+val+'斤'; cart[id].qty=1; }
   else { cart[id].note='按金额'+val+'元'; cart[id].qty=1; }
-  saveCart(); renderDishes(); renderCartbar(); renderCartItems();
+  
+  if(mode==='yuan' && val < 5){ alert('自定义金额最低5元起'); var m=document.getElementById('pickWModal'); if(m) m.remove(); return; }saveCart(); renderDishes(); renderCartbar(); renderCartItems();
   var m=document.getElementById('pickWModal'); if(m) m.remove();
 }
 function addToCart(id){
@@ -841,7 +843,7 @@ if(location.href.indexOf('autologin=1')>=0){
   });
 }
 function clearCart(){
-  if(!cartList().length){ alert('购物车是空的'); return; }
+  if(!cartList().length){ alert('购物车是空的'); return;  renderDishes(); }
   if(!confirm('确认清空购物车？')) return;
   cart={}; saveCart(); renderCartItems(); renderCartbar(); renderDishes(); closeDrawer();
 }
@@ -1071,7 +1073,7 @@ function submitOrder(){
   var remark=document.getElementById('ckRemark').value.trim();
   // 自动填充上次客户信息
   var saved=localStorage.getItem('zz_cust_'+phone);
-  if(saved){ try{ var s2=JSON.parse(saved); if(s2.name&&!name) document.getElementById('ckName').value=s2.name; if(s2.addr&&!addr) document.getElementById('ckAddr').value=s2.addr; if(s2.detail&&document.getElementById('ckAddrDetail')&&!detail) document.getElementById('ckAddrDetail').value=s2.detail; }catch(e){} }
+  if(saved){ try{ var s2=JSON.parse(saved); if(s2.name&&!name) document.getElementById('ckName').value=s2.name; if(s2.addr&&!addr) document.getElementById('ckAddr').value=s2.addr; if(s2.detail&&document.getElementById('ckAddrDetail')&&!document.getElementById('ckAddrDetail').value) document.getElementById('ckAddrDetail').value=s2.detail; }catch(e){} }
   if(!name){ alert('请填写称呼'); return; }
   if(!/^1\d{10}$/.test(phone) && phone.length<7){ alert('请填写正确的联系电话'); return; }
   if(!addr){ alert('请填写外卖地址（可手动输入，或从下方候选点选）'); return; }
@@ -1081,7 +1083,9 @@ function submitOrder(){
   if(subtotal<20){ alert('满 20 元起送，当前还差 '+money(20-subtotal)+'，请再选购一些~'); return; }
   var dlv=window._delivery;
   var fee=0, dist='';
-  if(dlv){ if(dlv.fee<0 || dlv.dist>10){ showOutOfRange(); return; } fee=deliveryFee(dlv.dist, subtotal); dist=dlv.dist.toFixed(1); }
+  if(!dlv){ alert('请选择配送地址后再提交订单'); return; }
+  if(dlv.fee<0 || dlv.dist>10){ showOutOfRange(); return; }
+  fee=deliveryFee(dlv.dist, subtotal); dist=dlv.dist.toFixed(1);
   var items=list.map(function(c){ var d=byId(c.id); return {id:d.id, name:d.name, price:d.price, qty:c.qty, note:c.note, unit:d.unit, per:(d.per?d.per:0), cat:d.cat}; });
   var hasWeight=items.some(function(it){return it.per>0 && it.id==='f_ganzhe';});
   var newcust=false, discount=0;
@@ -1094,9 +1098,12 @@ function submitOrder(){
   orders.unshift(order); save(LS_ORDERS, orders);
   localAlarmed[order.id]=1; try{ localStorage.setItem('zz_local_alarmed',JSON.stringify(localAlarmed)); }catch(e){}
   if(autoAlarm && localStorage.getItem('zz_merchant')){ try{ var _la=new Audio('https://zzxg-waisong.github.io/voice_new_order.wav'); _la.volume=Math.max(0,Math.min(1,parseInt(localStorage.getItem('zz_voice_vol')||'100',10)/100)); _la.play(); }catch(e){} }
-  try{ placeCloudOrder(order); }catch(e){}
+  try{
+    placeCloudOrder(order);
+    // 云端订单提交成功后再清除新客优惠标记
+    setTimeout(function(){ if(newcust){ localStorage.removeItem('zz_use_newcust_'+phone); } }, 3000);
+  }catch(e){}
   cart={}; saveCart(); renderDishes(); renderCartbar(); closeCheckout();
-  if(newcust){ localStorage.removeItem('zz_use_newcust_'+phone); }
   curOrder=order; showPay(order);
 }
 function showPay(order){
@@ -1334,6 +1341,16 @@ function adminRefresh(){
   cloudPull();
 }
 function renderAdmin(){
+  // 计算今日营业额
+  var _today=new Date().toISOString().slice(0,10);
+  window.todayTotal=0; window.todayCount=0;
+  if(Array.isArray(cloudOrders)){
+    cloudOrders.forEach(function(o){
+      if(o.status==='已完成' && o.created && o.created.slice(0,10)===_today){
+        window.todayTotal += Number(o.amount||0); window.todayCount++;
+      }
+    });
+  }
   var tabs=[['orders','📋 订单'],['dishes','🍉 菜品'],['pay','💳 收款码'],['shop','🏠 店铺'],['print','🖨 打印'],['qr','🔗 点单码'],['set','⚙ 设置']];
   var html=''; var cur=adminTab||'orders';
   tabs.forEach(function(t){ html+='<button class="'+(cur===t[0]?'on':'')+'" onclick="adminTab=\''+t[0]+'\';renderAdmin()">'+t[1]+'</button>'; });
@@ -1481,6 +1498,10 @@ function cloudAmount(c){
   if(p.newcust && p.discount!=null) base=base-Number(p.discount);
   return roundHalf(base);
 }
+function loadMoreCloudOrders(){
+  window.cloudVisibleCount = (window.cloudVisibleCount||5) + 5;
+  renderAdmin();
+}
 function renderCloudOrder(c){
   var p=c.payload||{};
   var items=p.items||[];
@@ -1508,7 +1529,6 @@ function renderCloudOrder(c){
     '<button class="btn" style="background:#555;color:#fff" onclick="printCloudOrder('+c.id+')">🖨 打印</button>'+
     '<button class="btn" onclick="navCloud('+c.id+')">高德导航</button>'+
     '<button class="btn orange" onclick="copyCloudAddr('+c.id+')">复制地址</button>'+
-    '<button class="btn gray" onclick="copyCloudOrderText('+c.id+')">复制订单</button>'+
     '<button class="btn red" onclick="deleteCloudOrder('+c.id+')">删除</button>'+
     '</div>';
 }
@@ -1683,13 +1703,16 @@ function renderOrders(){
       '<input id="addBalAmt" type="number" min="0.5" step="0.5" placeholder="金额" style="width:64px;border:1px solid #ddd;border-radius:6px;padding:6px;font-size:13px">'+
       '<button class="btn" style="background:#ad1457;color:#fff;font-size:12px;padding:5px 12px" onclick="addBalance()">增加</button>'+
     '</div>'+
+    '<div style='margin:10px 0;padding:10px;background:#e8f5e9;border-radius:8px;font-size:14px'><b>💰 今日营业额</b>：<span style='color:#2e7d32;font-weight:700'>¥'+todayTotal+'</span>（已完成 '+todayCount+' 单）</div>'+
+
     '<div style="display:flex;gap:6px;margin:10px 0;flex-wrap:wrap;align-items:center;background:#fff8e1;border:1px solid #ffe082;border-radius:8px;padding:8px">'+
       '<b style="font-size:13px">🔍 查客户</b>'+
       '<input id="custQPhone" type="tel" maxlength="11" placeholder="手机号" style="flex:1;min-width:110px;border:1px solid #ddd;border-radius:6px;padding:6px;font-size:13px">'+
       '<button class="btn" style="background:#f57c00;color:#fff;font-size:12px;padding:5px 12px" onclick="queryCustomer()">查询近3月</button>'+
       '<span id="custQResult" style="font-size:13px;color:#333"></span>'+
     '</div>'+
-    cloudOrders.map(renderCloudOrder).join('')+
+    cloudOrders.slice(0, window.cloudVisibleCount||5).map(renderCloudOrder).join('')+
+    (cloudOrders.length > (window.cloudVisibleCount||5) ? '<button class="btn" style="width:100%;margin-top:8px" onclick="loadMoreCloudOrders()">加载更多（还有'+(cloudOrders.length-(window.cloudVisibleCount||5))+'单）</button>' : '')+
     '</div>';
   if(!orders.length) html+='<div style="text-align:center;color:#999;padding:30px">暂无订单</div>';
   orders.forEach(function(o,i){
@@ -2226,9 +2249,8 @@ function browserPrint(text, seqNo){
   if(pay){
     body+='<div style="text-align:center;margin:3px 0"><div style="font-size:18px;font-weight:700">应付合计</div><div style="font-size:30px;font-weight:800">'+esc(pay)+'</div></div>';
   }
-  body+='<div style="text-align:center;margin:4px 0;font-size:15px;font-weight:900">加好友 · 扫码付款</div>';
+  body+='<div style="text-align:center;margin:4px 0;font-size:15px;font-weight:900">扫码付款</div>';
   body+='<div style="text-align:center">';
-  body+='<div style="text-align:center;margin:2px 0"><img src="'+esc(payCfg.wxUrl||'微信二维码.png')+'" style="width:42mm;height:42mm;display:block;margin:0 auto"><div style="font-size:12px;font-weight:700;margin-top:2px">微信好友</div></div>';
   body+='<div style="text-align:center;margin:2px 0"><img src="'+esc(payCfg.payUrl||'收款码.png')+'" style="width:42mm;height:42mm;display:block;margin:0 auto"><div style="font-size:12px;font-weight:700;margin-top:2px">扫码付款</div></div>';
   body+='</div>';
   body+='<div style="text-align:center;font-size:15px">----------------------</div>';
