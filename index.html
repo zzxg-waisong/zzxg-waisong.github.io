@@ -538,8 +538,7 @@ function closeHalfPrompt(add){
   var m=document.getElementById('halfPrompt'); if(m) m.remove();
   if(add){ halfEnabled=true; }
   renderCats(); renderDishes();
-}
-
+  if(add){ setCat('半价'); } else { renderDishes(); }
 function showCountDlg(d){
   var old=document.getElementById('peelModal'); if(old) old.remove();
   var html='<div id="peelModal" class="modal show" style="z-index:9999;display:flex;align-items:center;justify-content:center"><div style="background:#fff;border-radius:14px;padding:20px;width:90%;max-width:360px">'+
@@ -894,7 +893,7 @@ if(location.href.indexOf('autologin=1')>=0){
 function clearCart(){
   if(!cartList().length){ alert('购物车是空的'); return;  renderDishes(); }
   if(!confirm('确认清空购物车？')) return;
-  cart={}; saveCart(); renderCartItems(); renderCartbar(); renderDishes(); closeDrawer();
+  cart={}; saveCart(); halfEnabled=false; renderCats(); renderCartItems(); renderCartbar(); renderDishes(); closeDrawer();
 }
 function openCheckout(){
   if(!cartList().length){ alert('购物车是空的'); return; }
