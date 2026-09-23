@@ -538,7 +538,10 @@ function closeHalfPrompt(add){
   var m=document.getElementById('halfPrompt'); if(m) m.remove();
   if(add){ halfEnabled=true; }
   renderCats(); renderDishes();
-  if(add){ setCat('半价'); } else { renderDishes(); }
+  renderCats();
+  if(add){ setCat('半价'); }
+  renderDishes();
+}
 function showCountDlg(d){
   var old=document.getElementById('peelModal'); if(old) old.remove();
   var html='<div id="peelModal" class="modal show" style="z-index:9999;display:flex;align-items:center;justify-content:center"><div style="background:#fff;border-radius:14px;padding:20px;width:90%;max-width:360px">'+
