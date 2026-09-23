@@ -697,13 +697,14 @@ function cartList(){
   var r=[];
   for(var key in cart){
     if(cart[key].qty>0){
+      // key就是商品id，note存在cart[key].note里
+      // 只有柚类才是id_note格式（剥开/不剥开）
       var note=cart[key].note||'';
-      var id;
-      if(note){
+      var id=key;
+      // 如果是柚类的id_note格式（note是"剥开"或"不剥开"），拆分
+      if(note==='剥开' || note==='不剥开'){
         var idx=key.lastIndexOf('_');
-        id=idx>0?key.substring(0,idx):key;
-      } else {
-        id=key;
+        if(idx>0) id=key.substring(0,idx);
       }
       r.push({id:id,qty:cart[key].qty,note:note});
     }
