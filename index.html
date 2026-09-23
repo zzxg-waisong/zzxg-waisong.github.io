@@ -1571,11 +1571,11 @@ function renderCloudOrder(c){
     (c.status!=='已付款'?'<button class="btn" style="background:#2e7d32;color:#fff" onclick="updateCloudStatus('+c.id+',\'已付款\')">✅ 标记已付款</button>':'')+
     (c.status==='new'?'<button class="btn" style="background:#1565c0;color:#fff" onclick="acceptCloudOrder('+c.id+')">✅ 接单</button>':'')+
     (isNewCust?'<button class="btn" style="background:#ad1457;color:#fff" onclick="newCustCloudOrder('+c.id+')">🎁 新客优惠</button>':'')+
-    (c.status!=='已完成'?'<button class="btn" onclick="updateCloudStatus('+c.id+',\'已完成\')">标记完成</button>':'')+
     '<button class="btn" style="background:#555;color:#fff" onclick="printCloudOrder('+c.id+')">🖨 打印</button>'+
     '<button class="btn" onclick="navCloud('+c.id+')">高德导航</button>'+
     '<button class="btn orange" onclick="copyCloudAddr('+c.id+')">复制地址</button>'+
     '<button class="btn red" onclick="deleteCloudOrder('+c.id+')">删除</button>'+
+    (c.status!=='已完成'?'<button class="btn" onclick="updateCloudStatus('+c.id+',''已完成'')">标记完成</button>':'')+
     '</div>';
 }
 function printCloudOrder(id){
@@ -1775,7 +1775,6 @@ function renderOrders(){
       '<button class="btn" style="background:#555;color:#fff" onclick="printThis(\''+i+'\')">🖨 打印</button>'+
       '<button class="btn" onclick="navTo(\''+i+'\')">高德导航</button>'+
       '<button class="btn orange" onclick="copyAddr(\''+i+'\')">复制地址</button>'+
-      '<button class="btn gray" onclick="copyOrderText(\''+i+'\')">复制订单</button>'+
       (o.status!=='已完成'?'<button class="btn" onclick="markDone(\''+i+'\')">标记完成</button>':'')+
       '<button class="btn red" onclick="delOrder(\''+i+'\')">删除</button></div></div>';
   });
