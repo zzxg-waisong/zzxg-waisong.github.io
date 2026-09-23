@@ -1761,6 +1761,7 @@ function renderOrders(){
     cloudOrders.slice(0, window.cloudVisibleCount||5).map(renderCloudOrder).join('')+
     (cloudOrders.length > (window.cloudVisibleCount||5) ? '<button class="btn" style="width:100%;margin-top:8px" onclick="loadMoreCloudOrders()">加载更多（还有'+(cloudOrders.length-(window.cloudVisibleCount||5))+'单）</button>' : '')+
     '</div>';
+  return html;
 }
 function navTo(i){
   var o=orders[i]; if(!o) return;
