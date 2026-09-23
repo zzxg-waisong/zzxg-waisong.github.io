@@ -638,7 +638,7 @@ function confirmPickW(id,mode,val){
   if(mode==='he'){ cart[id].note=''; cart[id].qty=val; }
   else if(mode==='jin'){ cart[id].note='按斤'+val+'斤'; cart[id].qty=1; }
   else { cart[id].note='按金额'+val+'元'; cart[id].qty=1; }
-  saveCart(); renderDishes(); renderCartbar();
+  saveCart(); renderDishes(); renderCartbar(); renderCartItems();
   var m=document.getElementById('pickWModal'); if(m) m.remove();
 }
 function addToCart(id){
