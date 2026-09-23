@@ -783,7 +783,7 @@ function renderCartItems(){
     if(isW){
       qtyHtml='<div style="display:flex;gap:6px;flex-shrink:0;width:max-content"><button onclick="changeQty(\''+c.id+'\',-1)" style="width:auto!important;height:auto!important;border-radius:16px;background:#eee;color:#666;padding:6px 14px;font-size:13px;border:none;white-space:nowrap">删除</button><button onclick="pickWeight(\''+c.id+'\')" style="width:auto!important;height:auto!important;border-radius:16px;background:#fff3e0;color:#e65100;padding:6px 14px;font-size:13px;border:1px solid #ffcc80;white-space:nowrap">调整</button></div>';
     } else {
-      qtyHtml='<div class="qty"><button onclick="changeQty(\''+c.id+'\',-1,\''+(c.note||'')+'\')">−</button><span>'+c.qty+'</span><button onclick="changeQty(\''+c.id+'\',1,\''+(c.note||'')+'\')">+</button></div>';
+      qtyHtml='<div style="display:flex;gap:6px;flex-shrink:0;width:max-content"><button onclick="changeQty(\''+c.id+'\',-999,\''+(c.note||'')+'\')" style="width:auto!important;height:auto!important;border-radius:16px;background:#eee;color:#666;padding:6px 14px;font-size:13px;border:none;white-space:nowrap">删除</button><button onclick="adjustItem(\''+c.id+'\',\''+(c.note||'')+'\')" style="width:auto!important;height:auto!important;border-radius:16px;background:#fff3e0;color:#e65100;padding:6px 14px;font-size:13px;border:1px solid #ffcc80;white-space:nowrap">调整</button></div>';
     }
     html+='<div class="cart-item"><div class="n">'+esc(d.name)+
       (c.note?'<small>'+esc(c.note)+'</small>':'')+'</div>'+
