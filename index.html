@@ -697,10 +697,14 @@ function cartList(){
   var r=[];
   for(var key in cart){
     if(cart[key].qty>0){
-      // note是最后一个_后面的部分，前面是商品id
-      var idx=key.lastIndexOf('_');
-      var id=idx>0?key.substring(0,idx):key;
-      var note=idx>0?key.substring(idx+1):(cart[key].note||'');
+      var note=cart[key].note||'';
+      var id;
+      if(note){
+        var idx=key.lastIndexOf('_');
+        id=idx>0?key.substring(0,idx):key;
+      } else {
+        id=key;
+      }
       r.push({id:id,qty:cart[key].qty,note:note});
     }
   }
