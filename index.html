@@ -539,34 +539,35 @@ function closeHalfPrompt(add){
   if(add){ halfEnabled=true; }
   renderCats(); renderDishes();
 }
+
 function showCountDlg(d){
-  var old=document.getElementById(\"peelModal\"); if(old) old.remove();
-  var html=\"<div class=\\\"modal show\\\" style=\\\"z-index:9999;display:flex;align-items:center;justify-content:center\\\"><div style=\\\"background:#fff;border-radius:14px;padding:20px;width:90%;max-width:360px\\\">\"+
-    \"<h3 style=\\\"margin-bottom:4px\\\">\"+esc(d.name)+\"</h3>\"+
-    \"<div style=\\\"color:#e65100;font-size:18px;font-weight:900;margin-bottom:16px\\\">¥\"+d.price+\"/个</div>\"+
-    \"<div style=\\\"font-size:13px;color:#666;margin-bottom:8px\\\">购买数量</div>\"+
-    \"<div style=\\\"display:flex;gap:8px;margin-bottom:16px\\\">\"+
-      \"<button onclick=\\\"countQty(1)\\\" style=\\\"flex:1;padding:12px;border:2px solid #2e7d32;background:#e8f5e9;border-radius:10px;font-size:16px;font-weight:900\\\">1个</button>\"+
-      \"<button onclick=\\\"countQty(2)\\\" style=\\\"flex:1;padding:12px;border:2px solid #ddd;background:#fff;border-radius:10px;font-size:16px;font-weight:900\\\">2个</button>\"+
-      \"<button onclick=\\\"countQty(3)\\\" style=\\\"flex:1;padding:12px;border:2px solid #ddd;background:#fff;border-radius:10px;font-size:16px;font-weight:900\\\">3个</button>\"+
-      \"<button onclick=\\\"countQty(5)\\\" style=\\\"flex:1;padding:12px;border:2px solid #ddd;background:#fff;border-radius:10px;font-size:16px;font-weight:900\\\">5个</button>\"+
-    \"</div>\"+
-    \"<div style=\\\"display:flex;gap:10px\\\">\"+
-      \"<button class=\\\"btn\\\" style=\\\"flex:1\\\" onclick=\\\"confirmCount(\x27\"+d.id+\"\x27)\\\">加入购物车</button>\"+
-      \"<button class=\\\"btn gray\\\" style=\\\"flex:1\\\" onclick=\\\"document.getElementById(\x27peelModal\x27).remove()\\\">取消</button>\"+
-    \"</div>\"+
-  \"</div></div>\";
-  document.body.insertAdjacentHTML(\"beforeend\", html);
+  var old=document.getElementById('peelModal'); if(old) old.remove();
+  var html='<div class="modal show" style="z-index:9999;display:flex;align-items:center;justify-content:center"><div style="background:#fff;border-radius:14px;padding:20px;width:90%;max-width:360px">'+
+    '<h3 style="margin-bottom:4px">'+esc(d.name)+'</h3>'+
+    '<div style="color:#e65100;font-size:18px;font-weight:900;margin-bottom:16px">¥'+d.price+'/个</div>'+
+    '<div style="font-size:13px;color:#666;margin-bottom:8px">购买数量</div>'+
+    '<div style="display:flex;gap:8px;margin-bottom:16px">'+
+      '<button onclick="countQty(1)" style="flex:1;padding:12px;border:2px solid #2e7d32;background:#e8f5e9;border-radius:10px;font-size:16px;font-weight:900">1个</button>'+
+      '<button onclick="countQty(2)" style="flex:1;padding:12px;border:2px solid #ddd;background:#fff;border-radius:10px;font-size:16px;font-weight:900">2个</button>'+
+      '<button onclick="countQty(3)" style="flex:1;padding:12px;border:2px solid #ddd;background:#fff;border-radius:10px;font-size:16px;font-weight:900">3个</button>'+
+      '<button onclick="countQty(5)" style="flex:1;padding:12px;border:2px solid #ddd;background:#fff;border-radius:10px;font-size:16px;font-weight:900">5个</button>'+
+    '</div>'+
+    '<div style="display:flex;gap:10px">'+
+      '<button class="btn" style="flex:1" onclick="confirmCount(\''+d.id+'\')">加入购物车</button>'+
+      '<button class="btn gray" style="flex:1" onclick="document.getElementById(\'peelModal\').remove()">取消</button>'+
+    '</div>'+
+  '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', html);
   window._curCount=1; window._countId=d.id;
 }
 function countQty(n){
   window._curCount=n;
-  document.querySelectorAll(\"#peelModal button\").forEach(function(b,i){ if(i<4){ b.style.background=(i==n-1)?\"#e8f5e9\":\"#fff\"; b.style.borderColor=(i==n-1)?\"#2e7d32\":\"#ddd\"; }});
+  document.querySelectorAll("#peelModal button").forEach(function(b,i){ if(i<4){ b.style.background=(i==n-1)?"#e8f5e9":"#fff"; b.style.borderColor=(i==n-1)?"#2e7d32":"#ddd"; }});
 }
 function confirmCount(id){
-  cart[id]={qty:window._curCount,note:\"\"};
+  cart[id]={qty:window._curCount,note:""};
   saveCart(); renderDishes(); renderCartbar(); renderCartItems();
-  document.getElementById(\"peelModal\").remove();
+  document.getElementById('peelModal').remove();
   openDrawer();
 }
 
