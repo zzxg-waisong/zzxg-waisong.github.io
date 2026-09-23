@@ -344,7 +344,7 @@ function fillTimeOptions(){
   if(!s2||!s3) return;
   var h2='<option value="">今天</option>';
   for(var h=10;h<=19;h++){
-    if(h<=curH) continue;  // 已过的不显示
+    if(h<curH+1) continue;  // 至少提前1小时送达
     h2+='<option value="今天'+h+':00前送达">'+h+':00 前</option>';
   }
   s2.innerHTML=h2;
