@@ -783,9 +783,14 @@ function maxJuicePrice(){
 }
 function halfOrigPrice(d){ return d&&d.halfOf&&byId(d.halfOf)?byId(d.halfOf).price:Infinity; }
 function canAddHalf(d){
-  if(juiceCount()<=halfCount()) return false;
-  if(d&&d.cat==='半价') return halfOrigPrice(d)<=maxJuicePrice();
-  return false;
+  // 找购物车里最贵的原价果汁价格
+  var maxPrice = 0;
+  cartList().forEach(function(cartItem){
+    var item = byId(cartItem.id);
+    if(item && item.cat==='果汁' && item.price>maxPrice) maxPrice = item.price;
+  });
+  // 半价果汁价格不能超过最贵原价果汁价格
+  return d.price <= maxPrice;
 }
 function fixHalfCart(){
   var changed=true;
