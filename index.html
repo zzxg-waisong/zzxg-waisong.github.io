@@ -571,6 +571,33 @@ function confirmCount(id){
   saveCart(); renderDishes(); renderCartbar(); renderCartItems();
   document.getElementById('peelModal').remove();
   openDrawer();
+  // 加完果汁后判断要不要弹第二杯半价
+  var d=byId(id);
+  if(d && d.cat==='果汁'){
+    var ph=localStorage.getItem('zz_my_phone')||'';
+    var today=new Date().toDateString();
+    var juiceTotal = cartList().filter(function(c){var dd=byId(c.id);return dd&&dd.cat==='果汁';}).reduce(function(s,c){return s+c.qty;},0);
+    if(ph && /^1\d{10}$/.test(ph)){
+      var triggered=localStorage.getItem('zz_half_'+ph+'_'+today)==='1';
+      if(!triggered && juiceTotal===window._curCount){
+        fetch(SB_URL+'/rest/v1/orders?select=created_at&phone=eq.'+ph+'&created_at=gte.'+new Date().toISOString().slice(0,10),{headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY}})
+          .then(function(r){return r.json();})
+          .then(function(j){
+            if(Array.isArray(j)&&j.length===0){
+              localStorage.setItem('zz_half_'+ph+'_'+today,'1');
+              showHalfPrompt();
+            } else { localStorage.setItem('zz_half_'+ph+'_'+today,'1'); }
+          }).catch(function(){});
+      }
+    } else {
+      var triggered=localStorage.getItem('zz_half_local_'+today)==='1';
+      if(!triggered && juiceTotal===window._curCount){
+        localStorage.setItem('zz_half_local_'+today,'1');
+        showHalfPrompt();
+      }
+    }
+    if(!halfEnabled){ halfEnabled=true; renderCats(); }
+  }
 }
 
 function showPeelDlg(d){
