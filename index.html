@@ -571,33 +571,7 @@ function confirmCount(id){
   saveCart(); renderDishes(); renderCartbar(); renderCartItems();
   document.getElementById('peelModal').remove();
   openDrawer();
-  // 加完果汁后判断要不要弹第二杯半价
-  var d=byId(id);
-  if(d && d.cat==='果汁'){
-    var ph=localStorage.getItem('zz_my_phone')||'';
-    var today=new Date().toDateString();
-    var juiceTotal = cartList().filter(function(c){var dd=byId(c.id);return dd&&dd.cat==='果汁';}).reduce(function(s,c){return s+c.qty;},0);
-    if(ph && /^1\d{10}$/.test(ph)){
-      var triggered=localStorage.getItem('zz_half_'+ph+'_'+today)==='1';
-      if(!triggered && juiceTotal===window._curCount){
-        fetch(SB_URL+'/rest/v1/orders?select=created_at&phone=eq.'+ph+'&created_at=gte.'+new Date().toISOString().slice(0,10),{headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY}})
-          .then(function(r){return r.json();})
-          .then(function(j){
-            if(Array.isArray(j)&&j.length===0){
-              localStorage.setItem('zz_half_'+ph+'_'+today,'1');
-              showHalfPrompt();
-            } else { localStorage.setItem('zz_half_'+ph+'_'+today,'1'); }
-          }).catch(function(){});
-      }
-    } else {
-      var triggered=localStorage.getItem('zz_half_local_'+today)==='1';
-      if(!triggered && juiceTotal===window._curCount){
-        localStorage.setItem('zz_half_local_'+today,'1');
-        showHalfPrompt();
-      }
-    }
-    if(!halfEnabled){ halfEnabled=true; renderCats(); }
-  }
+  if(!halfEnabled){ halfEnabled=true; renderCats(); }
 }
 
 function showPeelDlg(d){
@@ -1140,46 +1114,26 @@ function closeOutOfRange(){
   var d=document.getElementById('drawer'); if(d) d.style.display='none';
 }
 function submitOrder(){
-  var name=document.getElementById('ckName').value.trim();
-  var phone=document.getElementById('ckPhone').value.trim(); localStorage.setItem('zz_my_phone',phone);
-  var addr=document.getElementById('ckAddr').value.trim();
-  var time=document.getElementById('ckTime').value;
-  if(!shopOpen && String(time||'').indexOf('次日')!==0){ alert('本店已打烊，暂不接即时单。如需次日配送，请选择「次日」时间段，或明天营业后再下单。'); return; }
-  var remark=document.getElementById('ckRemark').value.trim();
-  // 自动填充上次客户信息
-  var saved=localStorage.getItem('zz_cust_'+phone);
-  if(saved){ try{ var s2=JSON.parse(saved); if(s2.name&&!name) document.getElementById('ckName').value=s2.name; if(s2.addr&&!addr) document.getElementById('ckAddr').value=s2.addr; if(s2.detail&&document.getElementById('ckAddrDetail')&&!document.getElementById('ckAddrDetail').value) document.getElementById('ckAddrDetail').value=s2.detail; }catch(e){} }
-  if(!name){ alert('请填写称呼'); return; }
-  if(!/^1\d{10}$/.test(phone) && phone.length<7){ alert('请填写正确的联系电话'); return; }
-  if(!addr){ alert('请填写外卖地址（可手动输入，或从下方候选点选）'); return; }
-  var list=cartList(); if(!list.length){ alert('购物车为空'); return; }
-  if(halfCount()>juiceCount()){ alert('第二杯半价商品数量不能超过原价果汁数量，请调整购物车'); return; }
-  var subtotal=cartTotal();
-  if(subtotal<20){ alert('满 20 元起送，当前还差 '+money(20-subtotal)+'，请再选购一些~'); return; }
-  var dlv=window._delivery;
-  var fee=0, dist='';
-  if(!dlv){ alert('请选择配送地址后再提交订单'); return; }
-  if(dlv.fee<0 || dlv.dist>10){ showOutOfRange(); return; }
-  fee=deliveryFee(dlv.dist, subtotal); dist=dlv.dist.toFixed(1);
-  var items=list.map(function(c){ var d=byId(c.id); return {id:d.id, name:d.name, price:d.price, qty:c.qty, note:c.note, unit:d.unit, per:(d.per?d.per:0), cat:d.cat}; });
-  var hasWeight=items.some(function(it){return it.per>0 && it.id==='f_ganzhe';});
-  var newcust=false, discount=0;
-  if(localStorage.getItem('zz_use_newcust_'+phone)==='1'){
-    newcust=true; discount=5;
+  // 第一步：判断是不是当天第一杯果汁，弹第二杯半价
+  var ph=localStorage.getItem('zz_my_phone')||'';
+  var today=new Date().toDateString();
+  var hasJuice = cartList().some(function(c){var d=byId(c.id);return d&&d.cat==='果汁';});
+  var juiceTriggered = localStorage.getItem('zz_half_seen_'+(ph||'local')+'_'+today)==='1';
+  if(hasJuice && !juiceTriggered){
+    localStorage.setItem('zz_half_seen_'+(ph||'local')+'_'+today,'1');
+    showHalfPrompt();
+    // 等顾客选完第二杯后，再继续提交
+    return;
   }
-  var rawTotal=subtotal+fee-discount;
-  var total=hasWeight?rawTotal:roundHalf(rawTotal);
-  var order={id:oid(), items:items, hasWeight:hasWeight, weights:{}, subtotal:subtotal, deliveryFee:fee, dist:dist, total:total, estTotal:total, name:name, phone:phone, addr:addr, time:time, remark:remark, created:nowStr(), status:hasWeight?'待称重':'待付款', newcust:newcust, discount:discount};
-  orders.unshift(order); save(LS_ORDERS, orders);
-  localAlarmed[order.id]=1; try{ localStorage.setItem('zz_local_alarmed',JSON.stringify(localAlarmed)); }catch(e){}
-  if(autoAlarm && localStorage.getItem('zz_merchant')){ try{ var _la=new Audio('https://zzxg-waisong.github.io/voice_new_order.wav'); _la.volume=Math.max(0,Math.min(1,parseInt(localStorage.getItem('zz_voice_vol')||'100',10)/100)); _la.play(); }catch(e){} }
-  try{
-    placeCloudOrder(order);
-    // 云端订单提交成功后再清除新客优惠标记
-    setTimeout(function(){ if(newcust){ localStorage.removeItem('zz_use_newcust_'+phone); } }, 3000);
-  }catch(e){}
-  cart={}; saveCart(); renderDishes(); renderCartbar(); closeCheckout();
-  curOrder=order; showPay(order);
+  // 第二步：金额够25元，弹首单优惠
+  var total = calcCartTotal().total;
+  var newcustUsed = localStorage.getItem('zz_newcust_used_'+ph)==='1';
+  if(total>=25 && !newcustUsed && ph){
+    showPromoModal(ph);
+    return;
+  }
+  // 第三步：正常提交订单
+  doSubmitOrder();
 }
 function showPay(order){
   if(order.hasWeight){
