@@ -696,7 +696,7 @@ function addToCart(id){
   // 只有水果类柚子弹剥开选项
   if(d && d.cat==="水果" && d.name && d.name.indexOf("柚")>=0){ showPeelDlg(d); return; }
   // 按个卖的商品弹数量选择
-  if(d && !d.per && id!=='f_ganzhe' && d.cat!=='果汁' && d.cat!=='半价'){ showCountDlg(d); return; }
+  if(d && !d.per && id!=='f_ganzhe'){ showCountDlg(d); return; }
   if(d&&d.cat==='半价'&&!canAddHalf(d)){ alert('第二杯半价只能选价格相同或更低的果汁哦~'); return; }
   if(d&&(d.per>0||id==='f_ganzhe')){ pickWeight(id); return; }
   if(d&&d.cat==='果汁'){
