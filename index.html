@@ -166,11 +166,13 @@ body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f6f7f8;c
     <div class="form" style="padding:0">
       <label>您的称呼</label><input id="ckName" placeholder="例如：王女士">
       <label>联系电话</label><input id="ckPhone" type="tel" placeholder="手机号">
-      <label>外卖地址</label><div style="display:flex;gap:6px;align-items:center">
-        <input id="ckAddr" placeholder="输入小区/道路名" style="flex:1">
+      <label>外卖地址</label><div style="display:flex;gap:6px;align-items:flex-start">
+        <div style="flex:1">
+          <input id="ckAddr" placeholder="输入小区/道路名，自动出候选" oninput="searchAddr(this.value)">
+          <div id="addrTips" style="display:none;position:absolute;background:#fff;border:1px solid #eee;border-radius:6px;max-height:200px;overflow:auto;z-index:100;width:90%"></div>
+        </div>
         <button class="btn" style="font-size:13px;padding:8px 10px;background:#2e7d32;color:#fff;white-space:nowrap" onclick="autoLocate()">📍 自动定位</button>
       </div>
-      <div id="addrTips" style="display:none"></div>
       <button class="btn" style="margin-top:6px;font-size:13px;padding:6px 10px;background:#666;color:#fff" onclick="openMapPick()">地图选点</button>
       <label>详细地址（楼栋/单元/房号）</label><input id="ckAddrDetail" placeholder="例如：3栋2单元501" style="margin-bottom:8px">
       <div id="deliveryBox" style="background:#f0f7f0;border-radius:8px;padding:10px;margin-top:8px;font-size:13px;line-height:1.8;display:none"></div>
