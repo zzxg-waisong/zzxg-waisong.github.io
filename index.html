@@ -359,6 +359,14 @@ function fillTimeOptions(){
   for(var h=10;h<=19;h++){ h3+='<option value="明天'+h+':00前送达">'+h+':00 前</option>'; }
   s3.innerHTML=h3;
 }
+function pickTime(id){
+  document.getElementById('ckTime1').style.borderColor='#2e7d32';
+  document.getElementById('ckTime1').style.background='#e8f5e9';
+  document.getElementById('ckTime3').value='';
+  document.getElementById('ckTime3').style.borderColor='#ccc';
+  document.getElementById('ckTime3').style.background='#fff';
+  document.getElementById('ckTime').value='尽快送达';
+}
 function hlTime(el){
   ['ckTime1','ckTime2','ckTime3'].forEach(function(id){
     var x=document.getElementById(id);
