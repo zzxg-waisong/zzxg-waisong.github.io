@@ -1143,6 +1143,9 @@ function closeOutOfRange(){
 function submitOrder(){
   var ph=document.querySelector('input[placeholder="联系电话"]').value || localStorage.getItem('zz_my_phone')||'';
   localStorage.setItem('zz_my_phone', ph);
+  // 第一步：先查起送价，不够20直接拦
+  var totalBefore = calcCartTotal().total;
+  if(totalBefore < 20){ alert('还差 '+(20-totalBefore).toFixed(2)+' 元起送，满20元才能下单'); return; }
   var today=new Date().toDateString();
   var hasJuice = cartList().some(function(c){var d=byId(c.id);return d&&d.cat==='果汁';});
   // 先查云端：这个手机号今天有没有买过果汁
