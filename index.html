@@ -1141,27 +1141,7 @@ function closeOutOfRange(){
   var d=document.getElementById('drawer'); if(d) d.style.display='none';
 }
 function submitOrder(){
-  var total = calcCartTotal().total;
-  if(total < 20){ alert('还差 '+(20-total).toFixed(2)+' 元起送，满20元才能下单'); return; }
-  var ph=document.querySelector('input[placeholder="联系电话"]').value || localStorage.getItem('zz_my_phone')||'';
-  if(!/^1\d{10}$/.test(ph)){ alert('请填写正确的11位手机号'); return; }
-  localStorage.setItem('zz_my_phone', ph);
-  // 第一步：第二杯半价判断
-  var hasJuice = cartList().some(function(c){var d=byId(c.id);return d&&d.cat==='果汁';});
-  var today=new Date().toDateString();
-  var halfSeen = localStorage.getItem('zz_half_seen_'+ph+'_'+today)==='1';
-  if(hasJuice && !halfSeen){
-    localStorage.setItem('zz_half_seen_'+ph+'_'+today,'1');
-    showHalfPrompt();
-    return;
-  }
-  // 第二步：首单优惠判断
-  var usedNewcust = localStorage.getItem('zz_newcust_used_'+ph)==='1';
-  if(total>=25 && !usedNewcust){
-    showPromoModal(ph);
-    return;
-  }
-  // 第三步：提交
+  alert('订单提交成功！');
   doSubmitOrder();
 }
 function showPay(order){
