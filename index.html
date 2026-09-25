@@ -1058,9 +1058,25 @@ function autoLocate(){
   alert('正在获取当前位置...');
   navigator.geolocation.getCurrentPosition(function(pos){
     var lng=pos.coords.longitude, lat=pos.coords.latitude;
-    document.getElementById('ckAddr').value='当前位置('+lng.toFixed(6)+','+lat.toFixed(6)+')';
     window._pickedLoc={lng:lng,lat:lat};
-    calcDelivery();
+    // 调用高德逆地理编码，把经纬度转成具体地址
+    var xhr=new XMLHttpRequest();
+    xhr.open('GET','https://restapi.amap.com/v3/geocode/regeo?key=17e56cae3aca57e9862453d89791043c&location='+lng+','+lat);
+    xhr.onload=function(){
+      try{
+        var j=JSON.parse(xhr.responseText);
+        if(j.regeocode){
+          var addr=j.regeocode.formatted_address;
+          document.getElementById('ckAddr').value=addr;
+        }else{
+          document.getElementById('ckAddr').value='您的当前位置';
+        }
+      }catch(e){
+        document.getElementById('ckAddr').value='您的当前位置';
+      }
+      calcDelivery();
+    };
+    xhr.send();
   }, function(err){ alert('定位失败，请手动输入地址'); });
 }
 /* ============ 地图选点（高德 JS API） ============ */
