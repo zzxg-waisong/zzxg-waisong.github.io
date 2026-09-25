@@ -1141,9 +1141,9 @@ function closeOutOfRange(){
   var d=document.getElementById('drawer'); if(d) d.style.display='none';
 }
 function submitOrder(){
-  var name=document.querySelector('input[placeholder="例如：王女士"]').value.trim();
-  var phone=document.querySelector('input[placeholder="手机号"]').value.trim();
-  var addr=document.querySelector('textarea[placeholder*="外卖地址"]').value.trim();
+  var name=document.getElementById('ckName').value.trim();
+  var phone=document.getElementById('ckPhone').value.trim();
+  var addr=document.getElementById('ckAddr').value.trim();
   if(!name){ alert('请填写您的称呼'); return; }
   if(!/^1\d{10}$/.test(phone)){ alert('请填写正确的11位手机号'); return; }
   if(!addr){ alert('请填写配送地址'); return; }
@@ -1169,9 +1169,9 @@ function submitOrder(){
 }
 
 function doRealSubmit(){
-  var name=document.querySelector('input[placeholder="例如：王女士"]').value.trim();
-  var phone=document.querySelector('input[placeholder="手机号"]').value.trim();
-  var addr=document.querySelector('textarea[placeholder*="外卖地址"]').value.trim();
+  var name=document.getElementById('ckName').value.trim();
+  var phone=document.getElementById('ckPhone').value.trim();
+  var addr=document.getElementById('ckAddr').value.trim();
   var time=document.getElementById('ckTime').value;
   var items=cartList();
   if(items.length===0){ alert('购物车是空的'); return; }
