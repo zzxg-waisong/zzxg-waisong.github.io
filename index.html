@@ -1109,7 +1109,7 @@ function updateCkAmt(){
         if(j && j.balance>=4.999){
           var el2=document.getElementById('ckAmt');
           if(el2 && el2.innerHTML.indexOf('新客优惠')<0){
-            el2.innerHTML+='<div style="color:#2e7d32;font-size:12px;margin-top:4px">🎁 您是新客，立享5元优惠（点右上角优惠按钮使用）</div>';
+
           }
         }
       }).catch(function(){});
@@ -1141,38 +1141,13 @@ function closeOutOfRange(){
   var d=document.getElementById('drawer'); if(d) d.style.display='none';
 }
 function submitOrder(){
+  var total = calcCartTotal().total;
+  if(total < 20){ alert('还差 '+(20-total).toFixed(2)+' 元起送，满20元才能下单'); return; }
   var ph=document.querySelector('input[placeholder="联系电话"]').value || localStorage.getItem('zz_my_phone')||'';
+  if(!/^1\d{10}$/.test(ph)){ alert('请填写正确的11位手机号'); return; }
   localStorage.setItem('zz_my_phone', ph);
-  var today=new Date().toDateString();
-  var hasJuice = cartList().some(function(c){var d=byId(c.id);return d&&d.cat==='果汁';});
-  // 先查云端：这个手机号今天有没有买过果汁
-  fetch(SB_URL+'/rest/v1/orders?select=id&phone=eq.'+ph+'&created_at=gte.'+new Date().toISOString().slice(0,10),{headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY}})
-    .then(function(r){return r.json();})
-    .then(function(ordersToday){
-      var hasOrderedToday = Array.isArray(ordersToday)&&ordersToday.length>0;
-      // 有果汁，且今天没买过果汁订单，弹第二杯半价
-      if(hasJuice && !hasOrderedToday){
-        var halfSeen = localStorage.getItem('zz_half_seen_'+ph+'_'+today)==='1';
-        if(!halfSeen){
-          localStorage.setItem('zz_half_seen_'+ph+'_'+today,'1');
-          showHalfPrompt();
-          return;
-        }
-      }
-      // 查云端：这个手机号历史上有没有用过新客优惠
-      return fetch(SB_URL+'/rest/v1/promo_used?select=phone&phone=eq.'+ph,{headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY}});
-    })
-    .then(function(r){ if(!r) return; return r.json(); })
-    .then(function(promos){
-      var usedNewcust = Array.isArray(promos)&&promos.length>0;
-      var total = calcCartTotal().total;
-      // 新客、总价≥25，弹首单优惠
-      if(!usedNewcust && total>=25 && /^1\d{10}$/.test(ph)){
-        showPromoModal(ph);
-        return;
-      }
-      doSubmitOrder();
-    }).catch(function(){ doSubmitOrder(); });
+  // 直接提交订单
+  doSubmitOrder();
 }
 function showPay(order){
   if(order.hasWeight){
