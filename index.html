@@ -1167,6 +1167,27 @@ function submitOrder(){
   // 第三步：直接提交
   doRealSubmit();
 }
+
+function doRealSubmit(){
+  var name=document.querySelector('input[placeholder="例如：王女士"]').value.trim();
+  var phone=document.querySelector('input[placeholder="手机号"]').value.trim();
+  var addr=document.querySelector('textarea[placeholder*="外卖地址"]').value.trim();
+  var time=document.getElementById('ckTime').value;
+  var items=cartList();
+  if(items.length===0){ alert('购物车是空的'); return; }
+  var total=0;
+  items.forEach(function(it){ var d=byId(it.id); total+=d.price*it.qty; });
+  var order={
+    id:'o'+Date.now(),
+    items:items, name:name, phone:phone, addr:addr, time:time,
+    total:total, status:'new', created_at:new Date().toISOString()
+  };
+  orders.unshift(order);
+  save(LS_ORDERS, orders);
+  cart={};
+  saveCart();
+  showPayModal(order);
+}
 function showPay(order){
   if(order.hasWeight){
     var text=formatOrderText(order);
