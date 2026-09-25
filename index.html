@@ -166,7 +166,12 @@ body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f6f7f8;c
     <div class="form" style="padding:0">
       <label>您的称呼</label><input id="ckName" placeholder="例如：王女士">
       <label>联系电话</label><input id="ckPhone" type="tel" placeholder="手机号">
-      <label>外卖地址（输入关键词，从下方候选中点选可精确定位）</label><div class="wrap"><textarea id="ckAddr" rows="2" placeholder="输入小区/道路名，从候选点选"></textarea><div id="addrTips" style="display:none"></div><button class="btn" style="margin-top:6px;font-size:13px;padding:6px 10px;background:#666;color:#fff" onclick="openMapPick()">📍 地图选点（点地图选位置）</button></div>
+      <label>外卖地址</label><div style="display:flex;gap:6px;align-items:center">
+        <input id="ckAddr" placeholder="输入小区/道路名" style="flex:1">
+        <button class="btn" style="font-size:13px;padding:8px 10px;background:#2e7d32;color:#fff;white-space:nowrap" onclick="autoLocate()">📍 自动定位</button>
+      </div>
+      <div id="addrTips" style="display:none"></div>
+      <button class="btn" style="margin-top:6px;font-size:13px;padding:6px 10px;background:#666;color:#fff" onclick="openMapPick()">地图选点</button>
       <label>详细地址（楼栋/单元/房号）</label><input id="ckAddrDetail" placeholder="例如：3栋2单元501" style="margin-bottom:8px">
       <div id="deliveryBox" style="background:#f0f7f0;border-radius:8px;padding:10px;margin-top:8px;font-size:13px;line-height:1.8;display:none"></div>
       <label>配送时间</label>
@@ -1037,6 +1042,16 @@ function pickAddr(loc, text){
   document.getElementById('addrTips').innerHTML='';
   window._pickedLoc=loc;
   calcDelivery();
+}
+function autoLocate(){
+  if(!navigator.geolocation){ alert('浏览器不支持定位'); return; }
+  alert('正在获取当前位置...');
+  navigator.geolocation.getCurrentPosition(function(pos){
+    var lng=pos.coords.longitude, lat=pos.coords.latitude;
+    document.getElementById('ckAddr').value='当前位置('+lng.toFixed(6)+','+lat.toFixed(6)+')';
+    window._pickedLoc={lng:lng,lat:lat};
+    calcDelivery();
+  }, function(err){ alert('定位失败，请手动输入地址'); });
 }
 /* ============ 地图选点（高德 JS API） ============ */
 var _mapPick = {lng:'', lat:'', addr:''};
@@ -2412,3 +2427,4 @@ route();
 </script>
 </body>
 </html>
+
