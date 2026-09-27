@@ -164,7 +164,7 @@ body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f6f7f8;c
   <div class="box">
     <h3 style="margin-bottom:6px">填写配送信息</h3>
     <div class="form" style="padding:0">
-      <label>您的称呼</label><input id="ckName" placeholder="例如：王女士">
+      <label>您的称呼</label><input id="ckName" placeholder="例如：王女士" oninput="autoFillCust()">
       <label>联系电话</label><input id="ckPhone" type="tel" placeholder="手机号">
       <label>外卖地址</label><div style="display:flex;gap:6px;align-items:flex-start">
         <div style="flex:1">
@@ -178,12 +178,9 @@ body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f6f7f8;c
       <div id="deliveryBox" style="background:#f0f7f0;border-radius:8px;padding:10px;margin-top:8px;font-size:13px;line-height:1.8;display:none"></div>
       <label>配送时间</label>
       <div style="display:flex;gap:6px;align-items:center">
-        <select id="ckTime1" style="flex:1;border:2px solid #ccc" onchange="syncTime();hlTime(this)">
-          <option value="尽快送达">尽快送达</option>
-        </select>
-        <select id="ckTime2" style="flex:1;border:2px solid #ccc" onchange="syncTime();hlTime(this)"></select>
-        <select id="ckTime3" style="flex:1;border:2px solid #ccc" onchange="syncTime();hlTime(this)"></select>
-      </div>
+        <button type="button" id="ckTime1" onclick="pickTime()" style="flex:1;padding:10px;border:2px solid #ccc;background:#fff;border-radius:8px;font-size:14px;cursor:pointer">尽快送达</button>
+          <select id="ckTime3" style="flex:1;border:2px solid #ccc" onchange="syncTime();hlTime(this)"></select>
+        </div>
       <select id="ckTime" style="display:none"></select>
       <div style="font-size:12px;color:#999;margin-top:4px">📞 出发前电话联系您</div>
       <label>备注（可选）</label><input id="ckRemark" placeholder="选填，例如：放门口 / 敲门 / 切半">
@@ -345,16 +342,8 @@ function applyCloudMenu(arr){
   syncHalfPrice(); renderCats(); renderDishes(); renderCartbar();
 }
 function fillTimeOptions(){
-  var now=new Date();
-  var curH=now.getHours();
   var s3=document.getElementById('ckTime3');
-  if(!s2||!s3) return;
-  var h2='<option value="">今天</option>';
-  for(var h=10;h<=19;h++){
-    if(h<curH+1) continue;  // 至少提前1小时送达
-    h2+='<option value="今天'+h+':00前送达">'+h+':00 前</option>';
-  }
-  s2.innerHTML=h2;
+  if(!s3) return;
   var h3='<option value="">明天</option>';
   for(var h=10;h<=19;h++){ h3+='<option value="明天'+h+':00前送达">'+h+':00 前</option>'; }
   s3.innerHTML=h3;
@@ -376,14 +365,13 @@ function hlTime(el){
 }
 function syncTime(){
   var s1=document.getElementById('ckTime1');
-  var s2=document.getElementById('ckTime2');
   var s3=document.getElementById('ckTime3');
-  var v1=s1.value, v2=s2.value, v3=s3.value;
+  var v3=s3.value;
   var sel=document.getElementById('ckTime');
-  [s1,s2,s3].forEach(function(s){ s.style.background='#fff'; s.style.borderColor='#ddd'; s.style.color='#333'; });
-  var active=null;
-  if(v2){ sel.value=v2; active=s2; } else if(v3){ sel.value=v3; active=s3; } else { sel.value=v1; active=s1; }
-  if(active && active.value){ active.style.background='#fff3e0'; active.style.borderColor='#fb8c00'; active.style.color='#e65100'; active.style.fontWeight='700'; }
+  if(s1){ s1.style.background='#fff'; s1.style.borderColor='#ccc'; s1.style.color='#333'; }
+  if(s3){ s3.style.background='#fff'; s3.style.borderColor='#ddd'; s3.style.color='#333'; }
+  if(v3 && s3){ sel.value=v3; s3.style.background='#fff3e0'; s3.style.borderColor='#fb8c00'; s3.style.color='#e65100'; s3.style.fontWeight='700'; }
+  else { sel.value='尽快送达'; }
 }
 function loadCloud(force){
   var now=Date.now();
@@ -471,7 +459,7 @@ window.addEventListener('hashchange', route);
 
 /* ==================== 顾客端 ==================== */
 function hlTimeInit(){
-  ['ckTime1','ckTime2','ckTime3'].forEach(function(id){
+  ['ckTime1','ckTime3'].forEach(function(id){
     var x=document.getElementById(id);
     if(x && x.value){ x.style.border='2px solid #fb8c00'; }
   });
@@ -528,7 +516,7 @@ function renderDishes(){
       '<div class="price">'+(d.cat==='半价'?'<span style="background:#fb8c00;color:#fff;font-size:10px;padding:1px 5px;border-radius:3px;margin-right:4px;vertical-align:middle">半价</span>':'')+money(d.price)+'<small> / '+esc(d.unit||'份')+'</small></div></div>'+
       '<div class="ctrl">'+(d.cat==='果汁'?'<input class="note" placeholder="常温" value="'+esc(c.note)+'" onchange="setNote(\''+d.id+'\',this.value)">':'')+
 
-      (d.cat==='半价'?(canAddHalf(d)?'<button class="btn" style="background:#fb8c00" onclick="addToCart(\''+d.id+'\')">第二杯半价</button>':'<button class="btn" style="background:#ccc;cursor:not-allowed;color:#999" onclick="alert(\'需选一杯价格相同或更高的原价果汁解锁~\')">原价果汁解锁</button>'):'<button class="btn" onclick="addToCart(\''+d.id+'\')">加入购物车</button>')+
+      (d.cat==='半价'?(canAddHalf(d)?'<button class="btn" style="background:#fb8c00" onclick="addToCart(\''+d.id+'\')">加入购物车</button>':'<button class="btn" style="background:#ccc;cursor:not-allowed;color:#999" onclick="alert(\'需选一杯价格相同或更高的原价果汁解锁~\')">原价果汁解锁</button>'):'<button class="btn" onclick="addToCart(\''+d.id+'\')">加入购物车</button>')+
       '</div></div>';
   });
   box.innerHTML=html || (cats().length? '<div style="text-align:center;color:#999;padding:40px">该分类暂无商品</div>' : '');
@@ -960,8 +948,6 @@ function distKm(a,b){
 function deliveryFee(dist, subtotal){ if(dist<=3) return 0; if(dist<=5) return (subtotal>=30?0:3); if(dist<=10) return 3+Math.ceil((dist-5))*2; return -1; }
 function calcDelivery(){
   var addr=document.getElementById('ckAddr').value.trim(); var detail=document.getElementById('ckAddrDetail')?document.getElementById('ckAddrDetail').value.trim():''; if(detail) addr+=' '+detail;
-  // 下单后保存客户信息，下次自动填充
-  try{ localStorage.setItem('zz_cust_'+phone, JSON.stringify({name:name,addr:addr,detail:detail})); }catch(e){}
   var box=document.getElementById('deliveryBox');
   if(!addr){ box.style.display='none'; window._delivery=null; return; }
   box.style.display='block';
@@ -1198,14 +1184,76 @@ function submitOrder(){
     showHalfPrompt();
     return;
   }
-  // 第二步：首单优惠弹窗
-  var usedNew = localStorage.getItem('zz_new_used_'+phone)==='1';
+  // 第二步：首单优惠自动判断
   var total=0; cartList().forEach(function(it){var d=byId(it.id); total+=d.price*it.qty;});
-  if(total>=25 && !usedNew){
-    openPromo();
+  if(total>=25){
+    checkNewcust(phone);
     return;
   }
   // 第三步：直接提交
+  doRealSubmit();
+}
+
+function checkNewcust(phone){
+  // 自动查云端该手机号是否还有首单优惠
+  fetch(SB_URL+'/rest/v1/rpc/get_balance_public',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({phone:phone})})
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      var b=(j&&j.balance!=null)?Number(j.balance):5;
+      var useDisc=localStorage.getItem('zz_use_newcust_'+phone)==='1';
+      if(b>=4.999 && !useDisc){
+        showNewcustModal(phone);
+      } else {
+        doRealSubmit();
+      }
+    })
+    .catch(function(){ doRealSubmit(); });
+}
+function showNewcustModal(phone){
+  var old=document.getElementById('newcustModal'); if(old) old.remove();
+  var html='<div id="newcustModal" class="modal show" style="z-index:9999;display:flex;align-items:center;justify-content:center"><div style="background:#fff;border-radius:14px;padding:22px;width:90%;max-width:340px;text-align:center">'+
+    '<div style="font-size:36px;margin-bottom:6px">🎁</div>'+
+    '<div style="font-size:17px;font-weight:700;margin-bottom:6px">您是首单客人</div>'+
+    '<div style="font-size:14px;color:#666;margin-bottom:16px">立享 <b style="color:#e65100;font-size:18px">5 元</b> 优惠，本次下单立减！</div>'+
+    '<div style="display:flex;gap:10px">'+
+      '<button class="btn gray" style="flex:1" onclick="noUseNewcust(\''+phone+'\')">不使用（保留）</button>'+
+      '<button class="btn" style="flex:1;background:#fb8c00" onclick="useNewcust(\''+phone+'\')">使用优惠</button>'+
+    '</div>'+
+  '</div></div>';
+  var m=document.createElement('div'); m.innerHTML=html; m.id='newcustModal'; document.body.appendChild(m);
+}
+function useNewcust(phone){
+  localStorage.setItem('zz_use_newcust_'+phone,'1');
+  var m=document.getElementById('newcustModal'); if(m) m.remove();
+  doRealSubmit();
+}
+function autoFillCust(){
+  // 顾客填名字时，按名字自动弹出上一次填写的内容
+  var nm=document.getElementById('ckName').value.trim();
+  if(!nm) return;
+  var best=null, bestT=0;
+  for(var i=0;i<localStorage.length;i++){
+    var k=localStorage.key(i);
+    if(k && k.indexOf('zz_cust_')===0){
+      try{
+        var v=JSON.parse(localStorage.getItem(k));
+        if(v && v.name && v.name.trim()===nm && v.addr && (!bestT || (v.t||0)>bestT)){ best=v; bestT=(v.t||0); }
+      }catch(e){}
+    }
+  }
+  if(best){
+    var ph=document.getElementById('ckPhone');
+    var ad=document.getElementById('ckAddr');
+    var de=document.getElementById('ckAddrDetail');
+    if(ph && best.phone && !ph.value) ph.value=best.phone;
+    if(ad && best.addr && !ad.value) ad.value=best.addr;
+    if(de && best.detail && !de.value) de.value=best.detail;
+    if(ad && best.addr && !ad.value){} // 已填则不覆盖
+  }
+}
+function noUseNewcust(phone){
+  localStorage.removeItem('zz_use_newcust_'+phone);
+  var m=document.getElementById('newcustModal'); if(m) m.remove();
   doRealSubmit();
 }
 
@@ -1218,16 +1266,22 @@ function doRealSubmit(){
   if(items.length===0){ alert('购物车是空的'); return; }
   var total=0;
   items.forEach(function(it){ var d=byId(it.id); total+=d.price*it.qty; });
+  var disc=0;
+  if(localStorage.getItem('zz_use_newcust_'+phone)==='1'){ disc=5; }
+  var payTotal=total-disc;
+  if(payTotal<0) payTotal=0;
+  // 保存客户信息，下次填名字自动弹出
+  try{ localStorage.setItem('zz_cust_'+phone, JSON.stringify({name:name,phone:phone,addr:addr,detail:document.getElementById('ckAddrDetail')?document.getElementById('ckAddrDetail').value.trim():'',t:Date.now()})); }catch(e){}
   var order={
     id:'o'+Date.now(),
     items:items, name:name, phone:phone, addr:addr, time:time,
-    total:total, status:'new', created_at:new Date().toISOString()
+    total:total, payTotal:payTotal, discount:disc, status:'new', created_at:new Date().toISOString()
   };
   orders.unshift(order);
   save(LS_ORDERS, orders);
   cart={};
   saveCart();
-  showPayModal(order);
+  showPay(order);
 }
 function showPay(order){
   if(order.hasWeight){
@@ -1235,9 +1289,8 @@ function showPay(order){
     openResult(text, order, true);
     return;
   }
-  document.getElementById('payAmt').textContent=money(order.total);
+  document.getElementById('payAmt').textContent=money(order.payTotal!=null?order.payTotal:order.total);
   document.getElementById('payImg').src=payCfg.payUrl||'收款码.png';
-  document.getElementById('wxImg').src=payCfg.wxUrl||'微信二维码.png';
   document.getElementById('payModal').classList.add('show');
 }
 function openPromo(){ document.getElementById('promoModal').classList.add('show'); document.getElementById('promoRes').innerHTML=''; }
@@ -1409,7 +1462,6 @@ function showWeighedPayGo(){
   var m=document.getElementById('weighedModal'); if(m) m.remove();
   document.getElementById('payAmt').textContent=money(p.total||p.estTotal||0);
   document.getElementById('payImg').src=payCfg.payUrl||'收款码.png';
-  document.getElementById('wxImg').src=payCfg.wxUrl||'微信二维码.png';
   document.getElementById('payModal').classList.add('show');
 }
 function copyText(){
@@ -1651,6 +1703,7 @@ function renderCloudOrder(c){
     '<button class="btn" style="background:#555;color:#fff" onclick="printCloudOrder('+c.id+')">🖨 打印</button>'+
     '<button class="btn" onclick="navCloud('+c.id+')">高德导航</button>'+
     '<button class="btn orange" onclick="copyCloudAddr('+c.id+')">复制地址</button>'+
+    '<button class="btn" onclick="copyCloudOrderText('+c.id+')">复制订单</button>'+
     (c.status!=='已完成'?'<button class="btn" onclick="updateCloudStatus('+c.id+',\'已完成\')">标记完成</button>':'')+
     '<button class="btn red" onclick="deleteCloudOrder('+c.id+')">删除</button>'+
     '</div>';
