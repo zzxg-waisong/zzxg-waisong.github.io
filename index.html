@@ -162,31 +162,34 @@ body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f6f7f8;c
 <!-- 结算表单 -->
 <div class="modal" id="checkoutModal">
   <div class="box">
-    <h3 style="margin-bottom:6px">填写配送信息</h3>
+    <h3 style="margin-bottom:8px">填写配送信息</h3>
     <div class="form" style="padding:0">
-      <label>您的称呼</label><input id="ckName" placeholder="例如：王女士" oninput="autoFillCust()">
-      <label>联系电话</label><input id="ckPhone" type="tel" placeholder="手机号">
-      <label>外卖地址</label><div style="display:flex;gap:6px;align-items:flex-start">
-        <div style="flex:1">
-          <input id="ckAddr" placeholder="输入小区/道路名，自动出候选">
-          <div id="addrTips" style="display:none;position:absolute;background:#fff;border:1px solid #eee;border-radius:6px;max-height:200px;overflow:auto;z-index:100;width:90%"></div>
-        </div>
-        <button class="btn" style="font-size:13px;padding:8px 10px;background:#2e7d32;color:#fff;white-space:nowrap" onclick="autoLocate()">📍 自动定位</button>
+      <div style="display:flex;gap:8px">
+        <div style="flex:1"><label>您的称呼</label><input id="ckName" placeholder="王女士" oninput="autoFillCust()"></div>
+        <div style="flex:1"><label>联系电话</label><input id="ckPhone" type="tel" placeholder="手机号"></div>
       </div>
-      <button class="btn" style="margin-top:6px;font-size:13px;padding:6px 10px;background:#666;color:#fff" onclick="openMapPick()">地图选点</button>
-      <label>详细地址（楼栋/单元/房号）</label><input id="ckAddrDetail" placeholder="例如：3栋2单元501" style="margin-bottom:8px">
-      <div id="deliveryBox" style="background:#f0f7f0;border-radius:8px;padding:10px;margin-top:8px;font-size:13px;line-height:1.8;display:none"></div>
+      <label>外卖地址</label>
+      <div style="display:flex;gap:6px;align-items:flex-start">
+        <div style="flex:1;position:relative">
+          <input id="ckAddr" placeholder="输入小区/道路名，自动出候选">
+          <div id="addrTips" style="display:none;position:absolute;background:#fff;border:1px solid #eee;border-radius:6px;max-height:200px;overflow:auto;z-index:100;width:100%"></div>
+        </div>
+        <button class="btn" style="font-size:13px;padding:8px 10px;background:#2e7d32;color:#fff;white-space:nowrap" onclick="autoLocate()">📍 定位</button>
+        <button class="btn" style="font-size:13px;padding:8px 10px;background:#666;color:#fff;white-space:nowrap" onclick="openMapPick()">🗺️ 地图</button>
+      </div>
+      <label>详细地址（楼栋/单元/房号）</label><input id="ckAddrDetail" placeholder="3栋2单元501" style="margin-bottom:6px">
+      <div id="deliveryBox" style="background:#f0f7f0;border-radius:8px;padding:8px 10px;margin-top:6px;font-size:13px;line-height:1.7;display:none"></div>
       <label>配送时间</label>
       <div style="display:flex;gap:6px;align-items:center">
         <button type="button" id="ckTime1" onclick="pickTime()" style="flex:1;padding:10px;border:2px solid #ccc;background:#fff;border-radius:8px;font-size:14px;cursor:pointer">尽快送达</button>
-          <select id="ckTime3" style="flex:1;border:2px solid #ccc" onchange="syncTime();hlTime(this)"></select>
-        </div>
+        <select id="ckTime3" style="flex:1;border:2px solid #ccc" onchange="syncTime();hlTime(this)"></select>
+      </div>
       <select id="ckTime" style="display:none"></select>
       <div style="font-size:12px;color:#999;margin-top:4px">📞 出发前电话联系您</div>
-      <label>备注（可选）</label><input id="ckRemark" placeholder="选填，例如：放门口 / 敲门 / 切半">
-      <div id="ckAmt" style="margin-top:12px;background:#fff8e1;border-radius:8px;padding:10px 12px;font-size:13px;line-height:1.9"></div>
-      <div style="font-size:12px;color:#888;line-height:1.7;margin-top:12px;background:#fafafa;border-radius:6px;padding:8px 10px">🔒 您填写的称呼、电话、地址仅用于本次配送<br>💧 现榨果汁建议尽快饮用（2 小时内风味最佳）</div>
-      <div style="display:flex;gap:8px;margin-top:16px">
+      <label>备注（可选）</label><input id="ckRemark" placeholder="放门口 / 敲门 / 切半">
+      <div id="ckAmt" style="margin-top:10px;background:#fff8e1;border-radius:8px;padding:10px 12px;font-size:13px;line-height:1.9"></div>
+      <div style="font-size:12px;color:#888;margin-top:10px;background:#fafafa;border-radius:6px;padding:6px 10px;line-height:1.7">🔒 信息仅用于本次配送 ｜ 💧 果汁建议2小时内饮用</div>
+      <div style="display:flex;gap:8px;margin-top:14px">
         <button class="btn gray" style="flex:1" onclick="closeCheckout()">返回</button>
         <button class="btn" style="flex:1" onclick="submitOrder()">提交订单</button>
       </div>
