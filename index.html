@@ -543,17 +543,32 @@ function showHalfPrompt(){
 function closeHalfPrompt(add){
   var m=document.getElementById('halfPrompt'); if(m) m.remove();
   if(add){
+    // ① 关闭配送信息页（已填内容保留）
+    var cm=document.getElementById('checkoutModal'); if(cm) cm.classList.remove('show');
+    // ② 自动切到第二杯半价页面
     halfEnabled=true;
-    curCat='半价'; // 自动切到半价分类
+    curCat='半价';
     renderCats(); renderDishes();
-    // 等顾客选完半价果汁加购，自动继续
-    var t = setInterval(function(){
-      var hasHalf = cartList().some(function(c){var d=byId(c.id);return d&&d.cat==='半价';});
+    // ③ 等顾客选完半价果汁加入购物车，自动回到配送信息页并更新金额
+    var t=setInterval(function(){
+      var hasHalf=cartList().some(function(c){var d=byId(c.id);return d&&d.cat==='半价';});
       if(hasHalf){
         clearInterval(t);
-        setTimeout(submitOrder, 500); // 自动回到提交流程
+        setTimeout(function(){
+          closeDrawer();
+          var cm2=document.getElementById('checkoutModal');
+          if(cm2) cm2.classList.add('show');
+          fillTimeOptions(); hlTimeInit();
+          var addrEl=document.getElementById('ckAddr');
+          if(addrEl && addrEl.value.trim()) calcDelivery();
+          updateCkAmt();
+          // ④ 半价分类恢复隐藏，退出半价页面
+          halfEnabled=false;
+          if(curCat==='半价') curCat='果汁';
+          renderCats(); renderDishes();
+        },500);
       }
-    }, 500);
+    },500);
     return;
   }
   // 点不加，自动回到提交流程
