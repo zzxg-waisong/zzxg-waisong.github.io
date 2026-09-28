@@ -1318,13 +1318,18 @@ function doRealSubmit(){
   if(payTotal<0) payTotal=0;
   // 保存客户信息，下次填名字自动弹出
   try{ localStorage.setItem('zz_cust_'+phone, JSON.stringify({name:name,phone:phone,addr:addr,detail:document.getElementById('ckAddrDetail')?document.getElementById('ckAddrDetail').value.trim():'',t:Date.now()})); }catch(e){}
+  var remark=(document.getElementById('ckRemark')?document.getElementById('ckRemark').value.trim():'');
   var order={
     id:'o'+Date.now(),
-    items:items, name:name, phone:phone, addr:addr, time:time,
-    total:total, deliveryFee:fee, dist:distV, payTotal:payTotal, discount:disc, status:'new', created_at:new Date().toISOString()
+    items:items, name:name, phone:phone, addr:addr, time:time, remark:remark,
+    total:total, subtotal:total, deliveryFee:fee, dist:distV, payTotal:payTotal, discount:disc,
+    newcust:(disc>0?true:false), hasWeight:false, weights:{}, weightTotal:0,
+    status:'new', created:new Date().toISOString(), created_at:new Date().toISOString()
   };
   orders.unshift(order);
   save(LS_ORDERS, orders);
+  // 顾客下单即上传云端（老板后台可见、语音提醒、接单/打印的前提）
+  placeCloudOrder(order);
   cart={};
   saveCart();
   showPay(order);
@@ -1563,13 +1568,19 @@ function adminRefresh(){
   cloudPull();
 }
 function renderAdmin(){
-  // 计算今日营业额
+  // 计算今日营业额（云端订单金额在 payload 中）
   var _today=new Date().toISOString().slice(0,10);
   window.todayTotal=0; window.todayCount=0;
   if(Array.isArray(cloudOrders)){
     cloudOrders.forEach(function(o){
-      if(o.status==='已完成' && o.created && o.created.slice(0,10)===_today){
-        window.todayTotal += Number(o.amount||0); window.todayCount++;
+      if(o.status==='已完成' && o.payload){
+        var _p=o.payload;
+        var _created=(_p.created||o.created_at||'');
+        if(_created.slice(0,10)===_today){
+          var _amt=(_p.weightTotal!=null&&_p.weightTotal?Number(_p.weightTotal):(_p.total!=null?Number(_p.total):0));
+          if(_p.newcust && _p.discount!=null) _amt=_amt-Number(_p.discount);
+          window.todayTotal += _amt; window.todayCount++;
+        }
       }
     });
   }
@@ -1591,11 +1602,14 @@ var adminTab='orders';
 function placeCloudOrder(o){
   if(!window.SB_URL) return;
   try{
-    fetch(SB_URL+'/rest/v1/rpc/place_order',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({payload:{id:o.id,items:o.items,hasWeight:o.hasWeight,weights:o.weights||{},subtotal:o.subtotal,deliveryFee:o.deliveryFee,dist:o.dist,total:o.total,estTotal:o.estTotal,name:o.name,phone:o.phone,addr:o.addr,time:o.time,remark:o.remark,created:o.created,status:o.status,weightTotal:o.weightTotal||0,newcust:o.newcust||false,discount:o.discount||0}})})
-      .then(function(r){ if(!r.ok) throw 0; 
-        // 新客优惠自动扣余额
-        if(o.newcust && o.discount>0){
-          fetch(SB_URL+'/rest/v1/rpc/apply_newcust',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({admin_pwd:'1986shenhu',order_id:o.id,min_free:0})}).then(function(){}).catch(function(){});
+    fetch(SB_URL+'/rest/v1/rpc/place_order',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({payload:{id:o.id,items:o.items,hasWeight:o.hasWeight,weights:o.weights||{},subtotal:o.subtotal,deliveryFee:o.deliveryFee,dist:o.dist,total:o.total,estTotal:o.estTotal,name:o.name,phone:o.phone,addr:o.addr,time:o.time,remark:o.remark,created:o.created,status:o.status,weightTotal:o.weightTotal||0,newcust:false,discount:0}})})
+      .then(function(r){ return r.json(); })
+      .then(function(j){
+        if(!j || !j.ok) throw 0;
+        // 顾客已用首单优惠：用云端订单id扣余额并标记（上传不带优惠标记，否则云端判定 already 拒绝扣减）
+        var cid=(j.id!=null)?j.id:0;
+        if(o.newcust && o.discount>0 && cid){
+          fetch(SB_URL+'/rest/v1/rpc/apply_newcust',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({admin_pwd:'1986shenhu',order_id:cid,min_free:0})}).then(function(){}).catch(function(){});
         }
       }).catch(function(){});
   }catch(e){}
@@ -1732,7 +1746,7 @@ function renderCloudOrder(c){
   var stTxt=(c.status==='new')?'待处理':c.status;
   var amt=(p.weightTotal!=null&&p.weightTotal||p.total!=null)?cloudAmount(c):'';
   var isNewCust=!p.newcust && String(p.phone||'').trim() && cloudBalances[String(p.phone||'').trim()]>0;
-  var created=(c.created_at||'').replace('T',' ').slice(0,19);
+  var created=((c.payload||{}).created||c.created_at||'').replace('T',' ').slice(0,19);
   var phoneKey=String(p.phone||'').trim();
   var custCount=cloudOrders.filter(function(x){ return String((x.payload||{}).phone||'').trim()===phoneKey; }).length;
   var custTag = custCount===1 ? '🎁 新客首单' : ('第'+custCount+'次购买');
@@ -1800,12 +1814,13 @@ function queryCustomer(){
   var threeMonthsAgo=new Date(); threeMonthsAgo.setMonth(threeMonthsAgo.getMonth()-3);
   var list=cloudOrders.filter(function(o){
     var pp=(o.payload||{}).phone||'';
-    var ct=new Date(o.created_at||'');
+    var ct=new Date((o.payload||{}).created||o.created_at||'');
     return String(pp).trim()===ph && ct>=threeMonthsAgo;
   });
   var cnt=list.length;
   var total=list.reduce(function(sum,o){ var a=cloudAmount(o); return sum+a; },0);
   out.innerHTML='近3月：<b>'+cnt+'次</b>，合计 <b style="color:#e53935">'+money(total)+'</b> 元';
+  window._custQResult=out.innerHTML;
 }
 function addBalance(){
   var ph=(document.getElementById('addBalPhone').value||'').trim();
@@ -1816,7 +1831,7 @@ function addBalance(){
   try{
     fetch(SB_URL+'/rest/v1/rpc/add_balance',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({admin_pwd:pwd,p_phone:ph,p_amount:amt})})
       .then(function(r){ return r.json(); })
-      .then(function(j){ if(j&&j.ok){ alert('已为 '+ph+' 增加 '+amt+' 元优惠额度，当前余额 '+j.balance+' 元'); document.getElementById('addBalPhone').value=''; document.getElementById('addBalAmt').value=''; fetchCloudOrders(); } else { alert('增加失败'); } })
+      .then(function(j){ if(j&&j.ok){ alert('已为 '+ph+' 增加 '+amt+' 元优惠额度，当前余额 '+j.balance+' 元'); document.getElementById('addBalPhone').value=''; document.getElementById('addBalAmt').value=''; window._addBalPhone=''; window._addBalAmt=''; fetchCloudOrders(); } else { alert('增加失败'); } })
       .catch(function(){ alert('增加失败，请检查网络'); });
   }catch(e){ alert('增加失败'); }
 }
@@ -1856,10 +1871,10 @@ function confirmCloudWeight(id){
     .catch(function(){ alert('称重保存失败，请检查网络'); });
 }
 function deleteCloudOrder(id){
-  if(!confirm('确认删除订单 #'+id+'？\n删除后不再语音提醒。')) return;
+  if(!confirm('确认删除订单 #'+id+'？\n删除后不再语音提醒，可在「已删订单」查看，可永久删除。')) return;
   var pwd=localStorage.getItem(LS_CLOUDPWD)||'1986shenhu';
-  // 直接物理删除
-  fetch(SB_URL+'/rest/v1/rpc/delete_order',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({admin_pwd:pwd,order_id:id})})
+  // 软删除：状态置 deleted，语音不再提醒，可查看已删订单
+  fetch(SB_URL+'/rest/v1/rpc/update_order_status',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({admin_pwd:pwd,order_id:id,status:'deleted'})})
     .then(function(r){ return r.json(); }).then(function(j){ if(j&&j.ok){ fetchCloudOrders(); } else { alert('删除失败'); } }).catch(function(){ alert('删除失败'); });
 }
 function showDeletedOrders(){
@@ -1922,17 +1937,17 @@ function renderOrders(){
     (cloudOrders.length?'<div style="font-size:12px;color:#555;margin:8px 0">共 '+cloudOrders.length+' 单（顾客微信扫码下单后，点「刷新云端订单」即可看到）</div>':'<div style="font-size:12px;color:#888;margin:8px 0">云端未拉取（点击刷新查看顾客手机下的单）</div>')+
     '<div style="display:flex;gap:6px;margin:10px 0;flex-wrap:wrap;align-items:center;background:#eef4fb;border:1px solid #d0e0f5;border-radius:8px;padding:8px">'+
       '<b style="font-size:13px">🎁 加优惠额度</b>'+
-      '<input id="addBalPhone" type="tel" maxlength="11" placeholder="手机号" style="flex:1;min-width:110px;border:1px solid #ddd;border-radius:6px;padding:6px;font-size:13px">'+
-      '<input id="addBalAmt" type="number" min="0.5" step="0.5" placeholder="金额" style="width:64px;border:1px solid #ddd;border-radius:6px;padding:6px;font-size:13px">'+
+      '<input id="addBalPhone" type="tel" maxlength="11" placeholder="手机号" value="'+esc(window._addBalPhone||'')+'" oninput="window._addBalPhone=this.value" style="flex:1;min-width:110px;border:1px solid #ddd;border-radius:6px;padding:6px;font-size:13px">'+
+      '<input id="addBalAmt" type="number" min="0.5" step="0.5" placeholder="金额" value="'+esc(window._addBalAmt||'')+'" oninput="window._addBalAmt=this.value" style="width:64px;border:1px solid #ddd;border-radius:6px;padding:6px;font-size:13px">'+
       '<button class="btn" style="background:#ad1457;color:#fff;font-size:12px;padding:5px 12px" onclick="addBalance()">增加</button>'+
     '</div>'+
     '<div style="margin:10px 0;padding:10px;background:#e8f5e9;border-radius:8px;font-size:14px"><b>💰 今日营业额</b>：<span style="color:#2e7d32;font-weight:700">¥'+todayTotal+'</span>（已完成 '+todayCount+' 单）</div>'+
 
     '<div style="display:flex;gap:6px;margin:10px 0;flex-wrap:wrap;align-items:center;background:#fff8e1;border:1px solid #ffe082;border-radius:8px;padding:8px">'+
       '<b style="font-size:13px">🔍 查客户</b>'+
-      '<input id="custQPhone" type="tel" maxlength="11" placeholder="手机号" style="flex:1;min-width:110px;border:1px solid #ddd;border-radius:6px;padding:6px;font-size:13px">'+
+      '<input id="custQPhone" type="tel" maxlength="11" placeholder="手机号" value="'+esc(window._custQPhone||'')+'" oninput="window._custQPhone=this.value" style="flex:1;min-width:110px;border:1px solid #ddd;border-radius:6px;padding:6px;font-size:13px">'+
       '<button class="btn" style="background:#f57c00;color:#fff;font-size:12px;padding:5px 12px" onclick="queryCustomer()">查询近3月</button>'+
-      '<span id="custQResult" style="font-size:13px;color:#333"></span>'+
+      '<span id="custQResult" style="font-size:13px;color:#333">'+(window._custQResult||'')+'</span>'+
     '</div>'+
     cloudOrders.slice(0, window.cloudVisibleCount||5).map(renderCloudOrder).join('')+
     (cloudOrders.length > (window.cloudVisibleCount||5) ? '<button class="btn" style="width:100%;margin-top:8px" onclick="loadMoreCloudOrders()">加载更多（还有'+(cloudOrders.length-(window.cloudVisibleCount||5))+'单）</button>' : '')+
