@@ -659,7 +659,7 @@ function pickWeight(id){
   m.style='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center';
   var inner;
   if(id==='f_ganzhe'){
-    var heOpts=[1,2,3];
+    var heOpts=[1,2,3,5];
     var genOpts=[20,25,30,35,40];
     var cardS='width:23%;box-sizing:border-box;background:#fff;border:1px solid #ddd;border-radius:8px;padding:13px 0;font-size:15px;margin:1%';
     var heBtns=heOpts.map(function(h){return '<button onclick="confirmPickW(\''+id+'\',\'he\','+h+')" style="'+cardS+'">'+h+'盒</button>';}).join('');
