@@ -566,6 +566,8 @@ function closeHalfPrompt(add){
           halfEnabled=false;
           if(curCat==='半价') curCat='果汁';
           renderCats(); renderDishes();
+          // ⑤ 自动识别首单优惠：新客+满25元自动弹窗，不满足不提醒
+          autoNewcustPrompt();
         },500);
       }
     },500);
@@ -1233,6 +1235,21 @@ function checkNewcust(phone){
     })
     .catch(function(){ doRealSubmit(); });
 }
+function autoNewcustPrompt(){
+  // 根据配送信息页填写的手机号自动识别：新客+满25元才弹首单优惠，不满足不提醒
+  var ph=document.getElementById('ckPhone').value.trim();
+  if(!/^1\d{10}$/.test(ph)) return;
+  var total=0; cartList().forEach(function(it){var d=byId(it.id); total+=estPrice(d,it);});
+  if(total<25) return;
+  var useDisc=localStorage.getItem('zz_use_newcust_'+ph)==='1';
+  if(useDisc) return;
+  fetch(SB_URL+'/rest/v1/rpc/get_balance_public',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({phone:ph})})
+    .then(function(r){return r.json();})
+    .then(function(j){
+      var b=(j&&j.balance!=null)?Number(j.balance):5;
+      if(b>=4.999){ showNewcustModal(ph); }
+    }).catch(function(){});
+}
 function showNewcustModal(phone){
   var old=document.getElementById('newcustModal'); if(old) old.remove();
   var html='<div id="newcustModal" class="modal show" style="z-index:9999;display:flex;align-items:center;justify-content:center"><div style="background:#fff;border-radius:14px;padding:22px;width:90%;max-width:340px;text-align:center">'+
@@ -1290,16 +1307,22 @@ function doRealSubmit(){
   if(items.length===0){ alert('购物车是空的'); return; }
   var total=0;
   items.forEach(function(it){ var d=byId(it.id); total+=estPrice(d,it); });
+  // 配送费（与配送信息页显示一致）
+  var fee=0, distV=0;
+  if(window._delivery && window._delivery.dist<=10){ distV=window._delivery.dist; fee=deliveryFee(distV,total); if(fee<0) fee=0; }
   var disc=0;
   if(localStorage.getItem('zz_use_newcust_'+phone)==='1'){ disc=5; }
-  var payTotal=total-disc;
+  var hasW=items.some(function(c){var d=byId(c.id);return d&&d.per>0;});
+  var rawTotal=total+fee;
+  var finalTotal=hasW?rawTotal:roundHalf(rawTotal);
+  var payTotal=finalTotal-disc;
   if(payTotal<0) payTotal=0;
   // 保存客户信息，下次填名字自动弹出
   try{ localStorage.setItem('zz_cust_'+phone, JSON.stringify({name:name,phone:phone,addr:addr,detail:document.getElementById('ckAddrDetail')?document.getElementById('ckAddrDetail').value.trim():'',t:Date.now()})); }catch(e){}
   var order={
     id:'o'+Date.now(),
     items:items, name:name, phone:phone, addr:addr, time:time,
-    total:total, payTotal:payTotal, discount:disc, status:'new', created_at:new Date().toISOString()
+    total:total, deliveryFee:fee, dist:distV, payTotal:payTotal, discount:disc, status:'new', created_at:new Date().toISOString()
   };
   orders.unshift(order);
   save(LS_ORDERS, orders);
