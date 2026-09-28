@@ -583,10 +583,12 @@ function countQty(n){
 }
 function confirmCount(id){
   cart[id]={qty:window._curCount,note:""};
+  var isHalf=byId(id)&&byId(id).cat==='半价';
   saveCart(); renderDishes(); renderCartbar(); renderCartItems();
   document.getElementById('peelModal').remove();
   openDrawer();
-  if(!halfEnabled){ halfEnabled=true; renderCats(); }
+  // 半价分类只在提交订单点“加一杯”时临时显示，平时始终隐藏
+  if(isHalf){ halfEnabled=false; if(curCat==='半价'){ curCat='果汁'; } renderCats(); renderDishes(); }
 }
 
 function showPeelDlg(d){
@@ -736,7 +738,6 @@ function addToCart(id){
             if(Array.isArray(j)&&j.length===0){
               // 今天首单，弹提示
               localStorage.setItem('zz_half_'+ph+'_'+todayStr,'1');
-              showHalfPrompt();
             } else {
               localStorage.setItem('zz_half_'+ph+'_'+todayStr,'1');
             }
@@ -749,7 +750,6 @@ function addToCart(id){
       var hasJuiceAlready=cartList().some(function(c){var dd=byId(c.id);return dd&&dd.cat==='果汁';});
       if(!triggered && !hasJuiceAlready){
         localStorage.setItem('zz_half_local_'+today,'1');
-        showHalfPrompt();
       }
     }
   }
