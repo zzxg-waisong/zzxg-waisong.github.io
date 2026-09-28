@@ -1204,9 +1204,9 @@ function submitOrder(){
   // 第一步：第二杯半价提示
   var hasJuice = cartList().some(function(it){ var d=byId(it.id); return d && d.cat==='果汁'; });
   var today=new Date().toDateString();
-  var halfShown = localStorage.getItem('zz_half_shown_'+phone+'_'+today)==='1';
+  var halfShown = localStorage.getItem('zz_half_shown_v2_'+phone+'_'+today)==='1';
   if(hasJuice && !halfShown){
-    localStorage.setItem('zz_half_shown_'+phone+'_'+today,'1');
+    localStorage.setItem('zz_half_shown_v2_'+phone+'_'+today,'1');
     showHalfPrompt();
     return;
   }
@@ -1226,14 +1226,14 @@ function checkNewcust(phone){
     .then(function(r){ return r.json(); })
     .then(function(j){
       var b=(j&&j.balance!=null)?Number(j.balance):5;
-      var useDisc=localStorage.getItem('zz_use_newcust_'+phone)==='1';
-      if(b>=4.999 && !useDisc){
+      if(b>=4.999){
         showNewcustModal(phone);
       } else {
+        window._disc=0;
         doRealSubmit();
       }
     })
-    .catch(function(){ doRealSubmit(); });
+    .catch(function(){ window._disc=0; doRealSubmit(); });
 }
 function autoNewcustPrompt(){
   // 根据配送信息页填写的手机号自动识别：新客+满25元才弹首单优惠，不满足不提醒
@@ -1241,8 +1241,6 @@ function autoNewcustPrompt(){
   if(!/^1\d{10}$/.test(ph)) return;
   var total=0; cartList().forEach(function(it){var d=byId(it.id); total+=estPrice(d,it);});
   if(total<25) return;
-  var useDisc=localStorage.getItem('zz_use_newcust_'+ph)==='1';
-  if(useDisc) return;
   fetch(SB_URL+'/rest/v1/rpc/get_balance_public',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({phone:ph})})
     .then(function(r){return r.json();})
     .then(function(j){
@@ -1264,6 +1262,7 @@ function showNewcustModal(phone){
   var m=document.createElement('div'); m.innerHTML=html; m.id='newcustModal'; document.body.appendChild(m);
 }
 function useNewcust(phone){
+  window._disc=5;
   localStorage.setItem('zz_use_newcust_'+phone,'1');
   var m=document.getElementById('newcustModal'); if(m) m.remove();
   doRealSubmit();
@@ -1293,6 +1292,7 @@ function autoFillCust(){
   }
 }
 function noUseNewcust(phone){
+  window._disc=0;
   localStorage.removeItem('zz_use_newcust_'+phone);
   var m=document.getElementById('newcustModal'); if(m) m.remove();
   doRealSubmit();
@@ -1310,8 +1310,7 @@ function doRealSubmit(){
   // 配送费（与配送信息页显示一致）
   var fee=0, distV=0;
   if(window._delivery && window._delivery.dist<=10){ distV=window._delivery.dist; fee=deliveryFee(distV,total); if(fee<0) fee=0; }
-  var disc=0;
-  if(localStorage.getItem('zz_use_newcust_'+phone)==='1'){ disc=5; }
+  var disc=(window._disc===5?5:0);
   var hasW=items.some(function(c){var d=byId(c.id);return d&&d.per>0;});
   var rawTotal=total+fee;
   var finalTotal=hasW?rawTotal:roundHalf(rawTotal);
@@ -1370,6 +1369,7 @@ function checkPromo(){
   }catch(e){ res.innerHTML='<span style="color:#e65100">查询失败</span>'; }
 }
 function setUseNewcust(ph,use){
+  window._disc=use?5:0;
   if(use) localStorage.setItem('zz_use_newcust_'+ph,'1');
   else localStorage.removeItem('zz_use_newcust_'+ph);
   checkPromo();
