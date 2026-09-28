@@ -1335,11 +1335,7 @@ function doRealSubmit(){
   showPay(order);
 }
 function showPay(order){
-  if(order.hasWeight){
-    var text=formatOrderText(order);
-    openResult(text, order, true);
-    return;
-  }
+  curOrder=order;
   document.getElementById('payAmt').textContent=money(order.payTotal!=null?order.payTotal:order.total);
   document.getElementById('payImg').src=payCfg.payUrl||'收款码.png';
   document.getElementById('payModal').classList.add('show');
@@ -1398,7 +1394,7 @@ function payDone(){
   var text=formatOrderText(order);
   document.getElementById('payModal').classList.remove('show');
   // 非称重单付款后直接提示成功，不再让顾客复制订单
-  openResult(text, order, false, true);
+  openResult(text, order, true);
 }
 function formatOrderText(o){
   var lines=[];
@@ -1418,16 +1414,12 @@ function formatOrderText(o){
     if(it.note && it.note.indexOf('按根')!==0) lines.push('    （'+it.note+'）');
   });
   lines.push('——————————————');
-  var anyW=hasAnyWeight(o);
-  if(o.hasWeight) lines.push('【商品小计】'+money(realSub)+((o.weightTotal||anyW)?'':'（预估，以实际称重为准）'));
-  else if(o.subtotal) lines.push('【商品小计】'+money(o.subtotal));
+  if(o.subtotal) lines.push('【商品小计】'+money(o.subtotal));
   if(o.deliveryFee) lines.push('【配送费】'+money(o.deliveryFee)+(o.dist?'（约'+o.dist+'公里）':''));
-  var subTotal=o.weightTotal?calcWeightSub(o):realSub;
-  var rawTotal=o.weightTotal?o.weightTotal:(subTotal+(o.deliveryFee||0));
-  var isEstimate=o.hasWeight&&!o.weightTotal&&!anyW;
-  var finalTotal=isEstimate?rawTotal:roundHalf(rawTotal);
-  var discount=isEstimate?0:Math.round((rawTotal-finalTotal)*100)/100;
-  lines.push('【合计】'+money(rawTotal)+(isEstimate?'（预估）':''));
+  var rawTotal=realSub+(o.deliveryFee||0);
+  var finalTotal=roundHalf(rawTotal);
+  var discount=Math.round((rawTotal-finalTotal)*100)/100;
+  lines.push('【合计】'+money(rawTotal));
   if(discount>0) lines.push('【抹零】-'+money(discount));
   lines.push('【应付合计】'+money(finalTotal));
   lines.push('【顾客】'+o.name+'  '+o.phone);
@@ -1440,81 +1432,23 @@ function formatOrderText(o){
   lines.push('【状态】'+o.status);
   return lines.join('\n');
 }
-function openResult(text, order, weighMode, paidDone){
+function openResult(text, order, paidDone){
   var box=document.createElement('div');
   box.className='modal show'; box.id='resultModal';
   var inner='';
-  if(weighMode){
-    // 全屏等待页：不能关闭，自动轮询
-    inner='<p style="font-size:14px;color:#e65100;margin:16px 0;line-height:1.8;text-align:center">⚖️ 正在称重，约需 1 分钟<br><b style="color:#d32f2f">请停留在此页面，不要关闭</b><br>称重完成后自动显示实际金额</p>'+
-      '<div style="text-align:center;margin:16px 0;color:#888;font-size:13px">⏳ 称重中，请勿退出...</div>'+
-      '<div style="text-align:center;margin:10px 0"><img src="'+esc(payCfg.wxUrl||'微信二维码.png')+'" style="width:120px;border-radius:8px"><div style="font-size:12px;color:#888;margin-top:4px">加店主好友（可催单）</div></div>';
-    // 启动轮询
-    startWeighPoll(order);
-  } else if(paidDone){
+  if(paidDone){
     inner='<p style="text-align:center;font-size:15px;color:#2e7d32;margin:10px 0;line-height:1.7">✅ 付款成功，订单已收到<br>我们会尽快为您配送，请保持电话畅通～</p>';
   } else {
     inner='<p style="font-size:12px;color:#888;margin-top:10px;line-height:1.6">提示：纯网页无法直接唤起微信，请先"复制订单"，再打开微信粘贴发送给店主。</p>'+
       '<div style="display:flex;gap:8px"><button class="btn" style="flex:1" onclick="copyText()">复制订单</button>'+
       '<button class="btn orange" style="flex:1" onclick="sendWechat()">发送给商家微信</button></div>';
   }
-  box.innerHTML='<div class="box"><h3 style="text-align:center;margin-bottom:10px">'+(weighMode?'📦 订单已提交（待称重）':(paidDone?'✅ 订单已收到':'✅ 订单已生成，请发给店主'))+'</h3>'+
+  box.innerHTML='<div class="box"><h3 style="text-align:center;margin-bottom:10px">'+(paidDone?'✅ 订单已收到':'✅ 订单已生成，请发给店主')+'</h3>'+
     '<div class="ordertext">'+esc(text)+'</div>'+
     inner+
     '<button class="btn gray" style="width:100%;margin-top:10px" onclick="document.getElementById(\'resultModal\').remove();window.location.hash=\'#/\';">完成</button></div>';
   document.body.appendChild(box);
   window._lastText=text;
-}
-var _weighTimer=null;
-function startWeighPoll(order){
-  stopWeighPoll();
-  _weighTimer=setInterval(function(){
-    try{
-      fetch(SB_URL+'/rest/v1/rpc/get_my_order',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({oid:order.id})})
-        .then(function(r){return r.json();})
-        .then(function(j){
-          if(!j) return;
-          var p=j.payload||j;
-          // 称重完成：状态变了，或有 weights，或 total 变了
-          var done = (p.status && p.status!=='待称重') || (p.weights && Object.keys(p.weights).length>0);
-          if(done){
-            stopWeighPoll();
-            showWeighedPay(p);
-          }
-        }).catch(function(){});
-    }catch(e){}
-  },3000);
-}
-function stopWeighPoll(){ if(_weighTimer){ clearInterval(_weighTimer); _weighTimer=null; } }
-function showWeighedPay(p){
-  var m=document.getElementById('resultModal'); if(m) m.remove();
-  var total=p.total||p.estTotal||0;
-  var box=document.createElement('div');
-  box.className='modal show'; box.id='weighedModal';
-  var itemsHtml='';
-  (p.items||[]).forEach(function(it){
-    var w=(p.weights||{})[it.id];
-    var line=it.name+' ×'+it.qty;
-    if(w && it.per>0) line+='（'+w+'斤）';
-    line+=' — ';
-    if(it.per>0 && w){ line+=money(it.per*w); } else { var dd=byId(it.id); line+=money(dd?estPrice(dd,it):it.price*it.qty); }
-    itemsHtml+='<div style="font-size:13px;padding:4px 0;border-bottom:1px dashed #eee">'+line+'</div>';
-  });
-  var html='<div class="box"><h3 style="text-align:center;color:#2e7d32">✅ 称重完成</h3>'+
-    '<div style="margin:10px 0">'+itemsHtml+'</div>'+
-    '<div style="font-size:13px;line-height:2">配送费：'+money(p.deliveryFee||0)+'<br>应付合计：<b style="color:#d32f2f;font-size:20px">'+money(total)+'</b></div>'+
-    '<button class="btn orange" style="width:100%;margin-top:12px" onclick="showWeighedPayGo()">去付款</button>'+
-    '<div style="text-align:center;margin-top:8px"><img src="'+esc(payCfg.wxUrl||'微信二维码.png')+'" style="width:100px;border-radius:8px"><div style="font-size:11px;color:#888">加店主好友</div></div></div>';
-  box.innerHTML=html;
-  document.body.appendChild(box);
-  window._weighedOrder=p;
-}
-function showWeighedPayGo(){
-  var p=window._weighedOrder; if(!p) return;
-  var m=document.getElementById('weighedModal'); if(m) m.remove();
-  document.getElementById('payAmt').textContent=money(p.total||p.estTotal||0);
-  document.getElementById('payImg').src=payCfg.payUrl||'收款码.png';
-  document.getElementById('payModal').classList.add('show');
 }
 function copyText(){
   if(navigator.clipboard && navigator.clipboard.writeText){
@@ -1835,41 +1769,6 @@ function addBalance(){
       .catch(function(){ alert('增加失败，请检查网络'); });
   }catch(e){ alert('增加失败'); }
 }
-function weighCloudModal(id){
-  var c=cloudOrders.find(function(x){return x.id===id;}); if(!c) return;
-  var p=c.payload||{};
-  var box=document.createElement('div'); box.className='modal show'; box.id='cloudWeighModal';
-  var inner='<div class="box" style="max-width:420px"><h3>云端订单 #'+id+' 称重结算</h3>';
-  (p.items||[]).forEach(function(it){
-    if(it.per>0){
-      var w=(p.weights&&p.weights[it.id])?p.weights[it.id]:'';
-      inner+='<div style="display:flex;align-items:center;gap:6px;margin:6px 0;font-size:13px"><span style="flex:1">'+esc(it.name)+' ×'+it.qty+'（'+it.per+'元/斤）</span>'+
-        '<input id="cw_'+it.id+'" type="number" step="0.1" min="0" placeholder="实际重量(斤)" style="width:100px;padding:6px;border:1px solid #ddd;border-radius:6px;text-align:center" value="'+esc(String(w))+'"></div>';
-    }
-  });
-  inner+='<div style="display:flex;gap:8px;margin-top:10px">'+
-    '<button class="btn" style="flex:1;background:#2e7d32;color:#fff" onclick="confirmCloudWeight('+id+')">✅ 确定称重</button>'+
-    '<button class="btn gray" style="flex:1" onclick="document.getElementById(\'cloudWeighModal\').remove()">取消</button></div></div>';
-  box.innerHTML=inner; document.body.appendChild(box);
-}
-function confirmCloudWeight(id){
-  var c=cloudOrders.find(function(x){return x.id===id;}); if(!c) return;
-  var p=c.payload||{}; var weights=p.weights||{}; var need=0, filled=0;
-  (p.items||[]).forEach(function(it){
-    if(it.per>0){
-      need++;
-      var e=document.getElementById('cw_'+it.id);
-      if(e && parseFloat(e.value)>0){ weights[it.id]=Math.round(parseFloat(e.value)*10)/10; filled++; }
-    }
-  });
-  if(need>0 && filled<need){ alert('请先填完全部称重商品的重量'); return; }
-  var o2=JSON.parse(JSON.stringify(p)); o2.weights=weights; o2.weightTotal=calcWeightSub(o2); o2.status='已称重';
-  var pwd=localStorage.getItem(LS_CLOUDPWD)||'1986shenhu';
-  fetch(SB_URL+'/rest/v1/rpc/update_order_weights',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({admin_pwd:pwd,order_id:id,weights:weights,weight_total:o2.weightTotal})})
-    .then(function(r){ return r.json(); })
-    .then(function(j){ var old=document.getElementById('cloudWeighModal'); if(old) old.remove(); if(j&&j.ok){ fetchCloudOrders(); } else { alert('称重保存失败'); } })
-    .catch(function(){ alert('称重保存失败，请检查网络'); });
-}
 function deleteCloudOrder(id){
   if(!confirm('确认删除订单 #'+id+'？\n删除后不再语音提醒，可在「已删订单」查看，可永久删除。')) return;
   var pwd=localStorage.getItem(LS_CLOUDPWD)||'1986shenhu';
@@ -1926,7 +1825,7 @@ function renderOrders(){
   var pending=(typeof cloudOrders!=='undefined'?cloudOrders:[]).filter(function(c){return c.status==='new'||c.status==='待称重'||c.status==='待付款';}).length;
   var localPending=orders.filter(function(o){return o.status==='待称重'||o.status==='待付款';}).length;
   var totalPending=pending+localPending;
-  var html='<div class="panel"><h3>订单列表（'+orders.length+' 单）</h3><button onclick="showDeletedOrders()" style="background:#999;color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:12px;float:right">已删订单</button>';
+  var html='<div class="panel"><h3>订单列表（'+(typeof cloudOrders!=='undefined'?cloudOrders.length:0)+' 单）</h3><button onclick="showDeletedOrders()" style="background:#999;color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:12px;float:right">已删订单</button>';
   if(totalPending>0){
     html+='<div style="background:#ffebee;border:2px solid #e53935;border-radius:8px;padding:10px;text-align:center;margin-bottom:12px">'+
       '<span style="color:#e53935;font-weight:700;font-size:16px">🔔 待处理订单：'+totalPending+' 单</span></div>';
@@ -1970,77 +1869,11 @@ function viewOrder(i){
   var text=formatOrderText(o);
   var box=document.createElement('div'); box.className='modal show'; box.id='viewModal';
   box.innerHTML='<div class="box" style="max-width:520px"><h3>订单详情</h3><div class="ordertext">'+esc(text)+'</div>'+
-    weighPanelHtml(i)+
     '<div style="display:flex;gap:8px;flex-wrap:wrap">'+
     '<button class="btn" style="flex:1" onclick="printThis(\''+i+'\')">🖨 打印小票</button>'+
-    (o.hasWeight?'<button class="btn orange" style="flex:1" onclick="copyQuote('+i+')">📋 复制报价发微信</button>':'')+
     (o.status!=='已付款'&&o.status!=='已完成'?'<button class="btn" style="flex:1" onclick="markPaid('+i+')">✅ 标记已付款</button>':'')+
     '<button class="btn gray" style="flex:1" onclick="document.getElementById(\'viewModal\').remove()">关闭</button></div></div>';
   document.body.appendChild(box);
-}
-function weighPanelHtml(i){
-  var o=orders[i]; if(!o || !o.hasWeight) return '';
-  var html='<div class="card" style="background:#fff8e1;border:1px solid #f0e0b0;margin-top:10px">'+
-    '<div style="font-size:13px;font-weight:700;color:#8a6d00;margin-bottom:6px">⚖️ 称重结算（填实际重量，自动算金额）</div>';
-  o.items.forEach(function(it){
-    if(it.per>0){
-      var w=(o.weights&&o.weights[it.id])?o.weights[it.id]:'';
-      html+='<div style="display:flex;align-items:center;gap:6px;margin:6px 0;font-size:13px">'+
-        '<span style="flex:1">'+esc(it.name)+' ×'+it.qty+'（'+it.per+'元/斤）</span>'+
-        '<input id="w_'+it.id+'" type="number" step="0.1" min="0" placeholder="实际重量(斤)" style="width:96px;padding:6px;border:1px solid #ddd;border-radius:6px;text-align:center'+(o.status==='已称重'?';background:#f0f0f0':'')+'" value="'+esc(String(w))+'"'+(o.status==='已称重'?' readonly':'')+' oninput="weighChange('+i+')">';
-    }
-  });
-  var rawW=calcWeightSub(o)+(o.deliveryFee||0);
-  var finalW=roundHalf(rawW);
-  var discW=Math.round((rawW-finalW)*100)/100;
-  html+='<div style="margin-top:8px;font-size:13px"><b>合计：</b><span id="weighRaw_'+i+'">'+money(rawW)+'</span>'+(discW>0?' <span id="weighDisc_'+i+'" style="color:#999">抹零 -'+money(discW)+'</span>':'<span id="weighDisc_'+i+'" style="display:none"></span>')+' <b>应付：</b><span id="weighSum_'+i+'" style="color:#e53935;font-weight:700">'+money(finalW)+'</span>（含配送费 '+money(o.deliveryFee||0)+'）</div>'+
-    (o.status==='已称重'
-    ?'<div style="margin-top:8px;font-size:13px;color:#2e7d32;font-weight:700">✅ 已确定称重：应付 '+money(finalW)+' 元，重量已锁定</div>'
-    :'<div style="margin-top:8px"><button class="btn" style="width:100%;background:#2e7d32;color:#fff" onclick="confirmWeight('+i+')">✅ 确定称重（锁定金额）</button></div>')+
-    '<p style="font-size:11px;color:#999;margin-top:6px">'+(o.status==='已称重'?'称重已完成，可复制报价发微信 / 打印小票':'填好全部重量 → 点「确定称重」锁定 → 复制报价发微信 → 顾客付款后点「标记已付款」')+'</p></div>';
-  return html;
-}
-function confirmWeight(i){
-  var o=orders[i]; if(!o) return;
-  var need=0, filled=0;
-  o.items.forEach(function(it){
-    if(it.per>0){
-      need++;
-      var e=document.getElementById('w_'+it.id);
-      if(e && parseFloat(e.value)>0) filled++;
-    }
-  });
-  if(need>0 && filled<need){ alert('请先填完全部称重商品的重量'); return; }
-  o.weights=o.weights||{};
-  o.items.forEach(function(it){
-    if(it.per>0){ var e=document.getElementById('w_'+it.id); if(e) o.weights[it.id]=Math.round((parseFloat(e.value)||0)*10)/10; }
-  });
-  o.status='已称重';
-  o.weightTotal=calcWeightSub(o);
-  save(LS_ORDERS, orders);
-  var old=document.getElementById('viewModal'); if(old) old.remove();
-  viewOrder(i);
-  renderAdmin();
-}
-function weighChange(i){
-  var o=orders[i]; if(!o) return;
-  o.weights=o.weights||{};
-  o.items.forEach(function(it){
-    if(it.per>0){
-      var e=document.getElementById('w_'+it.id);
-      if(e) o.weights[it.id]=parseFloat(e.value)||0;
-    }
-  });
-  save(LS_ORDERS, orders);
-  var rawW=calcWeightSub(o)+(o.deliveryFee||0);
-  var finalW=roundHalf(rawW);
-  var discW=Math.round((rawW-finalW)*100)/100;
-  var rawEl=document.getElementById('weighRaw_'+i);
-  if(rawEl) rawEl.textContent=money(rawW);
-  var discEl=document.getElementById('weighDisc_'+i);
-  if(discEl){ if(discW>0){ discEl.textContent='抹零 -'+money(discW); discEl.style.display=''; } else discEl.style.display='none'; }
-  var sum=document.getElementById('weighSum_'+i);
-  if(sum) sum.textContent=money(finalW);
 }
 function calcWeightSub(o){
   var s=0;
@@ -2049,66 +1882,6 @@ function calcWeightSub(o){
     else { var dd=byId(it.id); s+=dd?estPrice(dd,it):it.price*it.qty; }
   });
   return Math.round(s*100)/100;
-}
-function hasAnyWeight(o){
-  if(!o || !o.weights) return false;
-  for(var k in o.weights){ if(o.weights[k]) return true; }
-  return false;
-}
-function copyQuote(i){
-  var o=orders[i]; if(!o) return;
-  var lines=['🍉 榨榨鲜果 称重报价','——————————————','【订单号】'+o.id];
-  lines.push('【商品（按实际重量）】');
-  o.items.forEach(function(it){
-    if(it.per>0){
-      var w=(o.weights&&o.weights[it.id])?o.weights[it.id]:0;
-      lines.push('  '+it.name+'（称重'+w+'斤×'+it.per+'元/斤 = '+money(it.per*w)+'）');
-    } else {
-      var dd=byId(it.id); var amt=dd?estPrice(dd,it):it.price*it.qty;
-      lines.push('  '+it.name+((it.note&&it.note.indexOf('按')===0)?('（'+it.note+'）'):(' ×'+it.qty))+'  '+money(amt));
-    }
-  });
-  var sub=calcWeightSub(o);
-  var rawTotal=sub+(o.deliveryFee||0);
-  var finalTotal=roundHalf(rawTotal);
-  var discount=Math.round((rawTotal-finalTotal)*100)/100;
-  lines.push('——————————————');
-  lines.push('【商品合计】'+money(sub));
-  if(o.deliveryFee) lines.push('【配送费】'+money(o.deliveryFee)+(o.dist?'（约'+o.dist+'公里）':''));
-  lines.push('【合计】'+money(rawTotal));
-  if(discount>0) lines.push('【抹零】-'+money(discount));
-  lines.push('【应付合计】'+money(finalTotal));
-  lines.push('请核对金额，微信扫码付款后，马上为您配送～');
-  lines.push('店址：城厢镇朝阳路16号附1号');
-  window._lastText=lines.join('\n');
-  showQuotePay();
-  if(navigator.clipboard && navigator.clipboard.writeText){
-    navigator.clipboard.writeText(window._lastText)['catch'](function(){ tryExecCopy(); });
-  } else { tryExecCopy(); }
-}
-function tryExecCopy(){
-  var ta=document.createElement('textarea'); ta.value=window._lastText; document.body.appendChild(ta); ta.select();
-  try{ document.execCommand('copy'); }catch(e){}
-  document.body.removeChild(ta);
-}
-function fallbackCopyQuote(){
-  var ta=document.createElement('textarea'); ta.value=window._lastText; document.body.appendChild(ta); ta.select();
-  try{ document.execCommand('copy'); showQuotePay(); }catch(e){ alert('复制失败，请长按手动复制报价文字'); }
-  document.body.removeChild(ta);
-}
-function showQuotePay(){
-  var oldQ=document.getElementById('quotePayModal'); if(oldQ) oldQ.remove();
-  var box=document.createElement('div'); box.className='modal show'; box.id='quotePayModal';
-  box.innerHTML='<div class="box" style="max-width:430px">'+
-    '<h3 style="text-align:center;margin-bottom:8px">✅ 报价已复制，请发给顾客</h3>'+
-    '<div class="ordertext" style="max-height:150px;overflow:auto;margin-bottom:10px">'+esc(window._lastText)+'</div>'+
-    '<button class="btn" style="width:100%;margin-bottom:10px" onclick="copyText()">📋 再次复制报价</button>'+
-    '<div style="text-align:center;margin:8px 0;position:relative">'+
-      '<img src="'+esc(payCfg.payUrl)+'" alt="收款码" style="width:210px;background:#fff;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,.12);-webkit-user-drag:element" ondragstart="return true">'+
-    '</div>'+
-    '<p style="font-size:13px;color:#e65100;text-align:center;margin:8px 0;line-height:1.7">👇 长按上方<b>收款码图片</b> → 发送给顾客<br>顾客扫码付款后，回来点「标记已付款」</p>'+
-    '<button class="btn gray" style="width:100%" onclick="document.getElementById(\'quotePayModal\').remove()">完成</button></div>';
-  document.body.appendChild(box);
 }
 function markPaid(i){
   var o=orders[i]; if(!o) return;
