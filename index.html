@@ -1191,7 +1191,7 @@ function submitOrder(){
     return;
   }
   // 第二步：首单优惠自动判断
-  var total=0; cartList().forEach(function(it){var d=byId(it.id); total+=d.price*it.qty;});
+  var total=0; cartList().forEach(function(it){var d=byId(it.id); total+=estPrice(d,it);});
   if(total>=25){
     checkNewcust(phone);
     return;
@@ -1271,7 +1271,7 @@ function doRealSubmit(){
   var items=cartList();
   if(items.length===0){ alert('购物车是空的'); return; }
   var total=0;
-  items.forEach(function(it){ var d=byId(it.id); total+=d.price*it.qty; });
+  items.forEach(function(it){ var d=byId(it.id); total+=estPrice(d,it); });
   var disc=0;
   if(localStorage.getItem('zz_use_newcust_'+phone)==='1'){ disc=5; }
   var payTotal=total-disc;
@@ -1451,7 +1451,7 @@ function showWeighedPay(p){
     var line=it.name+' ×'+it.qty;
     if(w && it.per>0) line+='（'+w+'斤）';
     line+=' — ';
-    if(it.per>0 && w){ line+=money(it.per*w); } else { line+=money(it.price*it.qty); }
+    if(it.per>0 && w){ line+=money(it.per*w); } else { var dd=byId(it.id); line+=money(dd?estPrice(dd,it):it.price*it.qty); }
     itemsHtml+='<div style="font-size:13px;padding:4px 0;border-bottom:1px dashed #eee">'+line+'</div>';
   });
   var html='<div class="box"><h3 style="text-align:center;color:#2e7d32">✅ 称重完成</h3>'+
@@ -1748,7 +1748,7 @@ function copyCloudOrderText(id){
   var raw=(p.weightTotal!=null&&p.weightTotal?Number(p.weightTotal):(p.total!=null?Number(p.total):0))-(p.newcust&&p.discount!=null?Number(p.discount):0);
   var amt=roundHalf(raw); var roundAmt=Math.round((raw-amt)*100)/100;
   var t='🍉 榨榨鲜果 外卖订单\n——————————————\n【订单号】'+(p.id||('云端#'+c.id))+'\n【下单时间】'+(p.created||'')+'\n【商品】\n'+
-    (p.items||[]).map(function(it){ var amt2=(it.per>0&&p.weights&&p.weights[it.id])?(it.per*p.weights[it.id]):(it.price*it.qty); return '  '+it.name+((it.per>0&&p.weights&&p.weights[it.id])?('（称重'+p.weights[it.id]+'斤×'+it.per+'元/斤）'):(' ×'+it.qty))+'  '+money(amt2); }).join('\n')+
+    (p.items||[]).map(function(it){ var dd=byId(it.id); var amt2=(it.per>0&&p.weights&&p.weights[it.id])?(it.per*p.weights[it.id]):(dd?estPrice(dd,it):it.price*it.qty); return '  '+it.name+((it.per>0&&p.weights&&p.weights[it.id])?('（称重'+p.weights[it.id]+'斤×'+it.per+'元/斤）'):((it.note&&it.note.indexOf('按')===0)?('（'+it.note+'）'):(' ×'+it.qty)))+'  '+money(amt2); }).join('\n')+
     '\n——————————————\n'+(p.newcust?'【新客优惠】-'+Number(p.discount||0).toFixed(2)+'\n':'')+(roundAmt>0?'【抹零】-'+money(roundAmt)+'\n':'')+'【应付合计】'+money(amt)+'\n【顾客】'+(p.name||'')+' '+(p.phone||'')+'\n【地址】'+(p.addr||'')+'\n【预送】'+(p.time||'')+'\n【状态】'+(c.status==='new'?'待处理':c.status);
   window._lastText=t; copyText();
 }
@@ -1990,7 +1990,7 @@ function calcWeightSub(o){
   var s=0;
   o.items.forEach(function(it){
     if(it.per>0 && o.weights && o.weights[it.id]) s+=it.per*o.weights[it.id];
-    else s+=it.price*it.qty;
+    else { var dd=byId(it.id); s+=dd?estPrice(dd,it):it.price*it.qty; }
   });
   return Math.round(s*100)/100;
 }
@@ -2008,7 +2008,8 @@ function copyQuote(i){
       var w=(o.weights&&o.weights[it.id])?o.weights[it.id]:0;
       lines.push('  '+it.name+'（称重'+w+'斤×'+it.per+'元/斤 = '+money(it.per*w)+'）');
     } else {
-      lines.push('  '+it.name+' ×'+it.qty+'  '+money(it.price*it.qty));
+      var dd=byId(it.id); var amt=dd?estPrice(dd,it):it.price*it.qty;
+      lines.push('  '+it.name+((it.note&&it.note.indexOf('按')===0)?('（'+it.note+'）'):(' ×'+it.qty))+'  '+money(amt));
     }
   });
   var sub=calcWeightSub(o);
