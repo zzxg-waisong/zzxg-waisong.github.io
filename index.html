@@ -172,8 +172,10 @@ button:active{transform:scale(.94);-webkit-transform:scale(.94);opacity:.85}
     <div class="form" style="padding:0">
       <div style="display:flex;gap:8px">
         <div style="flex:1"><label>您的称呼</label><input id="ckName" placeholder="王女士" oninput="autoFillCust()"></div>
-        <div style="flex:1"><label>联系电话</label><input id="ckPhone" type="tel" placeholder="手机号"></div>
+        <div style="flex:1"><label>联系电话</label><input id="ckPhone" type="tel" placeholder="手机号" oninput="onCkPhone()"></div>
       </div>
+      <label>推荐人手机号（选填 · 绑定后不可更改）</label><input id="ckRefPhone" type="tel" placeholder="填老客手机号，TA得返利、您购后也有礼">
+      <div id="refWalletTip" style="font-size:12px;color:#555;margin:4px 0 0;display:none;line-height:1.7"></div>
       <div id="ckAddrArea">
       <label>外卖地址</label>
       <div style="display:flex;gap:6px;align-items:flex-start">
@@ -259,6 +261,12 @@ button:active{transform:scale(.94);-webkit-transform:scale(.94);opacity:.85}
       <button class="btn" onclick="checkPromo()">查询</button>
     </div>
     <div id="promoRes" style="margin-top:12px;font-size:14px;line-height:1.8"></div>
+    <div style="margin:14px 0 8px;padding-top:12px;border-top:1px dashed #ddd;font-size:14px;color:#555">🤝 我的推广钱包（返利/抵扣）：</div>
+    <div style="display:flex;gap:8px">
+      <input id="refPhone" type="tel" maxlength="11" placeholder="输入手机号查返利余额" style="flex:1;border:1px solid #ddd;border-radius:8px;padding:10px;font-size:15px">
+      <button class="btn" onclick="checkRefWallet()">查询</button>
+    </div>
+    <div id="refRes" style="margin-top:10px;font-size:14px;line-height:1.8"></div>
   </div>
 </div>
 
@@ -1320,6 +1328,27 @@ function noUseNewcust(phone){
 }
 
 function doRealSubmit(){
+  var phone=document.getElementById('ckPhone').value.trim();
+  var total=0; cartList().forEach(function(it){ var d=byId(it.id); total+=estPrice(d,it); });
+  var fee=0;
+  if(window._ckMode!=='pickup' && window._delivery && window._delivery.dist<=10){ fee=deliveryFee(window._delivery.dist,total); if(fee<0) fee=0; }
+  tryReferralDeduct(phone, total+fee, function(ded){ finalSubmit(ded); });
+}
+function tryReferralDeduct(phone, amount, cb){
+  if(!phone || !/^1\d{10}$/.test(phone)){ cb(0); return; }
+  fetch(SB_URL+'/rest/v1/rpc/get_wallet_balance',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({phone:phone})})
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      if(j && j.ok && j.balance>0){
+        fetch(SB_URL+'/rest/v1/rpc/apply_referral_deduct',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({phone:phone,amount:amount})})
+          .then(function(r){ return r.json(); })
+          .then(function(j2){ cb((j2&&j2.ok)?Number(j2.deduct||0):0); })
+          .catch(function(){ cb(0); });
+      } else { cb(0); }
+    })
+    .catch(function(){ cb(0); });
+}
+function finalSubmit(ded){
   var name=document.getElementById('ckName').value.trim();
   var phone=document.getElementById('ckPhone').value.trim();
   var addr=document.getElementById('ckAddr').value.trim();
@@ -1334,10 +1363,11 @@ function doRealSubmit(){
   if(window._ckMode==='pickup'){ fee=0; distV=0; }
   else if(window._delivery && window._delivery.dist<=10){ distV=window._delivery.dist; fee=deliveryFee(distV,total); if(fee<0) fee=0; }
   var disc=(window._disc===5?5:0);
+  var disc2=(ded||0);
   var hasW=items.some(function(c){var d=byId(c.id);return d&&d.per>0;});
   var rawTotal=total+fee;
   var finalTotal=hasW?rawTotal:roundHalf(rawTotal);
-  var payTotal=finalTotal-disc;
+  var payTotal=finalTotal-disc-disc2;
   if(payTotal<0) payTotal=0;
   // 保存客户信息，下次填名字自动弹出
   try{ localStorage.setItem('zz_cust_'+phone, JSON.stringify({name:name,phone:phone,addr:(addr==='到店自提'?'':addr),detail:document.getElementById('ckAddrDetail')?document.getElementById('ckAddrDetail').value.trim():'',t:Date.now()})); }catch(e){}
@@ -1345,7 +1375,7 @@ function doRealSubmit(){
   var order={
     id:'o'+Date.now(),
     items:items, name:name, phone:phone, addr:addr, time:time, remark:remark, mode:(window._ckMode==='pickup'?'pickup':'delivery'),
-    total:total, subtotal:total, deliveryFee:fee, dist:distV, payTotal:payTotal, discount:disc,
+    total:total, subtotal:total, deliveryFee:fee, dist:distV, payTotal:payTotal, discount:disc, referralDeduct:disc2,
     newcust:(disc>0?true:false), hasWeight:false, weights:{}, weightTotal:0,
     status:'new', created:new Date().toISOString(), created_at:new Date().toISOString()
   };
@@ -1353,6 +1383,9 @@ function doRealSubmit(){
   save(LS_ORDERS, orders);
   // 顾客下单即上传云端（老板后台可见、语音提醒、接单/打印的前提）
   placeCloudOrder(order);
+  // 老带新：绑定推荐人 + 生成返款流水（每单都返，次日到账）
+  var ref=document.getElementById('ckRefPhone')?document.getElementById('ckRefPhone').value.trim():'';
+  bindRefAndRecord(phone, ref, order.id, total);
   cart={};
   saveCart();
   showPay(order);
@@ -1416,6 +1449,7 @@ function payDone(){
   }catch(e){}
   var text=formatOrderText(order);
   document.getElementById('payModal').classList.remove('show');
+  maybeRefPromo(order.phone||'');
   // 非称重单付款后直接提示成功，不再让顾客复制订单
   openResult(text, order, true);
 }
@@ -1541,7 +1575,7 @@ function renderAdmin(){
       }
     });
   }
-  var tabs=[['orders','📋 订单'],['dishes','🍉 菜品'],['pay','💳 收款码'],['shop','🏠 店铺'],['print','🖨 打印'],['qr','🔗 点单码'],['set','⚙ 设置']];
+  var tabs=[['orders','📋 订单'],['dishes','🍉 菜品'],['pay','💳 收款码'],['shop','🏠 店铺'],['print','🖨 打印'],['qr','🔗 点单码'],['ref','🤝 拉新'],['set','⚙ 设置']];
   var html=''; var cur=adminTab||'orders';
   tabs.forEach(function(t){ html+='<button class="'+(cur===t[0]?'on':'')+'" onclick="adminTab=\''+t[0]+'\';renderAdmin()">'+t[1]+'</button>'; });
   document.getElementById('adminTabs').innerHTML=html;
@@ -1552,6 +1586,7 @@ function renderAdmin(){
   else if(cur==='shop') panel.innerHTML=renderShopAdmin();
   else if(cur==='print') panel.innerHTML=renderPrintAdmin();
   else if(cur==='qr') renderQrAdmin();
+  else if(cur==='ref') panel.innerHTML=renderReferralAdmin();
   else if(cur==='set') panel.innerHTML=renderSetAdmin();
 }
 var adminTab='orders';
@@ -1559,7 +1594,7 @@ var adminTab='orders';
 function placeCloudOrder(o){
   if(!window.SB_URL) return;
   try{
-    fetch(SB_URL+'/rest/v1/rpc/place_order',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({payload:{id:o.id,items:o.items,hasWeight:o.hasWeight,weights:o.weights||{},subtotal:o.subtotal,deliveryFee:o.deliveryFee,dist:o.dist,total:o.total,estTotal:o.estTotal,name:o.name,phone:o.phone,addr:o.addr,time:o.time,remark:o.remark,created:o.created,status:o.status,weightTotal:o.weightTotal||0,newcust:false,discount:0,mode:o.mode||'delivery'}})})
+    fetch(SB_URL+'/rest/v1/rpc/place_order',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({payload:{id:o.id,items:o.items,hasWeight:o.hasWeight,weights:o.weights||{},subtotal:o.subtotal,deliveryFee:o.deliveryFee,dist:o.dist,total:o.total,estTotal:o.estTotal,name:o.name,phone:o.phone,addr:o.addr,time:o.time,remark:o.remark,created:o.created,status:o.status,weightTotal:o.weightTotal||0,newcust:false,discount:0,referralDeduct:o.referralDeduct||0,mode:o.mode||'delivery'}})})
       .then(function(r){ return r.json(); })
       .then(function(j){
         if(!j || !j.ok) throw 0;
@@ -1689,6 +1724,7 @@ function cloudAmount(c){
   var p=c.payload||{};
   var base=(p.weightTotal!=null&&p.weightTotal?Number(p.weightTotal):(p.total!=null?Number(p.total):0));
   if(p.newcust && p.discount!=null) base=base-Number(p.discount);
+  if(p.referralDeduct) base=base-Number(p.referralDeduct);
   return roundHalf(base);
 }
 function loadMoreCloudOrders(){
@@ -1713,7 +1749,7 @@ function renderCloudOrder(c){
     (p.mode==='pickup'?'<div class="rowline"><span>取餐</span><span style="color:#2e7d32">🏪 到店自提</span></div>':(p.addr?'<div class="rowline"><span>地址</span><span>'+esc(p.addr)+'</span></div>':''))+
     (p.time?'<div class="rowline"><span>预送</span><span>'+esc(p.time)+'</span></div>':'')+
     '<div class="rowline"><span>商品</span><span>'+lines+'</span></div>'+
-    (amt!==''?'<div class="rowline"><span>金额</span><span style="color:#e53935;font-weight:700">'+money(amt)+(p.newcust?'（已含新客-'+Number(p.discount||0).toFixed(2)+'元）':(p.hasWeight&&!p.weightTotal?'（预估）':''))+'</span></div>':'')+
+    (amt!==''?'<div class="rowline"><span>金额</span><span style="color:#e53935;font-weight:700">'+money(amt)+(p.newcust?'（已含新客-'+Number(p.discount||0).toFixed(2)+'元）':(p.hasWeight&&!p.weightTotal?'（预估）':''))+(p.referralDeduct?'（已含推广抵扣-'+Number(p.referralDeduct).toFixed(2)+'元）':'')+'</span></div>':'')+
     '<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">'+
     (c.status!=='已付款'?'<button class="btn" style="background:#2e7d32;color:#fff" onclick="updateCloudStatus('+c.id+',\'已付款\')">✅ 标记已付款</button>':'')+
     (c.status==='new'?'<button class="btn" style="background:#1565c0;color:#fff" onclick="acceptCloudOrder('+c.id+')">✅ 接单</button>':'')+
@@ -1737,11 +1773,11 @@ function printCloudOrder(id){
   });
   var note='';
   if(p.remark){ var rm=String(p.remark).trim(); if(rm && !/^https?:\/\/|\.github\.io|\.edgeone\.dev|uri\.amap\.com/i.test(rm)) note=rm; }
-  var raw=(p.weightTotal!=null&&p.weightTotal?Number(p.weightTotal):(p.total!=null?Number(p.total):0))-(p.newcust&&p.discount!=null?Number(p.discount):0);
+  var raw=(p.weightTotal!=null&&p.weightTotal?Number(p.weightTotal):(p.total!=null?Number(p.total):0))-(p.newcust&&p.discount!=null?Number(p.discount):0)-(p.referralDeduct?Number(p.referralDeduct):0);
   var amt=roundHalf(raw);
   var roundAmt=Math.round((raw-amt)*100)/100;
   var paid=(c.status==='已付款');
-  var body={ seqNo:String(c.id), title:'榨榨鲜果', lines:lines, note:note, round:(roundAmt>0?('-'+money(roundAmt)):''), amount:'¥'+Number(amt).toFixed(2), newCust:(p.newcust?true:false), newCustDiscount:(p.newcust?(Number(p.discount)||0):0), time:nowStr(), paid:paid, hasJuice:(p.items||[]).some(function(it){return it.cat==='果汁'||it.cat==='半价';}),
+  var body={ seqNo:String(c.id), title:'榨榨鲜果', lines:lines, note:note, round:(roundAmt>0?('-'+money(roundAmt)):''), amount:'¥'+Number(amt).toFixed(2), newCust:(p.newcust?true:false), newCustDiscount:(p.newcust?(Number(p.discount)||0):0), referralDeduct:(p.referralDeduct?Number(p.referralDeduct):0), time:nowStr(), paid:paid, hasJuice:(p.items||[]).some(function(it){return it.cat==='果汁'||it.cat==='半价';}),
     orderNo:(p.id||('云端#'+c.id)), created:(p.created||''), subtotal:'', total:'', customer:(p.name||'')+' '+(p.phone||''), addr:(p.mode==='pickup'?'到店自提':(p.addr||'')), deliveryTime:(p.time||''), status:(c.status==='new'?'待处理':c.status) };
   fetch('http://localhost:8899/print',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
     .then(function(r){ return r.json(); }).then(function(j){ if(!j||!j.ok){ throw 0; } }).catch(function(){ alert('打印失败：请确认本机打印代理已启动（桌面「榨榨鲜果外送」）'); });
@@ -1757,11 +1793,11 @@ function copyCloudAddr(id){ var c=cloudOrders.find(function(x){return x.id===id;
 function copyCloudOrderText(id){
   var c=cloudOrders.find(function(x){return x.id===id;}); if(!c) return;
   var p=c.payload||{};
-  var raw=(p.weightTotal!=null&&p.weightTotal?Number(p.weightTotal):(p.total!=null?Number(p.total):0))-(p.newcust&&p.discount!=null?Number(p.discount):0);
+  var raw=(p.weightTotal!=null&&p.weightTotal?Number(p.weightTotal):(p.total!=null?Number(p.total):0))-(p.newcust&&p.discount!=null?Number(p.discount):0)-(p.referralDeduct?Number(p.referralDeduct):0);
   var amt=roundHalf(raw); var roundAmt=Math.round((raw-amt)*100)/100;
   var t='🍉 榨榨鲜果 外卖订单\n——————————————\n【订单号】'+(p.id||('云端#'+c.id))+'\n【下单时间】'+(p.created||'')+'\n【商品】\n'+
     (p.items||[]).map(function(it){ var dd=byId(it.id); var amt2=(it.per>0&&p.weights&&p.weights[it.id])?(it.per*p.weights[it.id]):(dd?estPrice(dd,it):it.price*it.qty); return '  '+it.name+((it.per>0&&p.weights&&p.weights[it.id])?('（称重'+p.weights[it.id]+'斤×'+it.per+'元/斤）'):((it.note&&it.note.indexOf('按')===0)?('（'+it.note+'）'):(' ×'+it.qty)))+'  '+money(amt2); }).join('\n')+
-    '\n——————————————\n'+(p.newcust?'【新客优惠】-'+Number(p.discount||0).toFixed(2)+'\n':'')+(roundAmt>0?'【抹零】-'+money(roundAmt)+'\n':'')+'【应付合计】'+money(amt)+'\n【顾客】'+(p.name||'')+' '+(p.phone||'')+'\n【地址】'+(p.mode==='pickup'?'到店自提':(p.addr||''))+'\n【预送】'+(p.time||'')+'\n【状态】'+(c.status==='new'?'待处理':c.status);
+    '\n——————————————\n'+(p.newcust?'【新客优惠】-'+Number(p.discount||0).toFixed(2)+'\n':'')+(p.referralDeduct?'【推广抵扣】-'+Number(p.referralDeduct).toFixed(2)+'\n':'')+(roundAmt>0?'【抹零】-'+money(roundAmt)+'\n':'')+'【应付合计】'+money(amt)+'\n【顾客】'+(p.name||'')+' '+(p.phone||'')+'\n【地址】'+(p.mode==='pickup'?'到店自提':(p.addr||''))+'\n【预送】'+(p.time||'')+'\n【状态】'+(c.status==='new'?'待处理':c.status);
   window._lastText=t; copyText();
 }
 function queryCustomer(){
@@ -2350,6 +2386,125 @@ function downloadQr(){
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
 }
 
+function onCkPhone(){
+  var ph=document.getElementById('ckPhone').value.trim();
+  var tip=document.getElementById('refWalletTip');
+  if(!tip) return;
+  if(!/^1\d{10}$/.test(ph)){ tip.style.display='none'; return; }
+  fetch(SB_URL+'/rest/v1/rpc/get_bind',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({phone:ph})})
+    .then(function(r){ return r.json(); })
+    .then(function(jb){
+      var bindHtml=(jb&&jb.bound)?('您已绑定推荐人 '+esc(jb.old_phone||'')+'，不可更改'):'';
+      // 同时结算到期返利（次日到账）并刷新钱包
+      fetch(SB_URL+'/rest/v1/rpc/settle_referral',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({phone:ph})})
+        .then(function(r){ return r.json(); })
+        .then(function(j2){
+          var h=bindHtml;
+          if(j2 && j2.ok && j2.balance>0){ if(h) h+='<br>'; h+='🎁 推广钱包可用 <b style="color:#e65100">'+money(j2.balance)+'</b> 元，下单自动抵扣（订单20%、单笔最高10元）'; }
+          if(h){ tip.style.display='block'; tip.innerHTML=h; } else { tip.style.display='none'; }
+        }).catch(function(){ if(bindHtml){ tip.style.display='block'; tip.innerHTML=bindHtml; } });
+    }).catch(function(){});
+}
+function checkRefWallet(){
+  var ph=(document.getElementById('refPhone').value||'').trim();
+  var res=document.getElementById('refRes');
+  if(!/^1\d{10}$/.test(ph)){ res.innerHTML='<span style="color:#e65100">请输入正确的11位手机号</span>'; return; }
+  res.innerHTML='查询中…';
+  fetch(SB_URL+'/rest/v1/rpc/get_wallet_balance',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({phone:ph})})
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      if(j && j.ok){ res.innerHTML='🎁 推广钱包余额：<b style="color:#e65100">'+money(j.balance)+'</b> 元'+(j.pending>0?('<br>待入账返利 <b>'+j.pending+'</b> 笔（次日到账）'):''); }
+      else res.innerHTML='<span style="color:#888">暂无返利记录</span>';
+    }).catch(function(){ res.innerHTML='<span style="color:#e65100">查询失败</span>'; });
+}
+function bindRefAndRecord(phone, ref, orderId, total){
+  if(!ref || !/^1\d{10}$/.test(ref)) return;
+  if(ref===phone){ alert('推荐人不能是您自己'); return; }
+  fetch(SB_URL+'/rest/v1/rpc/bind_referral',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({p_new:phone,p_old:ref})})
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      if(j && j.ok){
+        fetch(SB_URL+'/rest/v1/rpc/record_referral',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({p_new:phone,p_old:ref,p_order_id:orderId,p_amount:total})}).catch(function(){});
+      } else if(j && j.msg && !window._refBindWarned){
+        window._refBindWarned=true;
+        setTimeout(function(){ alert('推荐人：'+j.msg); }, 400);
+      }
+    }).catch(function(){});
+}
+function maybeRefPromo(phone){
+  if(!/^1\d{10}$/.test(phone)) return;
+  if(localStorage.getItem('zz_ref_promo_off')==='1') return;
+  var today=new Date().toDateString();
+  if(localStorage.getItem('zz_ref_promo_day')===today) return;
+  fetch(SB_URL+'/rest/v1/rpc/get_balance_public',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({phone:phone})})
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      if(j && j.new===false){
+        localStorage.setItem('zz_ref_promo_day', today);
+        showRefPromo();
+      }
+    }).catch(function(){});
+}
+function showRefPromo(){
+  var old=document.getElementById('refPromoModal'); if(old) old.remove();
+  var m=document.createElement('div');
+  m.id='refPromoModal';
+  m.style='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center';
+  m.innerHTML='<div style="background:#fff;border-radius:14px;padding:22px;width:90%;max-width:340px;text-align:center">'+
+    '<div style="font-size:34px;margin-bottom:6px">🤝</div>'+
+    '<div style="font-size:17px;font-weight:700;margin-bottom:6px">把美味分享给朋友</div>'+
+    '<div style="font-size:13px;color:#666;line-height:1.9;text-align:left;margin-bottom:14px">'+
+    '① 朋友下单时填您的手机号，您得 <b style="color:#e65100">5%</b> 返利（次日到账）<br>'+
+    '② 您自己下单可 <b style="color:#2e7d32">抵扣 20%</b>，单笔最高 <b>10 元</b><br>'+
+    '③ 返利在「优惠说明 → 推广钱包」随时可查'+
+    '</div>'+
+    '<div style="display:flex;gap:8px">'+
+      '<button class="btn gray" style="flex:1" onclick="closeRefPromo(1)">今天不提示</button>'+
+      '<button class="btn gray" style="flex:1" onclick="closeRefPromo(2)">永久关闭</button>'+
+    '</div></div>';
+  document.body.appendChild(m);
+}
+function closeRefPromo(kind){
+  var m=document.getElementById('refPromoModal'); if(m) m.remove();
+  if(kind===1) localStorage.setItem('zz_ref_promo_day', new Date().toDateString());
+  if(kind===2) localStorage.setItem('zz_ref_promo_off','1');
+}
+function renderReferralAdmin(){
+  var html='<div class="panel"><h3>🤝 拉新分成设置</h3><div class="card"><div class="form" style="padding:0">'+
+    '<div class="rowline"><span>功能开关</span><span><select id="refEn" style="border:1px solid #ddd;border-radius:6px;padding:6px"><option value="1">开启</option><option value="0">关闭</option></select></span></div>'+
+    '<div class="rowline"><span>返点比例（%）</span><span><input id="refRate" type="number" step="0.5" min="0" style="width:70px;border:1px solid #ddd;border-radius:6px;padding:6px"></span></div>'+
+    '<div class="rowline"><span>抵扣比例（%）</span><span><input id="refDeductRate" type="number" step="1" min="0" style="width:70px;border:1px solid #ddd;border-radius:6px;padding:6px"></span></div>'+
+    '<div class="rowline"><span>单笔抵扣上限（元）</span><span><input id="refMax" type="number" step="0.5" min="0" style="width:70px;border:1px solid #ddd;border-radius:6px;padding:6px"></span></div>'+
+    '<div style="font-size:12px;color:#888;margin:6px 0;line-height:1.8">说明：朋友下单填您手机号 → 您得「返点比例」返利（次日到账）；您下单自动按「抵扣比例」抵扣，最高「单笔上限」元，不超钱包余额。</div>'+
+    '<div style="margin-top:10px;display:flex;gap:8px"><button class="btn" onclick="saveReferralCfg()">保存设置</button><span id="refSaveRes" style="font-size:13px;color:#2e7d32;line-height:34px"></span></div>'+
+    '</div></div></div>';
+  fetch(SB_URL+'/rest/v1/rpc/get_referral_cfg',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:'{}'})
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      if(j && j.rate!=null){
+        var e=document.getElementById('refEn'); if(e) e.value=j.enabled?'1':'0';
+        var r1=document.getElementById('refRate'); if(r1) r1.value=j.rate;
+        var r2=document.getElementById('refDeductRate'); if(r2) r2.value=j.deduct_rate;
+        var r3=document.getElementById('refMax'); if(r3) r3.value=j.max_deduct;
+      }
+    }).catch(function(){});
+  return html;
+}
+function saveReferralCfg(){
+  var pwd=localStorage.getItem(LS_CLOUDPWD)||'1986shenhu';
+  var rate=parseFloat(document.getElementById('refRate').value);
+  var dr=parseFloat(document.getElementById('refDeductRate').value);
+  var mx=parseFloat(document.getElementById('refMax').value);
+  var en=document.getElementById('refEn').value==='1';
+  if(!(rate>=0)||!(dr>=0)||!(mx>=0)){ alert('请输入有效的数字'); return; }
+  fetch(SB_URL+'/rest/v1/rpc/save_referral_cfg',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({admin_pwd:pwd,p_rate:rate,p_deduct_rate:dr,p_max_deduct:mx,p_enabled:en})})
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      var r=document.getElementById('refSaveRes');
+      if(j && j.ok){ if(r) r.textContent='✓ 已保存'; setTimeout(function(){ if(r) r.textContent=''; },2000); }
+      else if(j && j.msg){ alert(j.msg); }
+    }).catch(function(){ alert('保存失败：请确认云端已执行拉新SQL'); });
+}
 function renderSetAdmin(){
   var html='<div class="panel"><h3>设置</h3><div class="card">'+
     '<div class="rowline"><span>后台密码</span><span><a href="javascript:adminTab=\'shop\';renderAdmin()">去修改</a></span></div>'+
