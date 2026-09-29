@@ -477,7 +477,7 @@ function showCustomer(){
   loadCloud();
 }
 function cats(){ var order=['水果','打折','果汁','半价'], c=[]; order.forEach(function(cat){ if(cat==='半价' && !halfEnabled) return; if(dishes.some(function(d){return d.on && d.cat===cat;})) c.push(cat); }); return c; }
-function catLabel(c){ return c==='水果'?'新鲜水果':(c==='果汁'?'现榨果汁':(c==='打折'?'打折水果':(c==='半价'?'第二杯半价':c))); }
+function catLabel(c){ return c==='水果'?'新鲜水果':(c==='果汁'?'现榨果汁':(c==='打折'?'打折水果':(c==='半价'?'第二杯半价':(c==='off'?'已下架':c)))); }
 /* 第二杯半价：从现榨果汁自动同步生成，价格自动×0.5 */
 function syncHalfPrice(){
   dishes = dishes.filter(function(d){ return d.cat!=='半价'; });
@@ -1902,28 +1902,30 @@ function sortDishesByPrice(){
   renderAdmin();
 }
 function renderDishesAdmin(){
-  var cats=[['水果','新鲜水果'],['打折','打折水果'],['果汁','现榨果汁'],['半价','第二杯半价']];
-  var isHalf = adminDishCat==='半价';
+  var cats=[['水果','新鲜水果'],['打折','打折水果'],['果汁','现榨果汁'],['半价','第二杯半价'],['off','已下架']];
+  var isHalf = adminDishCat==='半价'; var isOff = adminDishCat==='off';
   var html='<div class="panel"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><h3>菜品管理</h3>'+
-    (isHalf?'':'<button class="btn" onclick="editDish()">＋ 新增菜品</button>')+'</div>'+
+    ((isHalf||isOff)?'':'<button class="btn" onclick="editDish()">＋ 新增菜品</button>')+'</div>'+
     '<div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;align-items:center">'+
     cats.map(function(c){return '<button class="btn '+(adminDishCat===c[0]?'':'gray')+'" style="font-size:13px;padding:5px 12px" onclick="setAdminDishCat(\''+c[0]+'\')">'+c[1]+'</button>';}).join('')+
-    (isHalf?'':'<button class="btn outline" style="font-size:13px;padding:5px 12px" onclick="sortDishesByPrice()">↕ 价格排序</button>')+
+    ((isHalf||isOff)?'':'<button class="btn outline" style="font-size:13px;padding:5px 12px" onclick="sortDishesByPrice()">↕ 价格排序</button>')+
     '</div>'+
     '<div class="card" style="background:#eef8ee;border:1px solid #c8e6c9;margin-bottom:12px">'+
     '<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">'+
     '<button class="btn outline" onclick="cloudPull()">拉取云端菜单</button>'+
     '<button class="btn orange" onclick="cloudSync()">☁️ 同步菜单到云端</button></div>'+
     '<div id="cloudStatus" style="font-size:12px;color:#666;margin-top:8px"></div></div>'+
-    (isHalf?'<p style="font-size:12px;color:#fb8c00;margin-bottom:10px">本分类由「现榨果汁」自动同步生成，价格自动为半价，无需手动编辑。</p>':'<p style="font-size:12px;color:#888;margin-bottom:10px">改好菜单后点「☁️ 同步菜单到云端」，顾客端即读取最新菜单（本机修改需手动同步才会生效）。</p>');
-  var sortedDishes = dishes.filter(function(d){ return d.cat===adminDishCat; }).slice().sort(function(a,b){ return a.price-b.price; });
+    (isHalf?'<p style="font-size:12px;color:#fb8c00;margin-bottom:10px">本分类由「现榨果汁」自动同步生成，价格自动为半价，无需手动编辑。</p>':(isOff?'<p style="font-size:12px;color:#e65100;margin-bottom:10px">已下架商品仅在后台可见，顾客端不会显示。重新上架后点「☁️ 同步菜单到云端」即可恢复在售。</p>':'<p style="font-size:12px;color:#888;margin-bottom:10px">改好菜单后点「☁️ 同步菜单到云端」，顾客端即读取最新菜单（本机修改需手动同步才会生效）。</p>'));
+  var sortedDishes = isOff ? dishes.filter(function(d){ return d.on===false && d.cat!=='半价'; }).slice().sort(function(a,b){ return a.price-b.price; }) : dishes.filter(function(d){ return d.cat===adminDishCat; }).slice().sort(function(a,b){ return a.price-b.price; });
   sortedDishes.forEach(function(d){
     html+='<div class="card"><div style="display:flex;justify-content:space-between;align-items:center">'+
       '<div>'+(d.img?'<img src="'+esc(d.img)+'?v='+IMG_VER+'" style="width:44px;height:44px;object-fit:cover;border-radius:6px;vertical-align:middle;margin-right:8px">':'')+'<b>'+esc(d.name)+'</b> <span class="badge '+(d.on?'':'off')+'">'+(d.on?'上架':'下架')+'</span>'+
       '<div style="font-size:12px;color:#888;margin-top:3px">'+esc(catLabel(d.cat))+' · '+money(d.price)+' / '+esc(d.unit||'份')+(d.per?' · 称重'+d.per+'元/斤':'')+'</div></div>'+
       (isHalf?'<span style="font-size:11px;color:#fb8c00;font-weight:600">自动同步</span>':
+      (isOff?'<div><button class="btn" style="font-size:12px;padding:4px 10px;background:#2e7d32;color:#fff;border:none;border-radius:6px;cursor:pointer" onclick="relistDish(\''+d.id+'\')">↩ 重新上架</button> '+
+      '<button class="btn red" style="font-size:12px;padding:4px 10px" onclick="delDish(\''+d.id+'\')">删除</button></div>':
       '<div><button class="btn gray" style="font-size:12px;padding:4px 10px" onclick="editDish(\''+d.id+'\')">编辑</button> '+
-      '<button class="btn red" style="font-size:12px;padding:4px 10px" onclick="delDish(\''+d.id+'\')">删除</button></div>')+
+      '<button class="btn red" style="font-size:12px;padding:4px 10px" onclick="delDish(\''+d.id+'\')">删除</button></div>'))+
     '</div></div>';
   });
   return html+'</div>';
@@ -1992,6 +1994,7 @@ function saveDish(id){
 }
 function delDish(id){ if(confirm('确认删除该菜品？')){ dishes=dishes.filter(function(d){return d.id!==id;}); save(LS_DISHES,dishes); syncHalfPrice(); renderAdmin(); renderCats(); renderDishes(); } }
 function sortDishes(){ dishes=groupSort(dishes); save(LS_DISHES,dishes); renderAdmin(); renderCats(); renderDishes(); }
+function relistDish(id){ var d=byId(id); if(!d) return; d.on=true; save(LS_DISHES,dishes); syncHalfPrice(); renderAdmin(); renderCats(); renderDishes(); }
 
 function renderPayAdmin(){
   var html='<div class="panel"><h3>收款码设置</h3>'+
