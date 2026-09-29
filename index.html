@@ -165,11 +165,16 @@ button:active{transform:scale(.94);-webkit-transform:scale(.94);opacity:.85}
 <div class="modal" id="checkoutModal">
   <div class="box">
     <h3 style="margin-bottom:8px">填写配送信息</h3>
+    <div style="display:flex;gap:8px;margin:10px 0 4px">
+      <button type="button" id="ckModeDlv" onclick="setCkMode('delivery')" style="flex:1;padding:10px;border:2px solid #2e7d32;background:#e8f5e9;border-radius:8px;font-size:14px;cursor:pointer">🚚 外卖配送</button>
+      <button type="button" id="ckModePick" onclick="setCkMode('pickup')" style="flex:1;padding:10px;border:2px solid #ccc;background:#fff;border-radius:8px;font-size:14px;cursor:pointer">🏪 到店自提</button>
+    </div>
     <div class="form" style="padding:0">
       <div style="display:flex;gap:8px">
         <div style="flex:1"><label>您的称呼</label><input id="ckName" placeholder="王女士" oninput="autoFillCust()"></div>
         <div style="flex:1"><label>联系电话</label><input id="ckPhone" type="tel" placeholder="手机号"></div>
       </div>
+      <div id="ckAddrArea">
       <label>外卖地址</label>
       <div style="display:flex;gap:6px;align-items:flex-start">
         <div style="flex:1;position:relative">
@@ -181,6 +186,7 @@ button:active{transform:scale(.94);-webkit-transform:scale(.94);opacity:.85}
       </div>
       <label>详细地址（楼栋/单元/房号）</label><input id="ckAddrDetail" placeholder="3栋2单元501" style="margin-bottom:6px">
       <div id="deliveryBox" style="background:#f0f7f0;border-radius:8px;padding:8px 10px;margin-top:6px;font-size:13px;line-height:1.7;display:none"></div>
+      </div>
       <label>配送时间</label>
       <div style="display:flex;gap:6px;align-items:center">
         <button type="button" id="ckTime1" onclick="pickTime()" style="flex:1;padding:10px;border:2px solid #ccc;background:#fff;border-radius:8px;font-size:14px;cursor:pointer">尽快送达</button>
@@ -953,8 +959,19 @@ function clearCart(){
   if(!confirm('确认清空购物车？')) return;
   cart={}; saveCart(); halfEnabled=false; renderCats(); renderCartItems(); renderCartbar(); renderDishes(); closeDrawer();
 }
+var _ckMode='delivery';
+function setCkMode(m){
+  _ckMode=m;
+  var a=document.getElementById('ckAddrArea'); if(a) a.style.display=(m==='pickup')?'none':'block';
+  var b1=document.getElementById('ckModeDlv'), b2=document.getElementById('ckModePick');
+  if(b1){ b1.style.borderColor=(m==='delivery')?'#2e7d32':'#ccc'; b1.style.background=(m==='delivery')?'#e8f5e9':'#fff'; }
+  if(b2){ b2.style.borderColor=(m==='pickup')?'#2e7d32':'#ccc'; b2.style.background=(m==='pickup')?'#e8f5e9':'#fff'; }
+  if(m==='pickup'){ window._delivery={dist:0,fee:0,mode:'pickup'}; if(typeof updateCkAmt==='function') updateCkAmt(); }
+  else { if(typeof calcDelivery==='function') calcDelivery(); }
+}
 function openCheckout(){
   if(!cartList().length){ alert('购物车是空的'); return; }
+  setCkMode('delivery');
   updateCkAmt();
   // 同步查一次营业状态，避免打烊竞态
   var ck=document.getElementById('ckTime').value;
@@ -974,6 +991,7 @@ function distKm(a,b){
 }
 function deliveryFee(dist, subtotal){ if(dist<=3) return 0; if(dist<=5) return (subtotal>=30?0:3); if(dist<=10) return 3+Math.floor((dist-5)+0.59)*2; return -1; }
 function calcDelivery(){
+  if(_ckMode==='pickup'){ window._delivery={dist:0,fee:0,mode:'pickup'}; return; }
   var addr=document.getElementById('ckAddr').value.trim(); var detail=document.getElementById('ckAddrDetail')?document.getElementById('ckAddrDetail').value.trim():''; if(detail) addr+=' '+detail;
   var box=document.getElementById('deliveryBox');
   if(!addr){ box.style.display='none'; window._delivery=null; return; }
@@ -1152,7 +1170,9 @@ function updateCkAmt(){
   var sub=cartTotal();
   var dlv=window._delivery;
   var fee=0, dist='';
-  if(dlv){ if(dlv.fee<0||dlv.dist>10){ el.innerHTML='<span style="color:#e65100">该地址超 10 公里，无法配送（建议到店自取）</span>'; return; } fee=deliveryFee(dlv.dist,sub); dist=dlv.dist.toFixed(1); }
+  var isPickup=(window._ckMode==='pickup');
+  if(isPickup){ fee=0; }
+  else if(dlv){ if(dlv.fee<0||dlv.dist>10){ el.innerHTML='<span style="color:#e65100">该地址超 10 公里，无法配送（建议到店自取）</span>'; return; } fee=deliveryFee(dlv.dist,sub); dist=dlv.dist.toFixed(1); }
   var html='<div>商品合计：<b>'+money(sub)+'</b></div>';
   // 新客优惠提示
   var ph=document.getElementById('ckPhone').value.trim();
@@ -1168,8 +1188,8 @@ function updateCkAmt(){
         }
       }).catch(function(){});
   }
-  if(dlv){ html+='<div>骑行距离：约 '+dist+' 公里</div>'; }
-  html+='<div>配送费：<b>'+(dlv?(fee===0?'免配送费':money(fee)):'请选地址后计算')+'</b></div>';
+  if(dlv && !isPickup){ html+='<div>骑行距离：约 '+dist+' 公里</div>'; }
+  html+='<div>配送费：<b>'+(isPickup?'免配送费（到店自提）':(dlv?(fee===0?'免配送费':money(fee)):'请选地址后计算'))+'</b></div>';
   var raw=sub+fee;
   var hasW=cartList().some(function(c){var d=byId(c.id);return d&&d.per>0;});
   var total=hasW?raw:roundHalf(raw);
@@ -1200,7 +1220,7 @@ function submitOrder(){
   var addr=document.getElementById('ckAddr').value.trim();
   if(!name){ alert('请填写您的称呼'); return; }
   if(!/^1\d{10}$/.test(phone)){ alert('请填写正确的11位手机号'); return; }
-  if(!addr){ alert('请填写配送地址'); return; }
+  if(window._ckMode!=='pickup' && !addr){ alert('请填写配送地址'); return; }
   localStorage.setItem('zz_my_phone', phone);
   // 第一步：第二杯半价提示
   var hasJuice = cartList().some(function(it){ var d=byId(it.id); return d && d.cat==='果汁'; });
@@ -1303,6 +1323,7 @@ function doRealSubmit(){
   var name=document.getElementById('ckName').value.trim();
   var phone=document.getElementById('ckPhone').value.trim();
   var addr=document.getElementById('ckAddr').value.trim();
+  if(window._ckMode==='pickup') addr='到店自提';
   var time=document.getElementById('ckTime').value;
   var items=cartList();
   if(items.length===0){ alert('购物车是空的'); return; }
@@ -1310,7 +1331,8 @@ function doRealSubmit(){
   items.forEach(function(it){ var d=byId(it.id); total+=estPrice(d,it); });
   // 配送费（与配送信息页显示一致）
   var fee=0, distV=0;
-  if(window._delivery && window._delivery.dist<=10){ distV=window._delivery.dist; fee=deliveryFee(distV,total); if(fee<0) fee=0; }
+  if(window._ckMode==='pickup'){ fee=0; distV=0; }
+  else if(window._delivery && window._delivery.dist<=10){ distV=window._delivery.dist; fee=deliveryFee(distV,total); if(fee<0) fee=0; }
   var disc=(window._disc===5?5:0);
   var hasW=items.some(function(c){var d=byId(c.id);return d&&d.per>0;});
   var rawTotal=total+fee;
@@ -1318,11 +1340,11 @@ function doRealSubmit(){
   var payTotal=finalTotal-disc;
   if(payTotal<0) payTotal=0;
   // 保存客户信息，下次填名字自动弹出
-  try{ localStorage.setItem('zz_cust_'+phone, JSON.stringify({name:name,phone:phone,addr:addr,detail:document.getElementById('ckAddrDetail')?document.getElementById('ckAddrDetail').value.trim():'',t:Date.now()})); }catch(e){}
+  try{ localStorage.setItem('zz_cust_'+phone, JSON.stringify({name:name,phone:phone,addr:(addr==='到店自提'?'':addr),detail:document.getElementById('ckAddrDetail')?document.getElementById('ckAddrDetail').value.trim():'',t:Date.now()})); }catch(e){}
   var remark=(document.getElementById('ckRemark')?document.getElementById('ckRemark').value.trim():'');
   var order={
     id:'o'+Date.now(),
-    items:items, name:name, phone:phone, addr:addr, time:time, remark:remark,
+    items:items, name:name, phone:phone, addr:addr, time:time, remark:remark, mode:(window._ckMode==='pickup'?'pickup':'delivery'),
     total:total, subtotal:total, deliveryFee:fee, dist:distV, payTotal:payTotal, discount:disc,
     newcust:(disc>0?true:false), hasWeight:false, weights:{}, weightTotal:0,
     status:'new', created:new Date().toISOString(), created_at:new Date().toISOString()
@@ -1424,7 +1446,7 @@ function formatOrderText(o){
   if(discount>0) lines.push('【抹零】-'+money(discount));
   lines.push('【应付合计】'+money(finalTotal));
   lines.push('【顾客】'+o.name+'  '+o.phone);
-  lines.push('【地址】'+o.addr);
+  lines.push(o.mode==='pickup'?'【取餐】到店自提':'【地址】'+o.addr);
   lines.push('【预送】'+o.time);
   if(o.remark){
     var rm=String(o.remark).trim();
@@ -1537,7 +1559,7 @@ var adminTab='orders';
 function placeCloudOrder(o){
   if(!window.SB_URL) return;
   try{
-    fetch(SB_URL+'/rest/v1/rpc/place_order',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({payload:{id:o.id,items:o.items,hasWeight:o.hasWeight,weights:o.weights||{},subtotal:o.subtotal,deliveryFee:o.deliveryFee,dist:o.dist,total:o.total,estTotal:o.estTotal,name:o.name,phone:o.phone,addr:o.addr,time:o.time,remark:o.remark,created:o.created,status:o.status,weightTotal:o.weightTotal||0,newcust:false,discount:0}})})
+    fetch(SB_URL+'/rest/v1/rpc/place_order',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({payload:{id:o.id,items:o.items,hasWeight:o.hasWeight,weights:o.weights||{},subtotal:o.subtotal,deliveryFee:o.deliveryFee,dist:o.dist,total:o.total,estTotal:o.estTotal,name:o.name,phone:o.phone,addr:o.addr,time:o.time,remark:o.remark,created:o.created,status:o.status,weightTotal:o.weightTotal||0,newcust:false,discount:0,mode:o.mode||'delivery'}})})
       .then(function(r){ return r.json(); })
       .then(function(j){
         if(!j || !j.ok) throw 0;
@@ -1688,7 +1710,7 @@ function renderCloudOrder(c){
   return '<div class="card" style="background:#fff"><h3>云端#'+c.id+' <span class="badge '+stCls+'">'+esc(stTxt)+'</span></h3>'+
     '<div class="rowline"><span>下单时间</span><span>'+esc(created)+'</span></div>'+
     '<div class="rowline"><span>顾客</span><span>'+esc(p.name||'')+' <b style="color:#c62828">'+esc(p.phone||'')+'</b> <span style="color:#ad1457;font-size:12px">'+custTag+'</span></span></div>'+
-    (p.addr?'<div class="rowline"><span>地址</span><span>'+esc(p.addr)+'</span></div>':'')+
+    (p.mode==='pickup'?'<div class="rowline"><span>取餐</span><span style="color:#2e7d32">🏪 到店自提</span></div>':(p.addr?'<div class="rowline"><span>地址</span><span>'+esc(p.addr)+'</span></div>':''))+
     (p.time?'<div class="rowline"><span>预送</span><span>'+esc(p.time)+'</span></div>':'')+
     '<div class="rowline"><span>商品</span><span>'+lines+'</span></div>'+
     (amt!==''?'<div class="rowline"><span>金额</span><span style="color:#e53935;font-weight:700">'+money(amt)+(p.newcust?'（已含新客-'+Number(p.discount||0).toFixed(2)+'元）':(p.hasWeight&&!p.weightTotal?'（预估）':''))+'</span></div>':'')+
@@ -1697,8 +1719,8 @@ function renderCloudOrder(c){
     (c.status==='new'?'<button class="btn" style="background:#1565c0;color:#fff" onclick="acceptCloudOrder('+c.id+')">✅ 接单</button>':'')+
     (isNewCust?'<button class="btn" style="background:#ad1457;color:#fff" onclick="newCustCloudOrder('+c.id+')">🎁 新客优惠</button>':'')+
     '<button class="btn" style="background:#555;color:#fff" onclick="printCloudOrder('+c.id+')">🖨 打印</button>'+
-    '<button class="btn" onclick="navCloud('+c.id+')">高德导航</button>'+
-    '<button class="btn orange" onclick="copyCloudAddr('+c.id+')">复制地址</button>'+
+    (p.addr && p.mode!=='pickup'?'<button class="btn" onclick="navCloud('+c.id+')">高德导航</button>':'')+
+    (p.addr && p.mode!=='pickup'?'<button class="btn orange" onclick="copyCloudAddr('+c.id+')">复制地址</button>':'')+
     '<button class="btn" onclick="copyCloudOrderText('+c.id+')">复制订单</button>'+
     (c.status!=='已完成'?'<button class="btn" onclick="updateCloudStatus('+c.id+',\'已完成\')">标记完成</button>':'')+
     '<button class="btn red" onclick="deleteCloudOrder('+c.id+')">删除</button>'+
@@ -1720,7 +1742,7 @@ function printCloudOrder(id){
   var roundAmt=Math.round((raw-amt)*100)/100;
   var paid=(c.status==='已付款');
   var body={ seqNo:String(c.id), title:'榨榨鲜果', lines:lines, note:note, round:(roundAmt>0?('-'+money(roundAmt)):''), amount:'¥'+Number(amt).toFixed(2), newCust:(p.newcust?true:false), newCustDiscount:(p.newcust?(Number(p.discount)||0):0), time:nowStr(), paid:paid, hasJuice:(p.items||[]).some(function(it){return it.cat==='果汁'||it.cat==='半价';}),
-    orderNo:(p.id||('云端#'+c.id)), created:(p.created||''), subtotal:'', total:'', customer:(p.name||'')+' '+(p.phone||''), addr:(p.addr||''), deliveryTime:(p.time||''), status:(c.status==='new'?'待处理':c.status) };
+    orderNo:(p.id||('云端#'+c.id)), created:(p.created||''), subtotal:'', total:'', customer:(p.name||'')+' '+(p.phone||''), addr:(p.mode==='pickup'?'到店自提':(p.addr||'')), deliveryTime:(p.time||''), status:(c.status==='new'?'待处理':c.status) };
   fetch('http://localhost:8899/print',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
     .then(function(r){ return r.json(); }).then(function(j){ if(!j||!j.ok){ throw 0; } }).catch(function(){ alert('打印失败：请确认本机打印代理已启动（桌面「榨榨鲜果外送」）'); });
 }
@@ -1739,7 +1761,7 @@ function copyCloudOrderText(id){
   var amt=roundHalf(raw); var roundAmt=Math.round((raw-amt)*100)/100;
   var t='🍉 榨榨鲜果 外卖订单\n——————————————\n【订单号】'+(p.id||('云端#'+c.id))+'\n【下单时间】'+(p.created||'')+'\n【商品】\n'+
     (p.items||[]).map(function(it){ var dd=byId(it.id); var amt2=(it.per>0&&p.weights&&p.weights[it.id])?(it.per*p.weights[it.id]):(dd?estPrice(dd,it):it.price*it.qty); return '  '+it.name+((it.per>0&&p.weights&&p.weights[it.id])?('（称重'+p.weights[it.id]+'斤×'+it.per+'元/斤）'):((it.note&&it.note.indexOf('按')===0)?('（'+it.note+'）'):(' ×'+it.qty)))+'  '+money(amt2); }).join('\n')+
-    '\n——————————————\n'+(p.newcust?'【新客优惠】-'+Number(p.discount||0).toFixed(2)+'\n':'')+(roundAmt>0?'【抹零】-'+money(roundAmt)+'\n':'')+'【应付合计】'+money(amt)+'\n【顾客】'+(p.name||'')+' '+(p.phone||'')+'\n【地址】'+(p.addr||'')+'\n【预送】'+(p.time||'')+'\n【状态】'+(c.status==='new'?'待处理':c.status);
+    '\n——————————————\n'+(p.newcust?'【新客优惠】-'+Number(p.discount||0).toFixed(2)+'\n':'')+(roundAmt>0?'【抹零】-'+money(roundAmt)+'\n':'')+'【应付合计】'+money(amt)+'\n【顾客】'+(p.name||'')+' '+(p.phone||'')+'\n【地址】'+(p.mode==='pickup'?'到店自提':(p.addr||''))+'\n【预送】'+(p.time||'')+'\n【状态】'+(c.status==='new'?'待处理':c.status);
   window._lastText=t; copyText();
 }
 function queryCustomer(){
