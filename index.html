@@ -658,7 +658,7 @@ function confirmPeel(id){
   saveCart();
   document.getElementById('peelModal').remove();
   renderCartbar();
-  updateBadge();
+  renderCartItems();
 }
 function adjustItem(id, note){
   var d=byId(id); if(!d) return;
@@ -1191,7 +1191,7 @@ function showOutOfRange(){
 }
 function closeOutOfRange(){
   var m=document.getElementById('outOfRangeModal'); if(m) m.remove();
-  cart={}; saveCart(); curCat='水果'; renderCats(); renderDishes(); updateCartBadge();
+  cart={}; saveCart(); curCat='水果'; renderCats(); renderDishes(); renderCartbar(); renderCartItems();
   var d=document.getElementById('drawer'); if(d) d.style.display='none';
 }
 function submitOrder(){
