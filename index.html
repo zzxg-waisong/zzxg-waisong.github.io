@@ -1336,11 +1336,11 @@ function doRealSubmit(){
 }
 function tryReferralDeduct(phone, amount, cb){
   if(!phone || !/^1\d{10}$/.test(phone)){ cb(0); return; }
-  fetch(SB_URL+'/rest/v1/rpc/get_wallet_balance',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({phone:phone})})
+  fetch(SB_URL+'/rest/v1/rpc/get_wallet_balance',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({p_phone:phone})})
     .then(function(r){ return r.json(); })
     .then(function(j){
       if(j && j.ok && j.balance>0){
-        fetch(SB_URL+'/rest/v1/rpc/apply_referral_deduct',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({phone:phone,amount:amount})})
+        fetch(SB_URL+'/rest/v1/rpc/apply_referral_deduct',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({p_phone:phone,p_amount:amount})})
           .then(function(r){ return r.json(); })
           .then(function(j2){ cb((j2&&j2.ok)?Number(j2.deduct||0):0); })
           .catch(function(){ cb(0); });
@@ -2391,12 +2391,12 @@ function onCkPhone(){
   var tip=document.getElementById('refWalletTip');
   if(!tip) return;
   if(!/^1\d{10}$/.test(ph)){ tip.style.display='none'; return; }
-  fetch(SB_URL+'/rest/v1/rpc/get_bind',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({phone:ph})})
+  fetch(SB_URL+'/rest/v1/rpc/get_bind',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({p_phone:ph})})
     .then(function(r){ return r.json(); })
     .then(function(jb){
       var bindHtml=(jb&&jb.bound)?('您已绑定推荐人 '+esc(jb.old_phone||'')+'，不可更改'):'';
       // 同时结算到期返利（次日到账）并刷新钱包
-      fetch(SB_URL+'/rest/v1/rpc/settle_referral',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({phone:ph})})
+      fetch(SB_URL+'/rest/v1/rpc/settle_referral',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({p_phone:ph})})
         .then(function(r){ return r.json(); })
         .then(function(j2){
           var h=bindHtml;
@@ -2410,7 +2410,7 @@ function checkRefWallet(){
   var res=document.getElementById('refRes');
   if(!/^1\d{10}$/.test(ph)){ res.innerHTML='<span style="color:#e65100">请输入正确的11位手机号</span>'; return; }
   res.innerHTML='查询中…';
-  fetch(SB_URL+'/rest/v1/rpc/get_wallet_balance',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({phone:ph})})
+  fetch(SB_URL+'/rest/v1/rpc/get_wallet_balance',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({p_phone:ph})})
     .then(function(r){ return r.json(); })
     .then(function(j){
       if(j && j.ok){ res.innerHTML='🎁 推广钱包余额：<b style="color:#e65100">'+money(j.balance)+'</b> 元'+(j.pending>0?('<br>待入账返利 <b>'+j.pending+'</b> 笔（次日到账）'):''); }
