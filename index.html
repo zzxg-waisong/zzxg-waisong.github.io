@@ -1610,7 +1610,10 @@ function placeCloudOrder(o){
         // 顾客已用首单优惠：用云端订单id扣余额并标记（上传不带优惠标记，否则云端判定 already 拒绝扣减）
         var cid=(j.id!=null)?j.id:0;
         if(o.newcust && o.discount>0 && cid){
-          fetch(SB_URL+'/rest/v1/rpc/apply_newcust',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({admin_pwd:'1986shenhu',order_id:cid,min_free:0})}).then(function(){}).catch(function(){});
+          fetch(SB_URL+'/rest/v1/rpc/apply_newcust',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({admin_pwd:'1986shenhu',order_id:cid,min_free:0})})
+            .then(function(r){ return r.json(); })
+            .then(function(j){ if(j && j.ok){ fetch(SB_URL+'/rest/v1/rpc/mark_newcust_order',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({p_admin:'1986shenhu',p_order_id:cid})}).catch(function(){}); } })
+            .catch(function(){});
         }
       }).catch(function(){});
   }catch(e){}
