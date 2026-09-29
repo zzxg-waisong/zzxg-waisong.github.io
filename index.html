@@ -189,6 +189,7 @@ button:active{transform:scale(.94);-webkit-transform:scale(.94);opacity:.85}
       <label>详细地址（楼栋/单元/房号）</label><input id="ckAddrDetail" placeholder="3栋2单元501" style="margin-bottom:6px">
       <div id="deliveryBox" style="background:#f0f7f0;border-radius:8px;padding:8px 10px;margin-top:6px;font-size:13px;line-height:1.7;display:none"></div>
       </div>
+      <div id="ckExtraArea">
       <label>配送时间</label>
       <div style="display:flex;gap:6px;align-items:center">
         <button type="button" id="ckTime1" onclick="pickTime()" style="flex:1;padding:10px;border:2px solid #ccc;background:#fff;border-radius:8px;font-size:14px;cursor:pointer">尽快送达</button>
@@ -197,6 +198,7 @@ button:active{transform:scale(.94);-webkit-transform:scale(.94);opacity:.85}
       <select id="ckTime" style="display:none"></select>
       <div style="font-size:12px;color:#999;margin-top:4px">📞 出发前电话联系您</div>
       <label>备注（可选）</label><input id="ckRemark" placeholder="放门口 / 敲门 / 切半">
+      </div>
       <div id="ckAmt" style="margin-top:10px;background:#fff8e1;border-radius:8px;padding:10px 12px;font-size:13px;line-height:1.9"></div>
       <div style="font-size:12px;color:#888;margin-top:10px;background:#fafafa;border-radius:6px;padding:6px 10px;line-height:1.7">🔒 信息仅用于本次配送 ｜ 💧 果汁建议2小时内饮用</div>
       <div style="display:flex;gap:8px;margin-top:14px">
@@ -972,6 +974,7 @@ var _ckMode='delivery';
 function setCkMode(m){
   _ckMode=m;
   var a=document.getElementById('ckAddrArea'); if(a) a.style.display=(m==='pickup')?'none':'block';
+  var e=document.getElementById('ckExtraArea'); if(e) e.style.display=(m==='pickup')?'none':'block';
   var b1=document.getElementById('ckModeDlv'), b2=document.getElementById('ckModePick');
   if(b1){ b1.style.borderColor=(m==='delivery')?'#2e7d32':'#ccc'; b1.style.background=(m==='delivery')?'#e8f5e9':'#fff'; }
   if(b2){ b2.style.borderColor=(m==='pickup')?'#2e7d32':'#ccc'; b2.style.background=(m==='pickup')?'#e8f5e9':'#fff'; }
