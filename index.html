@@ -1241,7 +1241,11 @@ function submitOrder(){
   }
   // 第二步：首单优惠自动判断
   var total=0; cartList().forEach(function(it){var d=byId(it.id); total+=estPrice(d,it);});
-  if(total>=25){
+  var _fee2=(window._ckMode!=='pickup'&&window._delivery&&window._delivery.dist<=10)?deliveryFee(window._delivery.dist,total):0; if(_fee2<0)_fee2=0;
+  var totCk=total+_fee2;
+  if(totCk>=25){
+    if(localStorage.getItem('zz_use_newcust_'+phone)==='1'){ window._disc=5; doRealSubmit(); return; }
+    if(window._newcustAsked){ doRealSubmit(); return; }
     checkNewcust(phone);
     return;
   }
@@ -1250,6 +1254,7 @@ function submitOrder(){
 }
 
 function checkNewcust(phone){
+  if(window._newcustAsked){ doRealSubmit(); return; }
   // 自动查云端该手机号是否还有首单优惠
   fetch(SB_URL+'/rest/v1/rpc/get_balance_public',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({phone:phone})})
     .then(function(r){ return r.json(); })
@@ -1269,12 +1274,13 @@ function autoNewcustPrompt(){
   var ph=document.getElementById('ckPhone').value.trim();
   if(!/^1\d{10}$/.test(ph)) return;
   var total=0; cartList().forEach(function(it){var d=byId(it.id); total+=estPrice(d,it);});
-  if(total<25) return;
+  var _fee3=(window._ckMode!=='pickup'&&window._delivery&&window._delivery.dist<=10)?deliveryFee(window._delivery.dist,total):0; if(_fee3<0)_fee3=0;
+  if(total+_fee3<25) return;
   fetch(SB_URL+'/rest/v1/rpc/get_balance_public',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({phone:ph})})
     .then(function(r){return r.json();})
     .then(function(j){
       var b=(j&&j.balance!=null)?Number(j.balance):5;
-      if(b>=4.999){ showNewcustModal(ph); }
+      if(b>=4.999){ window._newcustAsked=true; showNewcustModal(ph); }
     }).catch(function(){});
 }
 function showNewcustModal(phone){
@@ -1291,6 +1297,7 @@ function showNewcustModal(phone){
   var m=document.createElement('div'); m.innerHTML=html; m.id='newcustModal'; document.body.appendChild(m);
 }
 function useNewcust(phone){
+  window._newcustAsked=true;
   window._disc=5;
   localStorage.setItem('zz_use_newcust_'+phone,'1');
   var m=document.getElementById('newcustModal'); if(m) m.remove();
@@ -1321,6 +1328,7 @@ function autoFillCust(){
   }
 }
 function noUseNewcust(phone){
+  window._newcustAsked=true;
   window._disc=0;
   localStorage.removeItem('zz_use_newcust_'+phone);
   var m=document.getElementById('newcustModal'); if(m) m.remove();
@@ -1426,6 +1434,7 @@ function checkPromo(){
   }catch(e){ res.innerHTML='<span style="color:#e65100">查询失败</span>'; }
 }
 function setUseNewcust(ph,use){
+  window._newcustAsked=true;
   window._disc=use?5:0;
   if(use) localStorage.setItem('zz_use_newcust_'+ph,'1');
   else localStorage.removeItem('zz_use_newcust_'+ph);
@@ -2413,7 +2422,7 @@ function checkRefWallet(){
   fetch(SB_URL+'/rest/v1/rpc/get_wallet_balance',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({p_phone:ph})})
     .then(function(r){ return r.json(); })
     .then(function(j){
-      if(j && j.ok){ res.innerHTML='🎁 推广钱包余额：<b style="color:#e65100">'+money(j.balance)+'</b> 元'+(j.pending>0?('<br>待入账返利 <b>'+j.pending+'</b> 笔（次日到账）'):''); }
+      if(j && j.ok){ res.innerHTML='🎁 推广钱包余额：<b style="color:#e65100">'+money(Number(j.balance)||0)+'</b> 元'+(j.pending>0?('<br>待入账返利 <b>'+j.pending+'</b> 笔（次日到账）'):''); }
       else res.innerHTML='<span style="color:#888">暂无返利记录</span>';
     }).catch(function(){ res.innerHTML='<span style="color:#e65100">查询失败</span>'; });
 }
