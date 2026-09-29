@@ -1506,7 +1506,7 @@ function renderAdmin(){
   window.todayTotal=0; window.todayCount=0;
   if(Array.isArray(cloudOrders)){
     cloudOrders.forEach(function(o){
-      if(o.status==='已完成' && o.payload){
+      if(o.status==='已完成' && o.status!=='deleted' && o.payload){
         var _p=o.payload;
         var _created=(_p.created||o.created_at||'');
         if(_created.slice(0,10)===_today){
@@ -1746,6 +1746,7 @@ function queryCustomer(){
   if(!ph){ out.textContent='请输入手机号'; return; }
   var threeMonthsAgo=new Date(); threeMonthsAgo.setMonth(threeMonthsAgo.getMonth()-3);
   var list=cloudOrders.filter(function(o){
+    if(o.status==='deleted') return false;
     var pp=(o.payload||{}).phone||'';
     var ct=new Date((o.payload||{}).created||o.created_at||'');
     return String(pp).trim()===ph && ct>=threeMonthsAgo;
@@ -1821,10 +1822,11 @@ function clearAllDeleted(){
   });
 }
 function renderOrders(){
-  var pending=(typeof cloudOrders!=='undefined'?cloudOrders:[]).filter(function(c){return c.status==='new'||c.status==='待称重'||c.status==='待付款';}).length;
+  var aliveCloud=(typeof cloudOrders!=='undefined'?cloudOrders:[]).filter(function(c){return c.status!=='deleted';});
+  var pending=aliveCloud.filter(function(c){return c.status==='new'||c.status==='待称重'||c.status==='待付款';}).length;
   var localPending=orders.filter(function(o){return o.status==='待称重'||o.status==='待付款';}).length;
   var totalPending=pending+localPending;
-  var html='<div class="panel"><h3>订单列表（'+(typeof cloudOrders!=='undefined'?cloudOrders.length:0)+' 单）</h3><button onclick="showDeletedOrders()" style="background:#999;color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:12px;float:right">已删订单</button>';
+  var html='<div class="panel"><h3>订单列表（'+aliveCloud.length+' 单）</h3><button onclick="showDeletedOrders()" style="background:#999;color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:12px;float:right">已删订单</button>';
   if(totalPending>0){
     html+='<div style="background:#ffebee;border:2px solid #e53935;border-radius:8px;padding:10px;text-align:center;margin-bottom:12px">'+
       '<span style="color:#e53935;font-weight:700;font-size:16px">🔔 待处理订单：'+totalPending+' 单</span></div>';
@@ -1832,7 +1834,7 @@ function renderOrders(){
   html+='<div class="card" style="background:#e8f0fe;border:1px solid #c5d5f2;margin-bottom:12px">'+
     '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><b>📱 顾客手机下的单（云端）</b>'+
     '<button class="btn" style="background:#1a73e8;color:#fff" onclick="fetchCloudOrders()">🔄 刷新云端订单</button></div>'+
-    (cloudOrders.length?'<div style="font-size:12px;color:#555;margin:8px 0">共 '+cloudOrders.length+' 单（顾客微信扫码下单后，点「刷新云端订单」即可看到）</div>':'<div style="font-size:12px;color:#888;margin:8px 0">云端未拉取（点击刷新查看顾客手机下的单）</div>')+
+    (aliveCloud.length?'<div style="font-size:12px;color:#555;margin:8px 0">共 '+aliveCloud.length+' 单（顾客微信扫码下单后，点「刷新云端订单」即可看到）</div>':'<div style="font-size:12px;color:#888;margin:8px 0">云端未拉取（点击刷新查看顾客手机下的单）</div>')+
     '<div style="display:flex;gap:6px;margin:10px 0;flex-wrap:wrap;align-items:center;background:#eef4fb;border:1px solid #d0e0f5;border-radius:8px;padding:8px">'+
       '<b style="font-size:13px">🎁 加优惠额度</b>'+
       '<input id="addBalPhone" type="tel" maxlength="11" placeholder="手机号" value="'+esc(window._addBalPhone||'')+'" oninput="window._addBalPhone=this.value" style="flex:1;min-width:110px;border:1px solid #ddd;border-radius:6px;padding:6px;font-size:13px">'+
@@ -1847,8 +1849,8 @@ function renderOrders(){
       '<button class="btn" style="background:#f57c00;color:#fff;font-size:12px;padding:5px 12px" onclick="queryCustomer()">查询近3月</button>'+
       '<span id="custQResult" style="font-size:13px;color:#333">'+(window._custQResult||'')+'</span>'+
     '</div>'+
-    cloudOrders.slice(0, window.cloudVisibleCount||5).map(renderCloudOrder).join('')+
-    (cloudOrders.length > (window.cloudVisibleCount||5) ? '<button class="btn" style="width:100%;margin-top:8px" onclick="loadMoreCloudOrders()">加载更多（还有'+(cloudOrders.length-(window.cloudVisibleCount||5))+'单）</button>' : '')+
+    aliveCloud.slice(0, window.cloudVisibleCount||5).map(renderCloudOrder).join('')+
+    (aliveCloud.length > (window.cloudVisibleCount||5) ? '<button class="btn" style="width:100%;margin-top:8px" onclick="loadMoreCloudOrders()">加载更多（还有'+(aliveCloud.length-(window.cloudVisibleCount||5))+'单）</button>' : '')+
     '</div>';
   return html;
 }
