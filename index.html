@@ -1234,8 +1234,7 @@ function submitOrder(){
   var _fee2=(window._ckMode!=='pickup'&&window._delivery&&window._delivery.dist<=10)?deliveryFee(window._delivery.dist,total):0; if(_fee2<0)_fee2=0;
   var totCk=total+_fee2;
   if(totCk>=25){
-    if(localStorage.getItem('zz_use_newcust_'+phone)==='1'){ window._disc=5; doRealSubmit(); return; }
-    if(window._newcustAsked){ doRealSubmit(); return; }
+    if(window._newcustAsked){ window._disc=0; doRealSubmit(); return; }
     checkNewcust(phone);
     return;
   }
@@ -1244,7 +1243,7 @@ function submitOrder(){
 }
 
 function checkNewcust(phone){
-  if(window._newcustAsked){ doRealSubmit(); return; }
+  if(window._newcustAsked){ window._disc=0; doRealSubmit(); return; }
   // 自动查云端该手机号是否还有首单优惠
   fetch(SB_URL+'/rest/v1/rpc/get_balance_public',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({phone:phone})})
     .then(function(r){ return r.json(); })
