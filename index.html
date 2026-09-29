@@ -1374,7 +1374,7 @@ function finalSubmit(ded){
     id:'o'+Date.now(),
     items:items, name:name, phone:phone, addr:addr, time:time, remark:remark, mode:(window._ckMode==='pickup'?'pickup':'delivery'),
     total:total, subtotal:total, deliveryFee:fee, dist:distV, payTotal:payTotal, discount:disc, referralDeduct:disc2,
-    newcust:(disc>0?true:false), hasWeight:false, weights:{}, weightTotal:0,
+    newcust:(disc>0?true:false), hasWeight:hasW, weights:{}, weightTotal:0,
     status:'new', created:new Date().toISOString(), created_at:new Date().toISOString()
   };
   orders.unshift(order);
@@ -1459,13 +1459,20 @@ function formatOrderText(o){
   lines.push('【订单号】'+o.id);
   lines.push('【下单时间】'+o.created);
   lines.push('【商品】');
-  var realSub=0;
+  var realSub=0, hasW=false;
   o.items.forEach(function(it){
+    var d=byId(it.id)||{};
+    var nm=it.name||d.name||'未命名商品';
+    var price=(it.price!=null)?it.price:(d.price||0);
+    var per=(it.per!=null)?it.per:(d.per||0);
+    if(per>0) hasW=true;
+    var w=(o.weights&&o.weights[it.id])||null;
+    if(!w){ var mw=String(it.note||'').match(/按斤([\d.]+)斤/); if(mw) w=parseFloat(mw[1]); }
     var sub=0, extra='';
-    if(it.per>0 && o.weights && o.weights[it.id]){
-      var w=o.weights[it.id]; sub=it.per*w; extra='（称重'+w+'斤×'+it.per+'元/斤）';
-      lines.push('  '+it.name+extra+'  '+money(sub));
-    } else { var gm=String(it.note||'').match(/按根([\d.]+)元/); if(gm){ sub=parseFloat(gm[1]); lines.push('  '+it.name+'（'+it.note+'）  '+money(sub)); } else { sub=it.price*it.qty; lines.push('  '+it.name+extra+' ×'+it.qty+'  '+money(sub)); } }
+    if(per>0 && w){ sub=per*w; extra='（称重'+w+'斤×'+per+'元/斤）'; }
+    var gm=String(it.note||'').match(/按根([\d.]+)元/);
+    if(gm){ sub=parseFloat(gm[1]); lines.push('  '+nm+'（'+it.note+'）  '+money(sub)); }
+    else { sub=price*(it.qty||1); lines.push('  '+nm+extra+' ×'+it.qty+'  '+money(sub)); }
     realSub+=sub;
     if(it.note && it.note.indexOf('按根')!==0) lines.push('    （'+it.note+'）');
   });
@@ -1473,7 +1480,7 @@ function formatOrderText(o){
   if(o.subtotal) lines.push('【商品小计】'+money(o.subtotal));
   if(o.deliveryFee) lines.push('【配送费】'+money(o.deliveryFee)+(o.dist?'（约'+o.dist+'公里）':''));
   var rawTotal=realSub+(o.deliveryFee||0);
-  var finalTotal=roundHalf(rawTotal);
+  var finalTotal=hasW?rawTotal:roundHalf(rawTotal);
   var discount=Math.round((rawTotal-finalTotal)*100)/100;
   lines.push('【合计】'+money(rawTotal));
   if(discount>0) lines.push('【抹零】-'+money(discount));
@@ -1502,9 +1509,21 @@ function openResult(text, order, paidDone){
   box.innerHTML='<div class="box"><h3 style="text-align:center;margin-bottom:10px">'+(paidDone?'✅ 订单已收到':'✅ 订单已生成，请发给店主')+'</h3>'+
     '<div class="ordertext">'+esc(text)+'</div>'+
     inner+
-    '<button class="btn gray" style="width:100%;margin-top:10px" onclick="document.getElementById(\'resultModal\').remove();window.location.hash=\'#/\';">完成</button></div>';
+    '<button class="btn" style="width:100%;margin-top:10px;background:#2e7d32" onclick="finishOrder()">完成 · 返回首页</button>'+
+    '<button class="btn red" style="width:100%;margin-top:6px" onclick="closeApp()">关闭软件</button></div>';
   document.body.appendChild(box);
   window._lastText=text;
+}
+function finishOrder(){
+  var m=document.getElementById('resultModal'); if(m) m.remove();
+  location.hash='#/';
+  if(typeof renderCartbar==='function') renderCartbar();
+  if(typeof renderCartItems==='function') renderCartItems();
+  window.scrollTo(0,0);
+}
+function closeApp(){
+  try{ window.close(); }catch(e){}
+  setTimeout(function(){ alert('页面未自动关闭，请直接退出浏览器/小程序即可'); },400);
 }
 function copyText(){
   if(navigator.clipboard && navigator.clipboard.writeText){
@@ -1593,7 +1612,13 @@ var adminTab='orders';
 function placeCloudOrder(o){
   if(!window.SB_URL) return;
   try{
-    fetch(SB_URL+'/rest/v1/rpc/place_order',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({payload:{id:o.id,items:o.items,hasWeight:o.hasWeight,weights:o.weights||{},subtotal:o.subtotal,deliveryFee:o.deliveryFee,dist:o.dist,total:o.total,estTotal:o.estTotal,name:o.name,phone:o.phone,addr:o.addr,time:o.time,remark:o.remark,created:o.created,status:o.status,weightTotal:o.weightTotal||0,newcust:false,discount:0,referralDeduct:o.referralDeduct||0,mode:o.mode||'delivery'}})})
+    var upItems=(o.items||[]).map(function(it){
+      var d=byId(it.id)||{};
+      return {id:it.id, name:d.name||'未命名商品', price:(d.price!=null)?d.price:0, per:(d.per!=null)?d.per:0, unit:d.unit||'', cat:d.cat||'', qty:it.qty, note:it.note||'', halfOf:d.halfOf||null};
+    });
+    var weights={};
+    upItems.forEach(function(it){ if(it.per>0){ var mw=String(it.note||'').match(/按斤([\d.]+)斤/); if(mw) weights[it.id]=parseFloat(mw[1]); } });
+    fetch(SB_URL+'/rest/v1/rpc/place_order',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({payload:{id:o.id,items:upItems,hasWeight:o.hasWeight,weights:weights,subtotal:o.subtotal,deliveryFee:o.deliveryFee,dist:o.dist,total:o.total,estTotal:o.estTotal,name:o.name,phone:o.phone,addr:o.addr,time:o.time,remark:o.remark,created:o.created,status:o.status,weightTotal:o.weightTotal||0,newcust:false,discount:0,referralDeduct:o.referralDeduct||0,mode:o.mode||'delivery'}})})
       .then(function(r){ return r.json(); })
       .then(function(j){
         if(!j || !j.ok) throw 0;
