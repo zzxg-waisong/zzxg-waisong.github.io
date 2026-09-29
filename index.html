@@ -1916,7 +1916,7 @@ function renderDishesAdmin(){
     '<button class="btn orange" onclick="cloudSync()">☁️ 同步菜单到云端</button></div>'+
     '<div id="cloudStatus" style="font-size:12px;color:#666;margin-top:8px"></div></div>'+
     (isHalf?'<p style="font-size:12px;color:#fb8c00;margin-bottom:10px">本分类由「现榨果汁」自动同步生成，价格自动为半价，无需手动编辑。</p>':(isOff?'<p style="font-size:12px;color:#e65100;margin-bottom:10px">已下架商品仅在后台可见，顾客端不会显示。重新上架后点「☁️ 同步菜单到云端」即可恢复在售。</p>':'<p style="font-size:12px;color:#888;margin-bottom:10px">改好菜单后点「☁️ 同步菜单到云端」，顾客端即读取最新菜单（本机修改需手动同步才会生效）。</p>'));
-  var sortedDishes = isOff ? dishes.filter(function(d){ return d.on===false && d.cat!=='半价'; }).slice().sort(function(a,b){ return a.price-b.price; }) : dishes.filter(function(d){ return d.cat===adminDishCat; }).slice().sort(function(a,b){ return a.price-b.price; });
+  var sortedDishes = isOff ? dishes.filter(function(d){ return d.on===false && d.cat!=='半价'; }).slice().sort(function(a,b){ return a.price-b.price; }) : dishes.filter(function(d){ return d.cat===adminDishCat && d.on!==false; }).slice().sort(function(a,b){ return a.price-b.price; });
   sortedDishes.forEach(function(d){
     html+='<div class="card"><div style="display:flex;justify-content:space-between;align-items:center">'+
       '<div>'+(d.img?'<img src="'+esc(d.img)+'?v='+IMG_VER+'" style="width:44px;height:44px;object-fit:cover;border-radius:6px;vertical-align:middle;margin-right:8px">':'')+'<b>'+esc(d.name)+'</b> <span class="badge '+(d.on?'':'off')+'">'+(d.on?'上架':'下架')+'</span>'+
