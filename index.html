@@ -859,7 +859,7 @@ function estPrice(d, c){
   var m2=note.match(/按金额([\d.]+)元/); if(m2) return parseFloat(m2[1]);
   var m3=note.match(/按根([\d.]+)元/); if(m3) return parseFloat(m3[1]);
   if(!(d.per>0)) return d.price*c.qty;
-  var m1=note.match(/按斤([\d.]+)斤/); if(m1) return d.price*parseFloat(m1[1]);
+  var m1=note.match(/(?:按斤|称重)([\d.]+)斤/); if(m1) return d.price*parseFloat(m1[1]);
   return d.price;
 }
 function cartTotal(){ var t=0; cartList().forEach(function(c){ var d=byId(c.id); if(d) t+=estPrice(d,c); }); return t; }
@@ -1483,7 +1483,7 @@ function formatOrderText(o){
     var per=(it.per!=null)?it.per:(d.per||0);
     if(per>0) hasW=true;
     var w=(o.weights&&o.weights[it.id])||null;
-    if(!w){ var mw=String(it.note||'').match(/按斤([\d.]+)斤/); if(mw) w=parseFloat(mw[1]); }
+    if(!w){ var mw=String(it.note||'').match(/(?:按斤|称重)([\d.]+)斤/); if(mw) w=parseFloat(mw[1]); }
     var sub=0, extra='';
     var gm=String(it.note||'').match(/按根([\d.]+)元/);
     var ga=String(it.note||'').match(/按金额([\d.]+)元/);
@@ -1643,7 +1643,7 @@ function placeCloudOrder(o){
       return {id:it.id, name:d.name||'未命名商品', price:(d.price!=null)?d.price:0, per:(d.per!=null)?d.per:0, unit:d.unit||'', cat:d.cat||'', qty:it.qty, note:it.note||'', halfOf:d.halfOf||null};
     });
     var weights={};
-    upItems.forEach(function(it){ if(it.per>0){ var mw=String(it.note||'').match(/按斤([\d.]+)斤/); if(mw) weights[it.id]=parseFloat(mw[1]); } });
+    upItems.forEach(function(it){ if(it.per>0){ var mw=String(it.note||'').match(/(?:按斤|称重)([\d.]+)斤/); if(mw) weights[it.id]=parseFloat(mw[1]); } });
     fetch(SB_URL+'/rest/v1/rpc/place_order',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({payload:{id:o.id,items:upItems,hasWeight:o.hasWeight,weights:weights,subtotal:o.subtotal,deliveryFee:o.deliveryFee,dist:o.dist,total:o.total,estTotal:o.estTotal,name:o.name,phone:o.phone,addr:o.addr,time:o.time,remark:o.remark,created:o.created,status:o.status,weightTotal:o.weightTotal||0,newcust:false,discount:0,referralDeduct:o.referralDeduct||0,payTotal:(o.payTotal!=null?o.payTotal:0),mode:o.mode||'delivery'}})})
       .then(function(r){ return r.json(); })
       .then(function(j){
