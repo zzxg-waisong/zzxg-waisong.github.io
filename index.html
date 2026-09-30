@@ -632,7 +632,7 @@ function showCountDlg(d){
 }
 function countQty(n){
   window._curCount=n;
-  document.querySelectorAll("#peelModal button").forEach(function(b,i){ if(i<4){ b.style.background=(i==n-1)?"#e8f5e9":"#fff"; b.style.borderColor=(i==n-1)?"#2e7d32":"#ddd"; }});
+  document.querySelectorAll("#peelModal button").forEach(function(b,i){ if(i<4){ b.style.background=((i+1)===n||(i===3&&n===5))?"#e8f5e9":"#fff"; b.style.borderColor=((i+1)===n||(i===3&&n===5))?"#2e7d32":"#ddd"; }});
 }
 function confirmCount(id){
   var d0=byId(id);
@@ -690,7 +690,9 @@ function confirmPeel(id){
   var d=byId(id); if(!d) return;
   var qty=window._peelQty||1;
   var key=id+'_'+note;
-  if(cart[key]) cart[key].qty+=qty;
+  var hasOld=false;
+  for(var k in cart){ if(k===id || (k.indexOf(id+'_')===0 && k!==key)){ delete cart[k]; hasOld=true; } }
+  if(cart[key]){ if(hasOld) cart[key].qty=qty; else cart[key].qty+=qty; }
   else cart[key]={qty:qty,note:note};
   saveCart();
   document.getElementById('peelModal').remove();
@@ -1229,6 +1231,15 @@ function submitOrder(){
   if(window._ckMode!=='pickup' && window._delivery && window._delivery.dist>10){ showOutOfRange(); return; }
   var sub0=cartTotal();
   if(sub0<20){ alert('还差 '+money(20-sub0)+' 元起送（满 20 元起送），已返回首页'); closeCheckout(); window.scrollTo(0,0); return; }
+  // 打烊时只允许「明天」时间段（到店自提不受配送时间限制，放行）
+  if(!shopOpen && _shopLoaded && window._ckMode!=='pickup'){
+    var _tm=document.getElementById('ckTime').value;
+    if(String(_tm||'').indexOf('尽快')===0){ alert('店铺已打烊，请选择「明天」的时间段'); return; }
+  }
+  // 高德Key已配置但配送费尚未算出（地址识别失败/仍在计算）时拦截，避免配送费按0提交
+  if(window._ckMode!=='pickup' && addr && !window._delivery && shopCfg.amapKey){
+    alert('配送费正在计算或地址无法识别，请稍候再点提交，或重新选择地址'); return;
+  }
   localStorage.setItem('zz_my_phone', phone);
   // 第一步：第二杯半价提示
   var hasJuice = cartList().some(function(it){ var d=byId(it.id); return d && d.cat==='果汁'; });
@@ -1364,6 +1375,7 @@ function finalSubmit(ded){
   var addr=document.getElementById('ckAddr').value.trim();
   if(window._ckMode==='pickup') addr='到店自提';
   var time=document.getElementById('ckTime').value;
+  if(window._ckMode==='pickup') time='';
   var items=cartList();
   if(items.length===0){ alert('购物车是空的'); return; }
   var ref0=document.getElementById('ckRefPhone')?document.getElementById('ckRefPhone').value.trim():'';
@@ -1374,7 +1386,7 @@ function finalSubmit(ded){
   var fee=0, distV=0;
   if(window._ckMode==='pickup'){ fee=0; distV=0; }
   else if(window._delivery && window._delivery.dist<=10){ distV=window._delivery.dist; fee=deliveryFee(distV,total); if(fee<0) fee=0; }
-  var disc=(window._disc===5?5:0);
+  var disc=(window._disc===5 && (total+fee)>=25)?5:0;
   var disc2=(ded||0);
   var hasW=items.some(function(c){var d=byId(c.id);return d&&d.per>0;});
   var rawTotal=total+fee;
@@ -1401,6 +1413,8 @@ function finalSubmit(ded){
   cart={};
   saveCart();
   window._newcustAsked=false;
+  // 首单优惠仅限一次：提交成功后清除本地记忆，下次重新按云端余额判断
+  localStorage.removeItem('zz_use_newcust_'+phone);
   showPay(order);
 }
 function showPay(order){
@@ -1490,7 +1504,7 @@ function formatOrderText(o){
     if(per>0 && w){ sub=per*w; extra='（称重'+w+'斤×'+per+'元/斤）'; lines.push('  '+nm+extra+' ×'+it.qty+'  '+money(sub)); }
     else if(gm){ sub=parseFloat(gm[1]); lines.push('  '+nm+'（'+it.note+'）  '+money(sub)); }
     else if(ga){ sub=parseFloat(ga[1]); lines.push('  '+nm+'（'+it.note+'）  '+money(sub)); }
-    else { sub=price*(it.qty||1); lines.push('  '+nm+extra+' ×'+it.qty+'  '+money(sub)); }
+    else { sub=price*(it.qty||1); lines.push('  '+nm+extra+' ×'+it.qty+(d.unit?' '+d.unit:'')+'  '+money(sub)); }
     realSub+=sub;
     if(it.note && it.note.indexOf('按')!==0) lines.push('    （'+it.note+'）');
   });
@@ -1586,7 +1600,6 @@ function adminLogin(){
     adminOk=true;
     localStorage.setItem(LS_SESSION,'1');
     localStorage.setItem('zz_merchant','1');
-    localStorage.setItem('autologin','1');
     document.getElementById('loginModal').classList.remove('show');
     // 浏览器自动播放策略：利用本次点击手势解锁站点音频权限
     try{ var _u=new Audio(); _u.muted=true; var _pp=_u.play(); if(_pp&&_pp.then) _pp.then(function(){ _u.pause(); }).catch(function(){}); }catch(e){}
@@ -1599,7 +1612,7 @@ function adminLogin(){
   }
   else alert('密码错误');
 }
-function adminLogout(){ adminOk=false; localStorage.setItem(LS_SESSION,'0'); stopCloudTimer(); window.close(); }
+function adminLogout(){ adminOk=false; localStorage.setItem(LS_SESSION,'0'); stopCloudTimer(); location.hash='#/'; window.close(); }
 function adminRefresh(){
   cloudPull();
 }
@@ -1609,7 +1622,7 @@ function renderAdmin(){
   window.todayTotal=0; window.todayCount=0;
   if(Array.isArray(cloudOrders)){
     cloudOrders.forEach(function(o){
-      if(o.status==='已完成' && o.status!=='deleted' && o.payload){
+      if(o.status==='已完成' && o.payload){
         var _p=o.payload;
         var _created=(_p.created||o.created_at||'');
         if(_created.slice(0,10)===_today){
@@ -1859,7 +1872,7 @@ function copyCloudOrderText(id){
   var raw=(p.payTotal!=null)?Number(p.payTotal):((p.weightTotal!=null&&p.weightTotal?Number(p.weightTotal):(p.total!=null?Number(p.total):0))-(p.newcust&&p.discount!=null?Number(p.discount):0)-(p.referralDeduct?Number(p.referralDeduct):0));
   var amt=(p.hasWeight?raw:roundHalf(raw)); var roundAmt=Math.round((raw-amt)*100)/100;
   var t='🍉 榨榨鲜果 外卖订单\n——————————————\n【订单号】'+(p.id||('云端#'+c.id))+'\n【下单时间】'+(p.created||'')+'\n【商品】\n'+
-    (p.items||[]).map(function(it){ var dd=byId(it.id); var amt2=(it.per>0&&p.weights&&p.weights[it.id])?(it.per*p.weights[it.id]):(dd?estPrice(dd,it):it.price*it.qty); return '  '+it.name+((it.per>0&&p.weights&&p.weights[it.id])?('（称重'+p.weights[it.id]+'斤×'+it.per+'元/斤）'):((it.note&&it.note.indexOf('按')===0)?('（'+it.note+'）'):(' ×'+it.qty)))+'  '+money(amt2); }).join('\n')+
+    (p.items||[]).map(function(it){ var dd=byId(it.id); var amt2=(it.per>0&&p.weights&&p.weights[it.id])?(it.per*p.weights[it.id]):(dd?estPrice(dd,it):it.price*it.qty); return '  '+it.name+((it.per>0&&p.weights&&p.weights[it.id])?('（称重'+p.weights[it.id]+'斤×'+it.per+'元/斤）'):((it.note&&it.note.indexOf('按')===0)?('（'+it.note+'）'):(' ×'+it.qty+(it.unit?' '+it.unit:''))))+'  '+money(amt2); }).join('\n')+
     '\n——————————————\n'+(p.newcust?'【新客优惠】-'+Number(p.discount||0).toFixed(2)+'\n':'')+(p.referralDeduct?'【推广抵扣】-'+Number(p.referralDeduct).toFixed(2)+'\n':'')+(roundAmt>0?'【抹零】-'+money(roundAmt)+'\n':'')+'【应付合计】'+money(amt)+'\n【顾客】'+(p.name||'')+' '+(p.phone||'')+'\n【地址】'+(p.mode==='pickup'?'到店自提':(p.addr||''))+'\n【预送】'+(p.time||'')+'\n【状态】'+(c.status==='new'?'待处理':c.status);
   window._lastText=t; copyText();
 }
@@ -2010,7 +2023,7 @@ function calcWeightSub(o){
 function markPaid(i){
   var o=orders[i]; if(!o) return;
   var hasW=o.items.some(function(c){var d=byId(c.id);return d&&d.per>0;});
-  var raw=calcWeightSub(o)+(o.deliveryFee||0);
+  var raw=calcWeightSub(o)+(o.deliveryFee||0)-(o.discount||0)-(o.referralDeduct||0); if(raw<0) raw=0;
   var total=hasW?raw:roundHalf(raw);
   if(confirm('确认顾客已付款 '+money(total)+' 元？')){ o.status='已付款'; o.weightTotal=total; o.total=total; save(LS_ORDERS, orders); printViaAgent(i, true); renderAdmin(); }
 }
@@ -2386,7 +2399,7 @@ function browserPrint(text, seqNo){
 }
 
 function renderQrAdmin(){
-  var url=location.href.split('#')[0];
+  var url=location.origin+location.pathname;
   var html='<div class="panel"><h3>点单二维码</h3><div class="card" style="text-align:center">'+
     '<p style="font-size:13px;color:#555;margin-bottom:10px">顾客扫码直接进入点单页（免登录）。把此二维码打印贴在店内即可。</p>'+
     '<div id="qrBox"></div>'+
