@@ -417,6 +417,7 @@ if(!dishes||!dishes.length) dishes=defaultDishes();
 syncHalfPrice();
 // 后台异步拉云端菜单，拉到了就更新
 setTimeout(function(){ loadCloud(); }, 500);
+setTimeout(function(){ loadShopCloud(); }, 900);
 var orders = load(LS_ORDERS, []);
 var payCfg = load(LS_PAY, {payUrl:'收款码.png', wxUrl:'微信二维码.png'});
 var shopCfg = load(LS_SHOP, {address:'', amapKey:'17e56cae3aca57e9862453d89791043c', shopLat:'30.856438', shopLng:'104.323828', jskey:'0d47ebe194506326a62c092365563bf4', jscode:'edf199ba7acbb15a4b446f525976876c'});
@@ -1704,12 +1705,14 @@ function fetchCloudOrders(silent){
         j.forEach(function(c){ cloudSeen[c.id]=1; });
         try{ localStorage.setItem('zz_cloud_seen',JSON.stringify(cloudSeen)); }catch(e){}
         cloudOrders=j;
+        markOnline();
+        maybeResyncShop();
         var pc={}; j.forEach(function(cc){ var ph=String(((cc.payload||{}).phone)||'').trim(); if(ph) pc[ph]=(pc[ph]||0)+1; }); cloudPhoneCount=pc;
         if(silent && fresh.length===0){ renderCloudB(); return; }
         if(fresh.length>0 && autoAlarm) speakNewOrder(fresh[0]);
         renderCloudB();
       })
-      .catch(function(){ if(!silent) alert('云端订单拉取失败，请检查网络'); });
+      .catch(function(){ if(!silent) alert('云端订单拉取失败，请检查网络'); markOffline(); });
   }catch(e){}
 }
 function renderCloudB(){
@@ -2123,7 +2126,7 @@ function renderPayAdmin(){
 function savePayCfg(){
   payCfg.payUrl=document.getElementById('payUrl').value.trim()||'收款码.png';
   payCfg.wxUrl=document.getElementById('wxUrl').value.trim()||'微信二维码.png';
-  save(LS_PAY,payCfg); renderAdmin();
+  save(LS_PAY,payCfg); pushShopCloud(); renderAdmin();
 }
 function previewPay(){ savePayCfg(); renderPayAdmin(); }
 
@@ -2146,8 +2149,84 @@ function saveShop(){
   shopCfg.amapKey=document.getElementById('amapKey').value.trim();
   shopCfg.jskey=document.getElementById('jsKey').value.trim();
   shopCfg.jscode=document.getElementById('jsCode').value.trim();
-  save(LS_SHOP,shopCfg); renderAdmin(); alert('店铺设置已保存');
+  save(LS_SHOP,shopCfg); _localShopTs=Date.now(); pushShopCloud(); renderAdmin(); alert('店铺设置已保存');
 }
+/* ===== 云端为主·店铺配置同步 ===== */
+var _shopDirty=false, _localShopTs=0, _wasOnline=true, _lastShopCloudLoad=0;
+function loadShopCloud(){
+  var now=Date.now();
+  if(!_shopDirty && now-_lastShopCloudLoad<30000) return;
+  _lastShopCloudLoad=now;
+  fetch(SB_URL+'/rest/v1/rpc/get_shop_config',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:'{}'})
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      var c=j&&j.cfg;
+      if(c && (c.shop||c.pay)){
+        if(c.shop){ shopCfg=Object.assign({},shopCfg,c.shop); save(LS_SHOP,shopCfg); }
+        if(c.pay){ payCfg=Object.assign({},payCfg,c.pay); save(LS_PAY,payCfg); }
+        if(j.updated_at) _localShopTs=new Date(j.updated_at).getTime();
+        _shopDirty=false;
+        markOnline();
+      }
+    })
+    .catch(function(){});
+}
+function pushShopCloud(){
+  var pwd=localStorage.getItem(LS_CLOUDPWD)||'1986shenhu';
+  var cfg={shop:{address:shopCfg.address||'',shopLat:shopCfg.shopLat||'',shopLng:shopCfg.shopLng||'',amapKey:shopCfg.amapKey||'',jskey:shopCfg.jskey||'',jscode:shopCfg.jscode||''},pay:{payUrl:payCfg.payUrl||'',wxUrl:payCfg.wxUrl||''}};
+  fetch(SB_URL+'/rest/v1/rpc/save_shop_config',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({p_admin:pwd,p_cfg:cfg})})
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      if(j && j.ok){ _shopDirty=false; hideSyncTip(); }
+      else { _shopDirty=true; showSyncTip('⚠ 云端保存未成功：'+(j&&j.msg||'未知原因')+'。已存本机，联网后自动重试同步。'); }
+    })
+    .catch(function(){ _shopDirty=true; showSyncTip('⚠ 云端保存失败。已存本机，联网后自动重试同步。'); });
+}
+function maybeResyncShop(){
+  if(!_shopDirty){ loadShopCloud(); return; }
+  fetch(SB_URL+'/rest/v1/rpc/get_shop_config',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:'{}'})
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      var cts=j&&j.updated_at?new Date(j.updated_at).getTime():0;
+      if(cts>_localShopTs){
+        if(confirm('⚠ 同步冲突：云端配置有更新，本机也有未保存成功的修改。\n\n确定=以云端为准（放弃本机修改）\n取消=上传本机修改覆盖云端')){
+          _shopDirty=false; loadShopCloud();
+        } else { pushShopCloud(); }
+      } else { pushShopCloud(); }
+    })
+    .catch(function(){ pushShopCloud(); });
+}
+function markOnline(){
+  if(!_wasOnline){
+    _wasOnline=true;
+    setCloudStatus('✅ 已恢复云端连接，正在同步…');
+    setTimeout(function(){ if(_wasOnline) setCloudStatus(''); }, 4000);
+  }
+}
+function markOffline(){
+  if(_wasOnline){
+    _wasOnline=false;
+    setCloudStatus('❌ 云端连接中断：本地照常营业，恢复后自动以云端为主同步');
+    showSyncTip('⚠ 当前处于离线状态：订单/配置暂存本机，恢复联网后自动以云端为主同步。');
+  }
+}
+function showSyncTip(msg){
+  if(location.hash.indexOf('#/admin')!==0) return;
+  var e=document.getElementById('syncTip');
+  if(!e){
+    e=document.createElement('div');
+    e.id='syncTip';
+    e.style.cssText='position:fixed;top:0;left:0;right:0;background:#fff3e0;color:#e65100;font-size:14px;padding:10px 12px;z-index:9998;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.15);';
+    document.body.appendChild(e);
+  }
+  e.innerHTML=msg+' <a href="javascript:hideSyncTip()" style="margin-left:8px;color:#888">关闭</a>';
+  e.style.display='block';
+}
+function hideSyncTip(){
+  var e=document.getElementById('syncTip'); if(e) e.style.display='none';
+}
+window.addEventListener('online', function(){ markOnline(); });
+window.addEventListener('offline', function(){ markOffline(); });
 function changePwd(){
   var v=document.getElementById('newPwd').value.trim();
   if(!v){ alert('请输入新密码'); return; }
