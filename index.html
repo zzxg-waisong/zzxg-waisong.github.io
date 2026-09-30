@@ -1404,6 +1404,7 @@ function finalSubmit(ded){
   showPay(order);
 }
 function showPay(order){
+  closeCheckout();
   curOrder=order;
   document.getElementById('payAmt').textContent=money(order.payTotal!=null?order.payTotal:order.total);
   document.getElementById('payImg').src=payCfg.payUrl||'收款码.png';
@@ -1538,6 +1539,7 @@ function openResult(text, order, paidDone){
   window._lastText=text;
 }
 function finishOrder(){
+  closeCheckout();
   var m=document.getElementById('resultModal'); if(m) m.remove();
   location.hash='#/';
   if(typeof renderCartbar==='function') renderCartbar();
@@ -1586,6 +1588,8 @@ function adminLogin(){
     localStorage.setItem('zz_merchant','1');
     localStorage.setItem('autologin','1');
     document.getElementById('loginModal').classList.remove('show');
+    // 浏览器自动播放策略：利用本次点击手势解锁站点音频权限
+    try{ var _u=new Audio(); _u.muted=true; var _pp=_u.play(); if(_pp&&_pp.then) _pp.then(function(){ _u.pause(); }).catch(function(){}); }catch(e){}
     // 强制显示后台，隐藏顾客端
     var c=document.getElementById('customer'); if(c) c.classList.add('hidden');
     var a=document.getElementById('admin'); if(a) a.classList.remove('hidden');
@@ -1701,7 +1705,7 @@ function speakNewOrder(id){
       if(alarmOrder!==(id==null?0:id)) return;
       var a=new Audio('https://zzxg-waisong.github.io/voice_new_order.wav');
       a.volume=Math.max(0,Math.min(1,parseInt(localStorage.getItem('zz_voice_vol')||'100',10)/100));
-      a.play().catch(function(){});
+      a.play().catch(function(err){ if(err&&err.name==='NotAllowedError') showVoiceBlockTip(); });
     };
     play();
     alarmTimer=setInterval(function(){
@@ -1711,6 +1715,16 @@ function speakNewOrder(id){
     },15000);
   }catch(e){}
 }
+function showVoiceBlockTip(){
+  var old=document.getElementById('voiceBlockTip'); if(old) return;
+  var tip=document.createElement('div');
+  tip.id='voiceBlockTip';
+  tip.style='position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:99999;background:#fff3e0;border:1px solid #fb8c00;color:#e65100;border-radius:8px;padding:8px 14px;font-size:13px;box-shadow:0 2px 10px rgba(0,0,0,.15);cursor:pointer';
+  tip.innerHTML='⚠ 浏览器拦截了语音提醒，点击此处解锁';
+  tip.onclick=function(){ try{ var a=new Audio('https://zzxg-waisong.github.io/voice_new_order.wav'); a.volume=0.01; a.play(); }catch(e){} if(alarmOrder) speakNewOrder(alarmOrder); this.remove(); };
+  document.body.appendChild(tip);
+}
+
 function setVoiceVol(v){
   localStorage.setItem('zz_voice_vol', v);
   var e=document.getElementById('vv'); if(e) e.textContent=v;
