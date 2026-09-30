@@ -1485,10 +1485,10 @@ function formatOrderText(o){
     var w=(o.weights&&o.weights[it.id])||null;
     if(!w){ var mw=String(it.note||'').match(/按斤([\d.]+)斤/); if(mw) w=parseFloat(mw[1]); }
     var sub=0, extra='';
-    if(per>0 && w){ sub=per*w; extra='（称重'+w+'斤×'+per+'元/斤）'; }
     var gm=String(it.note||'').match(/按根([\d.]+)元/);
     var ga=String(it.note||'').match(/按金额([\d.]+)元/);
-    if(gm){ sub=parseFloat(gm[1]); lines.push('  '+nm+'（'+it.note+'）  '+money(sub)); }
+    if(per>0 && w){ sub=per*w; extra='（称重'+w+'斤×'+per+'元/斤）'; lines.push('  '+nm+extra+' ×'+it.qty+'  '+money(sub)); }
+    else if(gm){ sub=parseFloat(gm[1]); lines.push('  '+nm+'（'+it.note+'）  '+money(sub)); }
     else if(ga){ sub=parseFloat(ga[1]); lines.push('  '+nm+'（'+it.note+'）  '+money(sub)); }
     else { sub=price*(it.qty||1); lines.push('  '+nm+extra+' ×'+it.qty+'  '+money(sub)); }
     realSub+=sub;
