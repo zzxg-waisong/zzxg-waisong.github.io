@@ -174,7 +174,7 @@ button:active{transform:scale(.94);-webkit-transform:scale(.94);opacity:.85}
         <div style="flex:1"><label>您的称呼</label><input id="ckName" placeholder="王女士" oninput="autoFillCust()"></div>
         <div style="flex:1"><label>联系电话</label><input id="ckPhone" type="tel" placeholder="手机号" oninput="onCkPhone()"></div>
       </div>
-      <label>推荐人手机号（选填 · 绑定后不可更改）</label><input id="ckRefPhone" type="tel" placeholder="填老客手机号，TA得返利">
+      <div id="refPhoneWrap" style="display:none"><label>推荐人手机号（选填 · 绑定后不可更改）</label><input id="ckRefPhone" type="tel" placeholder="填老客手机号，TA得返利"></div>
       <div id="refWalletTip" style="font-size:12px;color:#555;margin:4px 0 0;display:none;line-height:1.7"></div>
       <div id="ckAddrArea">
       <label>外卖地址</label>
@@ -2475,7 +2475,7 @@ function onCkPhone(){
   var ph=document.getElementById('ckPhone').value.trim();
   var tip=document.getElementById('refWalletTip');
   if(!tip) return;
-  if(!/^1\d{10}$/.test(ph)){ tip.style.display='none'; window._refBoundPhone=null; window._refOldPhone=''; var w0=document.getElementById('refPhoneWrap'); if(w0) w0.style.display='block'; return; }
+  if(!/^1\d{10}$/.test(ph)){ tip.style.display='none'; window._refBoundPhone=null; window._refOldPhone=''; return; }
   fetch(SB_URL+'/rest/v1/rpc/get_bind',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({p_phone:ph})})
     .then(function(r){ return r.json(); })
     .then(function(jb){
@@ -2492,7 +2492,7 @@ function onCkPhone(){
           if(j2 && j2.ok && j2.balance>0){ if(h) h+='<br>'; h+='🎁 推广钱包可用 <b style="color:#e65100">'+money(j2.balance)+'</b> 元，下单自动抵扣（订单20%、单笔最高10元）'; }
           if(h){ tip.style.display='block'; tip.innerHTML=h; } else { tip.style.display='none'; }
         }).catch(function(){ if(bindHtml){ tip.style.display='block'; tip.innerHTML=bindHtml; } });
-    }).catch(function(){});
+    }).catch(function(){ var w1=document.getElementById('refPhoneWrap'); if(w1) w1.style.display='block'; });
   },300);
 }
 function checkRefWallet(){
