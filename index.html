@@ -2384,7 +2384,7 @@ function renderReferralAdmin(){
     '<div class="rowline"><span>抵扣比例（%）</span><span><input id="refDeductRate" type="number" step="1" min="0" style="width:70px;border:1px solid #ddd;border-radius:6px;padding:6px"></span></div>'+
     '<div class="rowline"><span>单笔抵扣上限（元）</span><span><input id="refMax" type="number" step="0.5" min="0" style="width:70px;border:1px solid #ddd;border-radius:6px;padding:6px"></span></div>'+
     '<div style="font-size:12px;color:#888;margin:6px 0;line-height:1.8">说明：朋友下单填您手机号 → 您得「返点比例」返利（次日到账）；您下单自动按「抵扣比例」抵扣，最高「单笔上限」元，不超钱包余额。</div>'+
-    '<div style="margin-top:10px;display:flex;gap:8px"><button class="btn" onclick="saveReferralCfg()">保存设置</button><span id="refSaveRes" style="font-size:13px;color:#2e7d32;line-height:34px"></span></div>'+
+    '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn" onclick="saveReferralCfg()">保存设置</button><button class="btn" onclick="openRefCfgWindow()">👨‍💼 老板查询·修改窗口</button><span id="refSaveRes" style="font-size:13px;color:#2e7d32;line-height:34px"></span></div>'+
     '</div></div></div>';
   fetch(SB_URL+'/rest/v1/rpc/get_referral_cfg',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:'{}'})
     .then(function(r){ return r.json(); })
@@ -2411,6 +2411,70 @@ function saveReferralCfg(){
       var r=document.getElementById('refSaveRes');
       if(j && j.ok){ if(r) r.textContent='✓ 已保存'; setTimeout(function(){ if(r) r.textContent=''; },2000); }
       else if(j && j.msg){ alert(j.msg); }
+    }).catch(function(){ alert('保存失败：请确认云端已执行拉新SQL'); });
+}
+function openRefCfgWindow(){
+  var old=document.getElementById('refCfgModal'); if(old) old.remove();
+  var m=document.createElement('div');
+  m.id='refCfgModal';
+  m.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center;';
+  var mm=document.createElement('div');
+  mm.style.cssText='background:#fff;border-radius:16px;width:90%;max-width:360px;padding:20px 18px;box-sizing:border-box;max-height:90vh;overflow:auto;';
+  mm.innerHTML=
+    '<div style="font-size:17px;font-weight:600;color:#222;margin-bottom:12px">老板查询·修改（拉新分成）</div>'+
+    '<div style="font-size:13px;color:#666;font-weight:600;margin:4px 0 6px">📊 当前设置查询</div>'+
+    '<div id="refCfgQry" style="font-size:13px;color:#333;background:#f7f7f7;border-radius:8px;padding:10px;line-height:1.9;margin-bottom:8px">正在查询云端…</div>'+
+    '<button class="btn" style="width:100%;margin-bottom:12px" onclick="loadRefCfgWindow()">🔄 刷新查询</button>'+
+    '<div style="font-size:13px;color:#666;font-weight:600;margin:4px 0 6px">✏️ 修改设置</div>'+
+    '<div class="rowline"><span>功能开关</span><span><select id="refCfgEn" style="border:1px solid #ddd;border-radius:6px;padding:6px"><option value="1">开启</option><option value="0">关闭</option></select></span></div>'+
+    '<div class="rowline"><span>返点比例（%）</span><span><input id="refCfgRate" type="number" step="0.5" min="0" style="width:70px;border:1px solid #ddd;border-radius:6px;padding:6px"></span></div>'+
+    '<div class="rowline"><span>抵扣比例（%）</span><span><input id="refCfgDr" type="number" step="1" min="0" style="width:70px;border:1px solid #ddd;border-radius:6px;padding:6px"></span></div>'+
+    '<div class="rowline"><span>单笔抵扣上限（元）</span><span><input id="refCfgMax" type="number" step="0.5" min="0" style="width:70px;border:1px solid #ddd;border-radius:6px;padding:6px"></span></div>'+
+    '<div style="margin-top:12px;display:flex;gap:8px">'+
+      '<button class="btn" style="flex:1" onclick="saveRefCfgWindow()">保存修改</button>'+
+      '<button class="btn gray" style="flex:1" onclick="document.getElementById(\'refCfgModal\').remove()">关闭</button>'+
+    '</div>'+
+    '<div id="refCfgRes" style="font-size:13px;color:#2e7d32;line-height:22px;margin-top:6px;text-align:center"></div>';
+  m.appendChild(mm);
+  document.body.appendChild(m);
+  loadRefCfgWindow();
+}
+function loadRefCfgWindow(){
+  var q=document.getElementById('refCfgQry');
+  if(q) q.textContent='正在查询云端…';
+  fetch(SB_URL+'/rest/v1/rpc/get_referral_cfg',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:'{}'})
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      if(j && j.rate!=null){
+        var t='开关：'+(j.enabled?'✅ 开启':'⛔ 关闭')+'<br>返点比例：'+j.rate+'%<br>抵扣比例：'+j.deduct_rate+'%<br>单笔抵扣上限：'+j.max_deduct+' 元';
+        if(q) q.innerHTML=t;
+        var e=document.getElementById('refCfgEn'); if(e) e.value=j.enabled?'1':'0';
+        var r1=document.getElementById('refCfgRate'); if(r1) r1.value=j.rate;
+        var r2=document.getElementById('refCfgDr'); if(r2) r2.value=j.deduct_rate;
+        var r3=document.getElementById('refCfgMax'); if(r3) r3.value=j.max_deduct;
+      } else if(q){ q.innerHTML='⚠ 查询失败：云端未返回配置（请确认已执行拉新SQL）'; }
+    }).catch(function(){ if(q) q.innerHTML='⚠ 查询失败：网络异常'; });
+}
+function saveRefCfgWindow(){
+  var pwd=localStorage.getItem(LS_CLOUDPWD)||'1986shenhu';
+  var rate=parseFloat(document.getElementById('refCfgRate').value);
+  var dr=parseFloat(document.getElementById('refCfgDr').value);
+  var mx=parseFloat(document.getElementById('refCfgMax').value);
+  var en=document.getElementById('refCfgEn').value==='1';
+  if(!(rate>=0)||!(dr>=0)||!(mx>=0)){ alert('请输入有效的数字'); return; }
+  fetch(SB_URL+'/rest/v1/rpc/save_referral_cfg',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({p_admin:pwd,p_rate:rate,p_deduct_rate:dr,p_max_deduct:mx,p_enabled:en})})
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      var res=document.getElementById('refCfgRes');
+      if(j && j.ok){
+        if(res) res.textContent='✓ 已保存，查询区已同步';
+        loadRefCfgWindow();
+        var e1=document.getElementById('refEn'); if(e1) e1.value=en?'1':'0';
+        var e2=document.getElementById('refRate'); if(e2) e2.value=rate;
+        var e3=document.getElementById('refDeductRate'); if(e3) e3.value=dr;
+        var e4=document.getElementById('refMax'); if(e4) e4.value=mx;
+        setTimeout(function(){ if(res) res.textContent=''; },2000);
+      } else if(j && j.msg){ alert(j.msg); }
     }).catch(function(){ alert('保存失败：请确认云端已执行拉新SQL'); });
 }
 function renderSetAdmin(){
