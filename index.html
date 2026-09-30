@@ -323,33 +323,7 @@ var IMG_VER='20260930a'; // 图片版本号：更新商品图后递增，用于�
 
 function defaultDishes(){
   return []; // 菜单全部由云端管理，本地不再硬编码旧菜单
-/* old:
-  return [
-    {id:'d1',name:'无籽麒麟西瓜（10斤左右）',price:40,unit:'个',cat:'水果',on:true,img:'wuzi_qilin_xigua.jpg',per:4},
-    {id:'d2',name:'地雷西瓜（1/4个）',price:12,unit:'份',cat:'水果',on:true,img:'dilei_xigua.jpg',per:1.5},
-    {id:'d3',name:'老挝香蕉（5根 2.5-3斤）',price:12.5,unit:'份',cat:'水果',on:true,img:'laowo_xiangjiao.jpg',per:5},
-    {id:'d4',name:'海南香蕉（9根/半爪 3-3.5斤）',price:10,unit:'份',cat:'水果',on:true,img:'hainan_xiangjiao.jpg',per:3},
-    {id:'d5',name:'凉山盐源糖心丑苹果（4个 1.5-2斤）',price:15,unit:'份',cat:'水果',on:true,img:'tangxin_choupingguo.jpg',per:8},
-    {id:'d6',name:'陕西红富士苹果（4个 1.5-2斤）',price:12,unit:'份',cat:'水果',on:true,img:'hongfushi_pingguo.jpg',per:6},
-    {id:'d7',name:'青苹果（4个 1.8-2斤）',price:10,unit:'份',cat:'水果',on:true,img:'qing_pingguo.jpg',per:5},
-    {id:'d8',name:'石榴',price:4,unit:'个',cat:'水果',on:true,img:'shiliu.jpg',per:6},
-    {id:'d9',name:'石榴（大）',price:5,unit:'个',cat:'水果',on:true,img:'da_shiliu.jpg',per:6},
-    {id:'d10',name:'花皮石榴',price:3,unit:'个',cat:'水果',on:true,img:'huapi_shiliu.jpg',per:4},
-    {id:'d11',name:'花皮石榴（大）',price:4,unit:'个',cat:'水果',on:true,img:'dahuapi_shiliu.jpg',per:4},
-    {id:'d12',name:'海南红心柚（约3斤）',price:15,unit:'个',cat:'水果',on:true,img:'hongxin_you.jpg',per:5},
-    {id:'d13',name:'黄皮哈密瓜',price:20,unit:'个',cat:'水果',on:true,img:'huangpi_hamigua.jpg',per:4.5},
-    {id:'d14',name:'哈密瓜',price:18,unit:'个',cat:'水果',on:true,img:'hamigua.jpg',per:3.5},
-    {id:'d15',name:'小番茄（约1斤）',price:8,unit:'盒',cat:'水果',on:true,img:'xiaofanqie.jpg',per:8},
-    {id:'d16',name:'小柿子（8颗装）',price:10,unit:'盒',cat:'水果',on:true,img:'xiaoshizi.jpg'},
-    {id:'j1',name:'西瓜汁（500ml）',price:10,unit:'杯',cat:'果汁',on:true,img:'xiguazhi.jpg'},
-    {id:'j2',name:'麒麟西瓜汁（500ml）',price:14,unit:'杯',cat:'果汁',on:true,img:'qilin_xiguazhi.jpg'},
-    {id:'j3',name:'石榴汁（500ml）',price:17,unit:'杯',cat:'果汁',on:true,img:'shiliuzhi.jpg'},
-    {id:'j4',name:'盐源苹果汁（500ml）',price:17,unit:'杯',cat:'果汁',on:true,img:'pingguozhi.jpg'},
-    {id:'j5',name:'青苹果汁（500ml）',price:14,unit:'杯',cat:'果汁',on:true,img:'qingpingguozhi.jpg'},
-    {id:'j6',name:'哈密瓜汁（500ml）',price:12,unit:'杯',cat:'果汁',on:true,img:'hamiguazhi.jpg'},
-    {id:'j7',name:'黄皮哈密瓜汁（500ml）',price:14,unit:'杯',cat:'果汁',on:true,img:'huangpihamiguazhi.jpg'}
-  ];
-*/
+
 }
 function load(k, def){ try{ var v=localStorage.getItem(k); return v?JSON.parse(v):def; }catch(e){ return def; } }
 function save(k, v){ localStorage.setItem(k, JSON.stringify(v)); }
@@ -411,15 +385,9 @@ function loadCloud(force){
         .catch(function(){});
     });
 }
-function loadCloudFallback(){
-  fetch('dishes.json?v='+Date.now(), {cache:'no-store'})
-    .then(function(r){ if(!r.ok) throw 0; return r.json(); })
-    .then(function(arr){ applyCloudMenu(arr); })
-    .catch(function(){});
-}
+
 function setCloudStatus(t){ var e=document.getElementById('cloudStatus'); if(e) e.innerHTML=t; }
 
-function b64utf8(s){ return btoa(unescape(encodeURIComponent(s))); }
 function cloudSync(){
   setCloudStatus('正在同步菜单到云端…');
   var pwd=localStorage.getItem(LS_CLOUDPWD)||'1986shenhu';
@@ -467,8 +435,6 @@ function roundHalf(x){
 }
 function nowStr(){ var d=new Date(); function p(x){return (x<10?'0':'')+x;}
   return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes()); }
-function oid(){ var d=new Date(); return d.getFullYear()+''+p2(d.getMonth()+1)+''+p2(d.getDate())+'-'+String(Math.floor(100+Math.random()*900)); }
-function p2(x){return (x<10?'0':'')+x;}
 
 /* ==================== 路由 ==================== */
 function route(){
@@ -509,7 +475,7 @@ function renderCats(){
   box.innerHTML=html;
 }
 function setCat(c){ curCat=c; renderCats(); renderDishes(); }
-function toggleDishSort(){ dishSort = dishSort==='default'?'priceAsc':(dishSort==='priceAsc'?'priceDesc':'default'); renderCats(); renderDishes(); }
+
 function baseName(name){ return String(name||'').replace(/（.*?）/g,'').replace(/\(.*?\)/g,'').trim(); }
 function groupSort(list){
   var groups={}, order=[];
@@ -743,7 +709,7 @@ function pickWeight(id){
     var yuanBtns=yuanOpts.map(function(y){return '<button onclick="confirmPickW(\''+id+'\',\'yuan\','+y+')" style="flex:1;background:#fff;border:1px solid #ddd;border-radius:8px;padding:12px;font-size:15px;margin:4px">'+y+'元</button>';}).join('');
     inner='<div style="background:#fff;border-radius:14px;padding:20px;width:88%;max-width:340px">'+
       '<div style="text-align:center;font-weight:700;font-size:17px;margin-bottom:4px">'+d.name+'</div>'+
-      '<div style="text-align:center;color:#999;font-size:13px;margin-bottom:14px">'+d.price+'元/斤</div>'+
+      '<div style="text-align:center;color:#999;font-size:13px;margin-bottom:14px">'+(d.per||d.price)+'元/斤</div>'+
       '<div style="font-size:14px;color:#666;margin-bottom:6px">按重量买</div>'+
       '<div style="display:flex;flex-wrap:wrap">'+jinBtns+'</div>'+
       '<div style="font-size:14px;color:#666;margin:12px 0 6px">按金额买</div>'+
@@ -814,7 +780,7 @@ function cartList(){
   }
   return r;
 }
-function juiceCount(){ var n=0; cartList().forEach(function(c){ var d=byId(c.id); if(d&&d.cat==='果汁') n+=c.qty; }); return n; }
+
 function halfCount(){ var n=0; cartList().forEach(function(c){ var d=byId(c.id); if(d&&d.cat==='半价') n+=c.qty; }); return n; }
 function maxJuicePrice(){
   var m=0;
@@ -861,7 +827,7 @@ function estPrice(d, c){
   var m2=note.match(/按金额([\d.]+)元/); if(m2) return parseFloat(m2[1]);
   var m3=note.match(/按根([\d.]+)元/); if(m3) return parseFloat(m3[1]);
   if(!(d.per>0)) return d.price*c.qty;
-  var m1=note.match(/(?:按斤|称重)([\d.]+)斤/); if(m1) return d.price*parseFloat(m1[1]);
+  var m1=note.match(/(?:按斤|称重)([\d.]+)斤/); if(m1) return (d.per>0?d.per:d.price)*parseFloat(m1[1]);
   return d.price;
 }
 function cartTotal(){ var t=0; cartList().forEach(function(c){ var d=byId(c.id); if(d) t+=estPrice(d,c); }); return t; }
@@ -1034,10 +1000,7 @@ function calcDelivery(){
     box.innerHTML=h;
     if(typeof updateCkAmt==='function') updateCkAmt();
   }
-  function fallback(loc){
-    var d=distKm({lng:+loc[0],lat:+loc[1]},{lng:+shopCfg.shopLng,lat:+shopCfg.shopLat});
-    done(d);
-  }
+
   function getDest(){
     if(window._pickedLoc){ var t=window._pickedLoc; window._pickedLoc=null; return Promise.resolve(t.split(',')); }
     return fetch('https://restapi.amap.com/v3/geocode/geo?address='+encodeURIComponent(addr)+'&key='+key+'&city=成都').then(function(r){return r.json();}).then(function(j){
@@ -1355,7 +1318,8 @@ function doRealSubmit(){
   var hasWx=cartList().some(function(c){var d=byId(c.id);return d&&d.per>0;});
   var rawTx=total+fee;
   var finalTx=hasWx?rawTx:roundHalf(rawTx);
-  tryReferralDeduct(phone, finalTx, function(ded){ finalSubmit(ded); });
+  // 抵扣查询/扣款统一后置到 finalSubmit 全部校验通过后再执行，避免校验失败（推荐人自荐/购物车空/绑定确认未定）时钱包已扣款但订单未生成
+  finalSubmit(null);
 }
 function tryReferralDeduct(phone, amount, cb){
   if(!phone || !/^1\d{10}$/.test(phone)){ cb(0); return; }
@@ -1438,6 +1402,11 @@ function finalSubmit(ded){
   var hasW=items.some(function(c){var d=byId(c.id);return d&&d.per>0;});
   var rawTotal=total+fee;
   var finalTotal=hasW?rawTotal:roundHalf(rawTotal);
+  if(ded==null){
+    // 所有校验（含绑定确认）通过后才查钱包/执行抵扣，防止校验失败白扣钱包
+    tryReferralDeduct(phone, finalTotal, function(d2){ finalSubmit(d2); });
+    return;
+  }
   var payTotal=finalTotal-disc-disc2;
   if(payTotal<0) payTotal=0;
   // 保存客户信息，下次填名字自动弹出
@@ -1511,11 +1480,7 @@ function setUseNewcust(ph,use){
 }
 function zoomImg(src){ document.getElementById('zoomImg').src=src; document.getElementById('zoomModal').classList.add('show'); }
 document.getElementById('zoomModal').addEventListener('click',function(e){ if(e.target===this||e.target.tagName==='P') this.classList.remove('show'); });
-function saveImg(idName){
-  var img=document.getElementById(idName);
-  var a=document.createElement('a'); a.href=img.src; a.download=img.src.split('/').pop();
-  document.body.appendChild(a); a.click(); document.body.removeChild(a);
-}
+
 function closePay(){ var m=document.getElementById('payModal'); if(m) m.classList.remove('show'); }
 function payDone(){
   if(!curOrder) return;
@@ -1638,9 +1603,7 @@ function showAdmin(){
   renderAdmin();
   startCloudTimer();
 }
-var _pressTimer=null;
-function secretDown(){ _pressTimer=setTimeout(function(){ location.hash='#/admin'; },1000); }
-function secretUp(){ if(_pressTimer){ clearTimeout(_pressTimer); _pressTimer=null; } }
+
 function backToShop(){ stopCloudTimer(); if(location.hash!=='#/'){ location.hash='#/'; } var c=document.getElementById('customer'); if(c) c.classList.remove('hidden'); var a=document.getElementById('admin'); if(a) a.classList.add('hidden'); }
 function adminLogin(){
   var pwd=document.getElementById('adminPwd').value;
@@ -2039,43 +2002,6 @@ function renderOrders(){
     '</div>';
   return html;
 }
-function navTo(i){
-  var o=orders[i]; if(!o) return;
-  var from=encodeURIComponent(shopCfg.address||'');
-  var to=encodeURIComponent(o.addr);
-  var url='https://uri.amap.com/navigation?from='+from+'&to='+to+'&mode=car&policy=1&src=myapp&coordinate=gaode&callnative=1';
-  window.open(url,'_blank');
-}
-function copyAddr(i){ var o=orders[i]; if(!o)return; fallbackCopy(o.addr); alert('地址已复制'); }
-function copyOrderText(i){ var o=orders[i]; if(!o)return; window._lastText=formatOrderText(o); copyText(); }
-function markDone(i){ orders[i].status='已完成'; save(LS_ORDERS,orders); renderAdmin(); }
-function delOrder(i){ if(confirm('确认删除该订单？')){ orders.splice(i,1); save(LS_ORDERS,orders); renderAdmin(); } }
-function viewOrder(i){
-  var o=orders[i]; if(!o)return;
-  var text=formatOrderText(o);
-  var box=document.createElement('div'); box.className='modal show'; box.id='viewModal';
-  box.innerHTML='<div class="box" style="max-width:520px"><h3>订单详情</h3><div class="ordertext">'+esc(text)+'</div>'+
-    '<div style="display:flex;gap:8px;flex-wrap:wrap">'+
-    '<button class="btn" style="flex:1" onclick="printThis(\''+i+'\')">🖨 打印小票</button>'+
-    (o.status!=='已付款'&&o.status!=='已完成'?'<button class="btn" style="flex:1" onclick="markPaid('+i+')">✅ 标记已付款</button>':'')+
-    '<button class="btn gray" style="flex:1" onclick="document.getElementById(\'viewModal\').remove()">关闭</button></div></div>';
-  document.body.appendChild(box);
-}
-function calcWeightSub(o){
-  var s=0;
-  o.items.forEach(function(it){
-    if(it.per>0 && o.weights && o.weights[it.id]) s+=it.per*o.weights[it.id];
-    else { var dd=byId(it.id); s+=dd?estPrice(dd,it):it.price*it.qty; }
-  });
-  return Math.round(s*100)/100;
-}
-function markPaid(i){
-  var o=orders[i]; if(!o) return;
-  var hasW=o.items.some(function(c){var d=byId(c.id);return d&&d.per>0;});
-  var raw=calcWeightSub(o)+(o.deliveryFee||0)-(o.discount||0)-(o.referralDeduct||0); if(raw<0) raw=0;
-  var total=hasW?raw:roundHalf(raw);
-  if(confirm('确认顾客已付款 '+money(total)+' 元？')){ o.status='已付款'; o.weightTotal=total; o.total=total; save(LS_ORDERS, orders); printViaAgent(i, true); renderAdmin(); }
-}
 
 function setAdminDishCat(c){ adminDishCat=c; renderAdmin(); }
 function sortDishesByPrice(){
@@ -2178,7 +2104,7 @@ function saveDish(id){
   dishes=groupSort(dishes); save(LS_DISHES,dishes); syncHalfPrice(); document.getElementById('dishModal').remove(); renderAdmin(); renderCats(); renderDishes();
 }
 function delDish(id){ if(confirm('确认删除该菜品？')){ dishes=dishes.filter(function(d){return d.id!==id;}); dishes=groupSort(dishes); save(LS_DISHES,dishes); syncHalfPrice(); renderAdmin(); renderCats(); renderDishes(); } }
-function sortDishes(){ dishes=groupSort(dishes); save(LS_DISHES,dishes); renderAdmin(); renderCats(); renderDishes(); }
+
 function relistDish(id){ var d=byId(id); if(!d) return; d.on=true; dishes=groupSort(dishes); save(LS_DISHES,dishes); syncHalfPrice(); renderAdmin(); renderCats(); renderDishes(); }
 
 function renderPayAdmin(){
@@ -2236,16 +2162,6 @@ function renderPrintAdmin(){
     '<button class="btn orange" onclick="testPrint()">USB 直连打印（备用）</button></div></div></div>';
   return html;
 }
-async function connectAndPrintLatest(){
-  if(!orders.length){ alert('暂无订单'); return; }
-  if(!navigator.serial){ alert('当前浏览器不支持 Web Serial，请用 Chrome/Edge'); return; }
-  try{
-    var port=await navigator.serial.requestPort();
-    await port.open({baudRate:9600});
-    await writeReceipt(port, formatOrderText(orders[0]));
-    alert('已发送打印，请检查小票');
-  }catch(e){ alert('打印失败：'+e.message); }
-}
 async function testPrint(){
   if(!navigator.serial){ alert('当前浏览器不支持 Web Serial，请用 Chrome/Edge'); return; }
   try{
@@ -2270,155 +2186,7 @@ async function writeReceipt(port, text){
   writer.releaseLock();
   port.close();
 }
-function printViaAgent(i, paid){
-  var o=orders[i]; if(!o) return;
-  var txt=formatOrderText(o);
-  function pick(k){ var m=txt.match(new RegExp(k+'(.*)')); return m?m[1].trim():''; }
-  var itemsPart=(txt.split('【商品小计】')[0].split('【商品】')[1]||'');
-  var lines=itemsPart.split('\n').filter(function(l){return l.trim().length>0;});
-  var note='';
-  if(o.remark){ var rm=String(o.remark).trim(); if(rm && !/^https?:\/\/|\.github\.io|\.edgeone\.dev|uri\.amap\.com/i.test(rm)) note=rm; }
-  function pickV(k){ return pick(k).split('（')[0].trim(); }
-  var body={ seqNo:String(i+1), title:'榨榨鲜果', lines:lines, note:note, round:pickV('【抹零】'), amount:pickV('【应付合计】'), time:nowStr(), paid:!!paid, hasJuice:(o.items||[]).some(function(it){return it.cat==='果汁'||it.cat==='半价';}),
-    newCust:(o.newcust?true:false), newCustDiscount:(o.newcust?(Number(o.discount)||0):0), referralDeduct:(o.referralDeduct?Number(o.referralDeduct):0),
-    orderNo:o.id, created:o.created, subtotal:pickV('【商品小计】'), total:pickV('【合计】'),
-    customer:(o.name||'')+' '+(o.phone||''), addr:o.addr||'', deliveryTime:o.time||'', status:o.status||'' };
-  fetch('http://localhost:8899/print',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
-    .then(function(r){ return r.json(); })
-    .then(function(j){ if(!j || !j.ok){ throw new Error('agent print fail'); } })
-    .catch(function(){ browserPrint(txt, i+1); });
-}
-function printThis(i){
-  var o=orders[i]; if(!o) return;
-  printViaAgent(i, o.status==='已付款');
-}
-function loadImg(src){
-  return new Promise(function(res,rej){ var im=new Image(); im.onload=function(){res(im)}; im.onerror=function(){rej(new Error('图片加载失败'))}; im.src=src; });
-}
-function renderReceiptBitmap(text, amt, seqNo, cb){
-  Promise.all([loadImg(payCfg.wxUrl||'微信二维码.png'), loadImg(payCfg.payUrl||'收款码.png')]).then(function(imgs){
-    var W=384, x=14, y=12, lineH=30, bodyFont=20;
-    var rows=(text||'').split('\n');
-    var estH=150 + rows.length*lineH + (amt?96:0) + 60 + 240 + 80;
-    var cv=document.createElement('canvas'); cv.width=W; cv.height=Math.max(estH,300);
-    var ctx=cv.getContext('2d');
-    ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,cv.height);
-    ctx.fillStyle='#000'; ctx.textBaseline='top';
-    // 顶部左侧：大单号
-    ctx.font='bold 48px "Microsoft YaHei",sans-serif'; ctx.textAlign='left';
-    ctx.fillText((seqNo||1)+'#', x, y); y+=60;
-    // 店名
-    ctx.font='bold 34px "Microsoft YaHei",sans-serif'; ctx.textAlign='center';
-    ctx.fillText('🍉 榨榨鲜果', W/2, y); y+=52;
-    ctx.font='16px "Microsoft YaHei"'; ctx.fillText('════════════', W/2, y); y+=30;
-    // 正文（放大）
-    ctx.textAlign='left';
-    rows.forEach(function(ln){
-      var f=bodyFont, t=ln;
-      ctx.font='bold '+f+'px "Microsoft YaHei",monospace';
-      while(ctx.measureText(t).width>W-24 && f>13){ f--; ctx.font='bold '+f+'px "Microsoft YaHei",monospace'; }
-      if(ctx.measureText(t).width>W-24){ while(ctx.measureText(t+'…').width>W-24) t=t.slice(0,-1); t+='…'; }
-      ctx.fillText(t, x, y); y+=lineH;
-    });
-    y+=8;
-    if(amt){
-      ctx.textAlign='center';
-      ctx.font='bold 18px "Microsoft YaHei"'; ctx.fillText('应付合计', W/2, y); y+=28;
-      ctx.font='bold 42px "Microsoft YaHei"';
-      var a=(String(amt).indexOf('¥')===0)?amt:('¥'+amt);
-      ctx.fillText(a, W/2, y); y+=62;
-    }
-    ctx.font='bold 22px "Microsoft YaHei"'; ctx.fillText('加好友 · 扫码付款', W/2, y); y+=12;
-    var qw=150, gap=(W-qw*2-24)/2;
-    ctx.drawImage(imgs[0], 12+gap, y+4, qw, qw);
-    ctx.drawImage(imgs[1], 12+gap+qw+8, y+4, qw, qw);
-    ctx.font='16px "Microsoft YaHei"';
-    ctx.fillText('微信好友', 12+gap+qw/2, y+qw+8);
-    ctx.fillText('扫码付款', 12+gap+qw+8+qw/2, y+qw+8);
-    y+=qw+46;
-    ctx.textAlign='center';
-    ctx.font='16px "Microsoft YaHei"'; ctx.fillText('---------------------', W/2, y); y+=26;
-    ctx.fillText(nowStr(), W/2, y); y+=26;
-    ctx.fillText('谢谢惠顾，欢迎再次光临！', W/2, y); y+=32;
-    // 底部留白减小到 40px（约5mm，够撕纸不浪费）
-    var actual=y+40;
-    var out=document.createElement('canvas'); out.width=W; out.height=Math.min(actual, 4096);
-    out.getContext('2d').drawImage(cv,0,0);
-    cb(out);
-  }).catch(function(e){ alert('二维码图片加载失败：'+e.message); });
-}
-function canvasToEscpos(canvas){
-  var sw=384, sh=Math.max(8, canvas.height), c=canvas;
-  if(canvas.width!==sw){ c=document.createElement('canvas'); c.width=sw; c.height=sh; c.getContext('2d').drawImage(canvas,0,0,sw,sh); }
-  var ctx=c.getContext('2d');
-  var im=ctx.getImageData(0,0,sw,sh);
-  var d=im.data, w=sw, h=sh;
-  // 转灰度
-  for(var i=0;i<d.length;i+=4){ var lum=d[i]*0.299+d[i+1]*0.587+d[i+2]*0.114; d[i]=d[i+1]=d[i+2]=lum; }
-  // Floyd-Steinberg 抖动：改善 1bit 打印清晰度（文字/二维码边缘保留细节）
-  for(var yy=0;yy<h;yy++){
-    for(var xx=0;xx<w;xx++){
-      var idx=(yy*w+xx)*4;
-      var oldv=d[idx];
-      var newv=oldv<128?0:255;
-      d[idx]=d[idx+1]=d[idx+2]=newv;
-      var err=oldv-newv;
-      if(xx+1<w) d[idx+4]+=err*7/16;
-      if(yy+1<h){
-        if(xx>0) d[((yy+1)*w+xx-1)*4]+=err*3/16;
-        d[((yy+1)*w+xx)*4]+=err*5/16;
-        if(xx+1<w) d[((yy+1)*w+xx+1)*4]+=err*1/16;
-      }
-    }
-  }
-  var bytesPerLine=Math.ceil(w/8);
-  var out=[0x1B,0x40];
-  out.push(0x1D,0x76,0x30,0x00);
-  out.push(bytesPerLine&0xFF,(bytesPerLine>>8)&0xFF);
-  out.push(h&0xFF,(h>>8)&0xFF);
-  for(var y=0;y<h;y++){
-    for(var bx=0;bx<bytesPerLine;bx++){
-      var byte=0;
-      for(var bit=0;bit<8;bit++){
-        var px=bx*8+bit; if(px>=w) break;
-        if(d[(y*w+px)*4]<128) byte|=(0x80>>bit);
-      }
-      out.push(byte);
-    }
-  }
-  out.push(0x1B,0x64,0x02);      // 走纸2行（原来4行，缩短出纸）
-  out.push(0x1D,0x56,0x01,0x00); // 部分切纸（不支持的打印机会忽略）
-  return new Uint8Array(out);
-}
-function printViaSerialWithFallback(text, amt, seqNo){
-  if(!navigator.serial){
-    if(confirm('当前浏览器不支持 USB 直连打印（需电脑端 Edge/Chrome）。是否改用浏览器打印？')) browserPrint(text, seqNo||1);
-    return;
-  }
-  renderReceiptBitmap(text, amt, seqNo||1, function(canvas){
-    (async function(){
-      var port=null;
-      try{
-        port=await navigator.serial.requestPort();
-        var opened=false, err='';
-        for(var br of [115200,9600]){
-          try{ await port.open({baudRate:br}); opened=true; break; }
-          catch(e){ err=e.message; }
-        }
-        if(!opened) throw new Error('打开打印机失败：'+(err||''));
-        var bytes=canvasToEscpos(canvas);
-        var writer=port.writable.getWriter();
-        await writer.write(bytes);
-        try{ writer.releaseLock(); }catch(e){}
-        try{ await port.close(); }catch(e){}
-        alert('已发送打印，请查看小票');
-      }catch(e){
-        try{ if(port){ await port.close(); } }catch(e2){}
-        if(confirm('USB 直连打印失败：'+e.message+'。是否改用浏览器打印？')) browserPrint(text, seqNo||1);
-      }
-    })();
-  });
-}
+
 function browserPrint(text, seqNo){
   text=text||'';
   var d=new Date(); function pp(x){return (x<10?'0':'')+x;}
