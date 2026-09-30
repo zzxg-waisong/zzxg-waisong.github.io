@@ -1371,6 +1371,45 @@ function tryReferralDeduct(phone, amount, cb){
     })
     .catch(function(){ cb(0); });
 }
+function showRefBindConfirm(phone, ref){
+  var old=document.getElementById('refBindModal'); if(old) old.remove();
+  var m=document.createElement('div');
+  m.id='refBindModal';
+  m.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center;';
+  var mm=document.createElement('div');
+  mm.style.cssText='background:#fff;border-radius:16px;width:86%;max-width:340px;padding:22px 18px;box-sizing:border-box;text-align:center;';
+  var t=document.createElement('div');
+  t.style.cssText='font-size:17px;font-weight:600;color:#222;margin-bottom:12px;';
+  t.textContent='确认绑定推荐人';
+  var d=document.createElement('div');
+  d.style.cssText='font-size:22px;font-weight:700;color:#e65100;margin:6px 0 4px;letter-spacing:1px;';
+  d.textContent=maskPhone(ref);
+  var p=document.createElement('div');
+  p.style.cssText='font-size:13px;color:#888;line-height:1.6;margin-bottom:16px;';
+  p.innerHTML='绑定后<b>不可更改</b>，该老客每单可得 5% 返利<br>确定使用这个推荐人吗？';
+  var row=document.createElement('div');
+  row.style.cssText='display:flex;gap:10px;';
+  var b1=document.createElement('button');
+  b1.textContent='修改';
+  b1.style.cssText='flex:1;padding:11px 0;border:1px solid #ddd;border-radius:10px;background:#fff;color:#666;font-size:15px;';
+  b1.onclick=function(){ m.remove(); };
+  var b2=document.createElement('button');
+  b2.textContent='确定绑定';
+  b2.style.cssText='flex:1;padding:11px 0;border:none;border-radius:10px;background:#e65100;color:#fff;font-size:15px;font-weight:600;';
+  b2.onclick=function(){
+    m.remove();
+    window._refConfirmAsk=ref;
+    finalSubmit();
+  };
+  row.appendChild(b1); row.appendChild(b2);
+  mm.appendChild(t); mm.appendChild(d); mm.appendChild(p); mm.appendChild(row);
+  m.appendChild(mm);
+  document.body.appendChild(m);
+}
+function maskPhone(ph){
+  if(!ph || ph.length<11) return ph||'';
+  return ph.substr(0,3)+'****'+ph.substr(7);
+}
 function finalSubmit(ded){
   var name=document.getElementById('ckName').value.trim();
   var phone=document.getElementById('ckPhone').value.trim();
@@ -1382,6 +1421,12 @@ function finalSubmit(ded){
   if(items.length===0){ alert('购物车是空的'); return; }
   var ref0=document.getElementById('ckRefPhone')?document.getElementById('ckRefPhone').value.trim():'';
   if(ref0 && ref0===phone){ alert('推荐人不能是您自己，请重新填写'); return; }
+  // 未绑定新客填写推荐人时：提交前弹确认（确定→绑定并继续下单；修改→返回重填）
+  if(ref0 && window._refBoundPhone!==phone && window._refConfirmAsk!==ref0){
+    showRefBindConfirm(phone, ref0);
+    return;
+  }
+  window._refConfirmAsk=null;
   var total=0;
   items.forEach(function(it){ var d=byId(it.id); total+=estPrice(d,it); });
   // 配送费（与配送信息页显示一致）
