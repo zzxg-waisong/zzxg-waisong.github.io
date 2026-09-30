@@ -518,6 +518,7 @@ function groupSort(list){
 }
 function renderDishes(){
   var box=document.getElementById('dishList'); var html='';
+  if(curCat==='半价') html+='<div style="margin-bottom:10px;text-align:center"><button class="btn" style="background:#fff;color:#666;border:1px solid #ddd;width:90%;max-width:280px" onclick="backFromHalf()">↩ 不加了，返回结算</button></div>';
   var list = dishes.filter(function(d){ return d.cat===curCat && d.on; });
   if(dishSort==='priceAsc') list.sort(function(a,b){return a.price-b.price;});
   else if(dishSort==='priceDesc') list.sort(function(a,b){return b.price-a.price;});
@@ -567,10 +568,10 @@ function closeHalfPrompt(add){
     curCat='半价';
     renderCats(); renderDishes();
     // ③ 等顾客选完半价果汁加入购物车，自动回到配送信息页并更新金额
-    var t=setInterval(function(){
+    window._halfTimer=setInterval(function(){
       var hasHalf=cartList().some(function(c){var d=byId(c.id);return d&&d.cat==='半价';});
       if(hasHalf){
-        clearInterval(t);
+        clearInterval(window._halfTimer); window._halfTimer=null;
         setTimeout(function(){
           closeDrawer();
           var cm2=document.getElementById('checkoutModal');
@@ -593,6 +594,19 @@ function closeHalfPrompt(add){
   // 点不加，自动回到提交流程
   renderCats(); renderDishes();
   submitOrder();
+}
+function backFromHalf(){
+  // 半价页「不加了，返回结算」：停止轮询、退出半价分类、回到配送信息页并更新金额
+  if(window._halfTimer){ clearInterval(window._halfTimer); window._halfTimer=null; }
+  halfEnabled=false;
+  if(curCat==='半价') curCat='果汁';
+  renderCats(); renderDishes();
+  var cm2=document.getElementById('checkoutModal');
+  if(cm2) cm2.classList.add('show');
+  fillTimeOptions(); hlTimeInit();
+  var addrEl=document.getElementById('ckAddr');
+  if(addrEl && addrEl.value.trim()) calcDelivery();
+  updateCkAmt();
 }
 function showCountDlg(d){
   var old=document.getElementById('peelModal'); if(old) old.remove();
@@ -1092,7 +1106,6 @@ function pickAddr(loc, text){
 }
 function autoLocate(){
   if(!navigator.geolocation){ alert('浏览器不支持定位'); return; }
-  alert('正在获取当前位置...');
   navigator.geolocation.getCurrentPosition(function(pos){
     var lng=pos.coords.longitude, lat=pos.coords.latitude;
     window._pickedLoc=lng+','+lat;
@@ -1204,7 +1217,7 @@ function showOutOfRange(){
 function closeOutOfRange(){
   var m=document.getElementById('outOfRangeModal'); if(m) m.remove();
   cart={}; saveCart(); curCat='水果'; renderCats(); renderDishes(); renderCartbar(); renderCartItems();
-  var d=document.getElementById('drawer'); if(d) d.style.display='none';
+  var d=document.getElementById('drawer'); if(d) d.classList.remove('show');
 }
 function submitOrder(){
   var name=document.getElementById('ckName').value.trim();
@@ -1213,6 +1226,7 @@ function submitOrder(){
   if(!name){ alert('请填写您的称呼'); return; }
   if(!/^1\d{10}$/.test(phone)){ alert('请填写正确的11位手机号'); return; }
   if(window._ckMode!=='pickup' && !addr){ alert('请填写配送地址'); return; }
+  if(window._ckMode!=='pickup' && window._delivery && window._delivery.dist>10){ showOutOfRange(); return; }
   var sub0=cartTotal();
   if(sub0<20){ alert('还差 '+money(20-sub0)+' 元起送（满 20 元起送），已返回首页'); closeCheckout(); window.scrollTo(0,0); return; }
   localStorage.setItem('zz_my_phone', phone);
@@ -1230,7 +1244,7 @@ function submitOrder(){
   var _fee2=(window._ckMode!=='pickup'&&window._delivery&&window._delivery.dist<=10)?deliveryFee(window._delivery.dist,total):0; if(_fee2<0)_fee2=0;
   var totCk=total+_fee2;
   if(totCk>=25){
-    if(window._newcustAsked){ window._disc=0; doRealSubmit(); return; }
+    if(window._newcustAsked){ var uf=localStorage.getItem('zz_use_newcust_'+phone)==='1'; window._disc=uf?5:0; doRealSubmit(); return; }
     checkNewcust(phone);
     return;
   }
@@ -1239,7 +1253,7 @@ function submitOrder(){
 }
 
 function checkNewcust(phone){
-  if(window._newcustAsked){ window._disc=0; doRealSubmit(); return; }
+  if(window._newcustAsked){ var uf=localStorage.getItem('zz_use_newcust_'+phone)==='1'; window._disc=uf?5:0; doRealSubmit(); return; }
   // 自动查云端该手机号是否还有首单优惠
   fetch(SB_URL+'/rest/v1/rpc/get_balance_public',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({phone:phone})})
     .then(function(r){ return r.json(); })
@@ -1325,7 +1339,10 @@ function doRealSubmit(){
   var total=0; cartList().forEach(function(it){ var d=byId(it.id); total+=estPrice(d,it); });
   var fee=0;
   if(window._ckMode!=='pickup' && window._delivery && window._delivery.dist<=10){ fee=deliveryFee(window._delivery.dist,total); if(fee<0) fee=0; }
-  tryReferralDeduct(phone, total+fee, function(ded){ finalSubmit(ded); });
+  var hasWx=cartList().some(function(c){var d=byId(c.id);return d&&d.per>0;});
+  var rawTx=total+fee;
+  var finalTx=hasWx?rawTx:roundHalf(rawTx);
+  tryReferralDeduct(phone, finalTx, function(ded){ finalSubmit(ded); });
 }
 function tryReferralDeduct(phone, amount, cb){
   if(!phone || !/^1\d{10}$/.test(phone)){ cb(0); return; }
@@ -1349,6 +1366,8 @@ function finalSubmit(ded){
   var time=document.getElementById('ckTime').value;
   var items=cartList();
   if(items.length===0){ alert('购物车是空的'); return; }
+  var ref0=document.getElementById('ckRefPhone')?document.getElementById('ckRefPhone').value.trim():'';
+  if(ref0 && ref0===phone){ alert('推荐人不能是您自己，请重新填写'); return; }
   var total=0;
   items.forEach(function(it){ var d=byId(it.id); total+=estPrice(d,it); });
   // 配送费（与配送信息页显示一致）
@@ -1381,6 +1400,7 @@ function finalSubmit(ded){
   bindRefAndRecord(phone, ref, order.id, total);
   cart={};
   saveCart();
+  window._newcustAsked=false;
   showPay(order);
 }
 function showPay(order){
@@ -1466,10 +1486,12 @@ function formatOrderText(o){
     var sub=0, extra='';
     if(per>0 && w){ sub=per*w; extra='（称重'+w+'斤×'+per+'元/斤）'; }
     var gm=String(it.note||'').match(/按根([\d.]+)元/);
+    var ga=String(it.note||'').match(/按金额([\d.]+)元/);
     if(gm){ sub=parseFloat(gm[1]); lines.push('  '+nm+'（'+it.note+'）  '+money(sub)); }
+    else if(ga){ sub=parseFloat(ga[1]); lines.push('  '+nm+'（'+it.note+'）  '+money(sub)); }
     else { sub=price*(it.qty||1); lines.push('  '+nm+extra+' ×'+it.qty+'  '+money(sub)); }
     realSub+=sub;
-    if(it.note && it.note.indexOf('按根')!==0) lines.push('    （'+it.note+'）');
+    if(it.note && it.note.indexOf('按')!==0) lines.push('    （'+it.note+'）');
   });
   lines.push('——————————————');
   if(o.subtotal) lines.push('【商品小计】'+money(o.subtotal));
@@ -1587,8 +1609,7 @@ function renderAdmin(){
         var _p=o.payload;
         var _created=(_p.created||o.created_at||'');
         if(_created.slice(0,10)===_today){
-          var _amt=(_p.weightTotal!=null&&_p.weightTotal?Number(_p.weightTotal):(_p.total!=null?Number(_p.total):0));
-          if(_p.newcust && _p.discount!=null) _amt=_amt-Number(_p.discount);
+          var _amt=cloudAmount(o);
           window.todayTotal += _amt; window.todayCount++;
         }
       }
@@ -1619,7 +1640,7 @@ function placeCloudOrder(o){
     });
     var weights={};
     upItems.forEach(function(it){ if(it.per>0){ var mw=String(it.note||'').match(/按斤([\d.]+)斤/); if(mw) weights[it.id]=parseFloat(mw[1]); } });
-    fetch(SB_URL+'/rest/v1/rpc/place_order',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({payload:{id:o.id,items:upItems,hasWeight:o.hasWeight,weights:weights,subtotal:o.subtotal,deliveryFee:o.deliveryFee,dist:o.dist,total:o.total,estTotal:o.estTotal,name:o.name,phone:o.phone,addr:o.addr,time:o.time,remark:o.remark,created:o.created,status:o.status,weightTotal:o.weightTotal||0,newcust:false,discount:0,referralDeduct:o.referralDeduct||0,mode:o.mode||'delivery'}})})
+    fetch(SB_URL+'/rest/v1/rpc/place_order',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({payload:{id:o.id,items:upItems,hasWeight:o.hasWeight,weights:weights,subtotal:o.subtotal,deliveryFee:o.deliveryFee,dist:o.dist,total:o.total,estTotal:o.estTotal,name:o.name,phone:o.phone,addr:o.addr,time:o.time,remark:o.remark,created:o.created,status:o.status,weightTotal:o.weightTotal||0,newcust:false,discount:0,referralDeduct:o.referralDeduct||0,payTotal:(o.payTotal!=null?o.payTotal:0),mode:o.mode||'delivery'}})})
       .then(function(r){ return r.json(); })
       .then(function(j){
         if(!j || !j.ok) throw 0;
@@ -1750,9 +1771,9 @@ function newCustCloudOrder(id){
 }
 function cloudAmount(c){
   var p=c.payload||{};
-  var base=(p.weightTotal!=null&&p.weightTotal?Number(p.weightTotal):(p.total!=null?Number(p.total):0));
-  if(p.newcust && p.discount!=null) base=base-Number(p.discount);
-  if(p.referralDeduct) base=base-Number(p.referralDeduct);
+  var base;
+  if(p.payTotal!=null){ base=Number(p.payTotal); }
+  else { base=(p.weightTotal!=null&&p.weightTotal?Number(p.weightTotal):(p.total!=null?Number(p.total):0)); if(p.newcust && p.discount!=null) base=base-Number(p.discount); if(p.referralDeduct) base=base-Number(p.referralDeduct); }
   return roundHalf(base);
 }
 function loadMoreCloudOrders(){
@@ -1796,12 +1817,12 @@ function printCloudOrder(id){
   var lines=(p.items||[]).map(function(it){
     var sub=0, extra='';
     if(it.per>0 && p.weights && p.weights[it.id]){ var w=p.weights[it.id]; sub=it.per*w; extra='（称重'+w+'斤×'+it.per+'元/斤）'; }
-    else { var gm=String(it.note||'').match(/按根([\d.]+)元/); sub=gm?parseFloat(gm[1]):it.price*it.qty; }
+    else { var gm=String(it.note||'').match(/按根([\d.]+)元/); var ga=String(it.note||'').match(/按金额([\d.]+)元/); sub=gm?parseFloat(gm[1]):(ga?parseFloat(ga[1]):it.price*it.qty); }
     var s=(it.name||''); if(it.note && (it.note.indexOf('按金额')===0||it.note.indexOf('按根')===0)) s+=' '+it.note; else s+=' x'+(it.qty!=null?it.qty:'')+(it.unit?it.unit:''); s+=' ¥'+sub.toFixed(2); return s;
   });
   var note='';
   if(p.remark){ var rm=String(p.remark).trim(); if(rm && !/^https?:\/\/|\.github\.io|\.edgeone\.dev|uri\.amap\.com/i.test(rm)) note=rm; }
-  var raw=(p.weightTotal!=null&&p.weightTotal?Number(p.weightTotal):(p.total!=null?Number(p.total):0))-(p.newcust&&p.discount!=null?Number(p.discount):0)-(p.referralDeduct?Number(p.referralDeduct):0);
+  var raw=(p.payTotal!=null)?Number(p.payTotal):((p.weightTotal!=null&&p.weightTotal?Number(p.weightTotal):(p.total!=null?Number(p.total):0))-(p.newcust&&p.discount!=null?Number(p.discount):0)-(p.referralDeduct?Number(p.referralDeduct):0));
   var amt=roundHalf(raw);
   var roundAmt=Math.round((raw-amt)*100)/100;
   var paid=(c.status==='已付款');
@@ -1821,7 +1842,7 @@ function copyCloudAddr(id){ var c=cloudOrders.find(function(x){return x.id===id;
 function copyCloudOrderText(id){
   var c=cloudOrders.find(function(x){return x.id===id;}); if(!c) return;
   var p=c.payload||{};
-  var raw=(p.weightTotal!=null&&p.weightTotal?Number(p.weightTotal):(p.total!=null?Number(p.total):0))-(p.newcust&&p.discount!=null?Number(p.discount):0)-(p.referralDeduct?Number(p.referralDeduct):0);
+  var raw=(p.payTotal!=null)?Number(p.payTotal):((p.weightTotal!=null&&p.weightTotal?Number(p.weightTotal):(p.total!=null?Number(p.total):0))-(p.newcust&&p.discount!=null?Number(p.discount):0)-(p.referralDeduct?Number(p.referralDeduct):0));
   var amt=roundHalf(raw); var roundAmt=Math.round((raw-amt)*100)/100;
   var t='🍉 榨榨鲜果 外卖订单\n——————————————\n【订单号】'+(p.id||('云端#'+c.id))+'\n【下单时间】'+(p.created||'')+'\n【商品】\n'+
     (p.items||[]).map(function(it){ var dd=byId(it.id); var amt2=(it.per>0&&p.weights&&p.weights[it.id])?(it.per*p.weights[it.id]):(dd?estPrice(dd,it):it.price*it.qty); return '  '+it.name+((it.per>0&&p.weights&&p.weights[it.id])?('（称重'+p.weights[it.id]+'斤×'+it.per+'元/斤）'):((it.note&&it.note.indexOf('按')===0)?('（'+it.note+'）'):(' ×'+it.qty)))+'  '+money(amt2); }).join('\n')+
@@ -2076,11 +2097,11 @@ function saveDish(id){
   if(!name||isNaN(price)||price<0){ alert('请填写名称和正确的价格'); return; }
   if(id){ var d=byId(id); d.name=name; d.price=price; d.unit=unit; d.img=img; d.cat=cat; d.on=on; d.per=per; }
   else { dishes.push({id:'d'+Date.now(),name:name,price:price,unit:unit,img:img,cat:cat,on:on,per:per}); }
-  save(LS_DISHES,dishes); syncHalfPrice(); document.getElementById('dishModal').remove(); renderAdmin(); renderCats(); renderDishes();
+  dishes=groupSort(dishes); save(LS_DISHES,dishes); syncHalfPrice(); document.getElementById('dishModal').remove(); renderAdmin(); renderCats(); renderDishes();
 }
-function delDish(id){ if(confirm('确认删除该菜品？')){ dishes=dishes.filter(function(d){return d.id!==id;}); save(LS_DISHES,dishes); syncHalfPrice(); renderAdmin(); renderCats(); renderDishes(); } }
+function delDish(id){ if(confirm('确认删除该菜品？')){ dishes=dishes.filter(function(d){return d.id!==id;}); dishes=groupSort(dishes); save(LS_DISHES,dishes); syncHalfPrice(); renderAdmin(); renderCats(); renderDishes(); } }
 function sortDishes(){ dishes=groupSort(dishes); save(LS_DISHES,dishes); renderAdmin(); renderCats(); renderDishes(); }
-function relistDish(id){ var d=byId(id); if(!d) return; d.on=true; save(LS_DISHES,dishes); syncHalfPrice(); renderAdmin(); renderCats(); renderDishes(); }
+function relistDish(id){ var d=byId(id); if(!d) return; d.on=true; dishes=groupSort(dishes); save(LS_DISHES,dishes); syncHalfPrice(); renderAdmin(); renderCats(); renderDishes(); }
 
 function renderPayAdmin(){
   var html='<div class="panel"><h3>收款码设置</h3>'+
@@ -2416,6 +2437,8 @@ function downloadQr(){
 }
 
 function onCkPhone(){
+  if(window._ckPhoneTimer){ clearTimeout(window._ckPhoneTimer); }
+  window._ckPhoneTimer=setTimeout(function(){
   var ph=document.getElementById('ckPhone').value.trim();
   var tip=document.getElementById('refWalletTip');
   if(!tip) return;
@@ -2433,6 +2456,7 @@ function onCkPhone(){
           if(h){ tip.style.display='block'; tip.innerHTML=h; } else { tip.style.display='none'; }
         }).catch(function(){ if(bindHtml){ tip.style.display='block'; tip.innerHTML=bindHtml; } });
     }).catch(function(){});
+  },300);
 }
 function checkRefWallet(){
   var ph=(document.getElementById('refPhone').value||'').trim();
