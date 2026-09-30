@@ -2220,7 +2220,7 @@ function saveShop(){
 /* ===== 云端为主·店铺配置同步 ===== */
 var _shopDirty=false, _localShopTs=0, _wasOnline=true, _lastShopCloudLoad=0;
 var deliverCfg = load(LS_DELIVER, {pwd:''});
-var deliverLogged=false, deliverOrders=[], deliverPwd='', deliverName='', deliverPosTimer=null, myOrdersTimer=null;
+var deliverLogged=false, deliverOrders=[], deliverPwd='', deliverName='', deliverPosTimer=null, myOrdersTimer=null, deliverTimer=null;
 function loadShopCloud(){
   var now=Date.now();
   if(!_shopDirty && now-_lastShopCloudLoad<30000) return;
