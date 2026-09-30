@@ -124,6 +124,7 @@ button:active{transform:scale(.94);-webkit-transform:scale(.94);opacity:.85}
       </div>
       <div style="display:flex;flex-direction:column;gap:6px;align-items:stretch">
       <button class="admin-entry" style="color:#e65100" onclick="openPromo()">🎁 优惠</button>
+      <button class="admin-entry" style="color:#1565c0" onclick="openDeliverLogin()">🛵 配送</button>
       
     </div>
     </div>
@@ -238,9 +239,45 @@ button:active{transform:scale(.94);-webkit-transform:scale(.94);opacity:.85}
       </div>
       <p style="text-align:center;font-size:12px;color:#999;margin:8px 0 0">长按图片可识别二维码</p>
       <button class="btn" style="width:100%;padding:12px;font-size:16px;margin-top:10px" onclick="payDone()">我 已 付 款</button>
+      <button class="btn gray" style="width:100%;padding:12px;font-size:15px;margin-top:8px" onclick="openMyOrders()">📋 查看订单进度</button>
       <p style="text-align:center;font-size:12px;color:#999;margin-top:6px">付款后点击上方按钮，自动整理订单发给店主</p>
     </div>
   </div>
+</div>
+
+<!-- 我的订单弹窗 -->
+<div class="modal" id="myOrdersModal">
+  <div class="box" style="max-width:520px;position:relative">
+    <button title="关闭" style="position:absolute;top:10px;right:10px;width:32px;height:32px;border:none;background:#f0f0f0;border-radius:50%;font-size:16px;color:#888;cursor:pointer;z-index:5;line-height:1" onclick="closeModal('myOrdersModal')">✕</button>
+    <h3 style="text-align:center;margin:4px 0 12px;font-size:17px">📋 我的订单</h3>
+    <div style="display:flex;gap:8px">
+      <input id="myOrderPhone" type="tel" maxlength="11" placeholder="输入点单手机号" style="flex:1;border:1px solid #ddd;border-radius:8px;padding:10px;font-size:15px">
+      <button class="btn" onclick="loadMyOrders()">查询</button>
+    </div>
+    <div id="myOrdersRes" style="margin-top:12px;font-size:14px;line-height:1.8"></div>
+  </div>
+</div>
+
+<!-- 配送员登录弹窗 -->
+<div class="modal" id="deliverLoginModal">
+  <div class="box" style="max-width:420px;position:relative">
+    <button title="关闭" style="position:absolute;top:10px;right:10px;width:32px;height:32px;border:none;background:#f0f0f0;border-radius:50%;font-size:16px;color:#888;cursor:pointer;z-index:5;line-height:1" onclick="closeModal('deliverLoginModal')">✕</button>
+    <h3 style="text-align:center;margin:4px 0 12px;font-size:17px">🛵 配送员登录</h3>
+    <div style="font-size:14px;color:#666;margin-bottom:4px">配送口令（老板设置）</div>
+    <input id="deliverPwd" type="password" placeholder="配送口令" style="width:100%;border:1px solid #ddd;border-radius:8px;padding:10px;font-size:15px;box-sizing:border-box">
+    <div style="font-size:14px;color:#666;margin:10px 0 4px">配送员姓名（老板后台可见）</div>
+    <input id="deliverName" type="text" placeholder="如：小李" style="width:100%;border:1px solid #ddd;border-radius:8px;padding:10px;font-size:15px;box-sizing:border-box">
+    <button class="btn" style="width:100%;padding:12px;font-size:15px;margin-top:12px" onclick="doDeliverLogin()">进入配送工作台</button>
+  </div>
+</div>
+
+<!-- 配送工作台视图 -->
+<div id="deliverView" style="display:none;position:fixed;inset:0;background:#f5f5f5;z-index:9000;overflow:auto">
+  <div style="background:#1565c0;color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:5">
+    <div style="font-size:17px;font-weight:700">🛵 配送工作台 <span id="deliverWho" style="font-size:13px;font-weight:400"></span></div>
+    <button class="btn" style="background:rgba(255,255,255,.18);color:#fff;padding:6px 14px" onclick="deliverLogout()">退出</button>
+  </div>
+  <div id="deliverBody" style="padding:12px;max-width:640px;margin:0 auto"></div>
 </div>
 
 <!-- 优惠说明弹窗 -->
@@ -313,7 +350,7 @@ button:active{transform:scale(.94);-webkit-transform:scale(.94);opacity:.85}
 <script>
 /* ==================== 数据层 ==================== */
 var LS_DISHES='fruit_dishes', LS_ORDERS='fruit_orders', LS_PWD='fruit_admin_pwd',
-    LS_PAY='fruit_pay', LS_SHOP='fruit_shop', LS_SESSION='fruit_admin_ok', LS_CLOUD='fruit_cloud';
+    LS_PAY='fruit_pay', LS_SHOP='fruit_shop', LS_SESSION='fruit_admin_ok', LS_CLOUD='fruit_cloud', LS_DELIVER='fruit_deliver';
 var SB_URL='https://aenrwtwhhuqzmbxsjump.supabase.co', SB_KEY='sb_publishable_TYMADeCoaKMsnJ7INuHnfQ_n9yKIHkl', LS_CLOUDPWD='fruit_cloud_pwd';
 var cloudOrders=[]; // 顾客手机下单的云端订单
 var cloudPhoneCount={}; // 手机号出现次数
@@ -441,6 +478,7 @@ function nowStr(){ var d=new Date(); function p(x){return (x<10?'0':'')+x;}
 function route(){
   var h=location.hash||'#/';
   if(h.indexOf('#/admin')===0){ if(location.href.indexOf('autologin=1')<0){ location.hash='#/'; return; } showAdmin(); }
+  else if(h.indexOf('#/deliver')===0){ if(!deliverLogged){ location.hash='#/'; return; } showDeliverView(); }
   else { stopCloudTimer(); showCustomer(); }
 }
 window.addEventListener('hashchange', route);
@@ -1645,7 +1683,7 @@ function renderAdmin(){
       }
     });
   }
-  var tabs=[['orders','📋 订单'],['dishes','🍉 菜品'],['pay','💳 收款码'],['shop','🏠 店铺'],['print','🖨 打印'],['qr','🔗 点单码'],['ref','🤝 拉新'],['set','⚙ 设置']];
+  var tabs=[['orders','📋 订单'],['dishes','🍉 菜品'],['pay','💳 收款码'],['shop','🏠 店铺'],['print','🖨 打印'],['qr','🔗 点单码'],['ref','🤝 拉新'],['deliver','🛵 配送'],['set','⚙ 设置']];
   var html=''; var cur=adminTab||'orders';
   tabs.forEach(function(t){ html+='<button class="'+(cur===t[0]?'on':'')+'" onclick="adminTab=\''+t[0]+'\';renderAdmin()">'+t[1]+'</button>'; });
   document.getElementById('adminTabs').innerHTML=html;
@@ -1657,6 +1695,7 @@ function renderAdmin(){
   else if(cur==='print') panel.innerHTML=renderPrintAdmin();
   else if(cur==='qr') renderQrAdmin();
   else if(cur==='ref') panel.innerHTML=renderReferralAdmin();
+  else if(cur==='deliver') panel.innerHTML=renderDeliverAdmin();
   else if(cur==='set') panel.innerHTML=renderSetAdmin();
 }
 var adminTab='orders';
@@ -1826,7 +1865,7 @@ function renderCloudOrder(c){
   var p=c.payload||{};
   var items=p.items||[];
   var lines=items.map(function(it){ var s=(it.name||''); if(it.note && (it.note.indexOf('按金额')===0||it.note.indexOf('按根')===0)) s+=' '+it.note; else if(it.qty!=null) s+=' x'+it.qty+(it.unit?it.unit:''); if(it.per>0&&p.weights&&p.weights[it.id]) s+='（称重'+p.weights[it.id]+'斤）'; return esc(s); }).join('<br>')||'（无商品）';
-  var stCls=c.status==='已完成'?'off':(c.status==='已付款'?'paid':(c.status==='已称重'?'weigh':(c.status==='已接单'?'paid':'new')));
+  var stCls=(c.status==='已完成'||c.status==='已送达')?'off':(c.status==='已付款'?'paid':(c.status==='已称重'||c.status==='待自提'?'weigh':(c.status==='已接单'||c.status==='制作中'||c.status==='配送中'?'paid':'new')));
   var stTxt=(c.status==='new')?'待处理':c.status;
   var amt=(p.weightTotal!=null&&p.weightTotal||p.total!=null)?cloudAmount(c):'';
   var isNewCust=!p.newcust && String(p.phone||'').trim() && cloudBalances[String(p.phone||'').trim()]>0;
@@ -1841,9 +1880,13 @@ function renderCloudOrder(c){
     (p.time?'<div class="rowline"><span>预送</span><span>'+esc(p.time)+'</span></div>':'')+
     '<div class="rowline"><span>商品</span><span>'+lines+'</span></div>'+
     (amt!==''?'<div class="rowline"><span>金额</span><span style="color:#e53935;font-weight:700">'+money(amt)+(p.newcust?'（已含新客-'+Number(p.discount||0).toFixed(2)+'元）':(p.hasWeight&&!p.weightTotal?'（预估）':''))+(p.referralDeduct?'（已含推广抵扣-'+Number(p.referralDeduct).toFixed(2)+'元）':'')+'</span></div>':'')+
+    (p.carrier?'<div class="rowline"><span>配送员</span><span style="color:#1565c0">🛵 '+esc(p.carrier)+'</span></div>':'')+
     '<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">'+
     (c.status!=='已付款'?'<button class="btn" style="background:#2e7d32;color:#fff" onclick="updateCloudStatus('+c.id+',\'已付款\')">✅ 标记已付款</button>':'')+
     (c.status==='new'?'<button class="btn" style="background:#1565c0;color:#fff" onclick="acceptCloudOrder('+c.id+')">✅ 接单</button>':'')+
+    (c.status==='已接单'?'<button class="btn" style="background:#6a1b9a;color:#fff" onclick="updateCloudStatus('+c.id+',\'制作中\')">👨‍🍳 制作中</button>':'')+
+    (c.status==='制作中'?(p.mode==='pickup'?'<button class="btn" style="background:#00897b;color:#fff" onclick="updateCloudStatus('+c.id+',\'待自提\')">🏪 待自提</button>':'<button class="btn" style="background:#00897b;color:#fff" onclick="updateCloudStatus('+c.id+',\'配送中\')">🛵 开始配送</button>'):'')+
+    (c.status==='配送中'||c.status==='待自提'?'<button class="btn" style="background:#2e7d32;color:#fff" onclick="markDelivered('+c.id+')">✅ 已送达</button>':'')+
     (isNewCust?'<button class="btn" style="background:#ad1457;color:#fff" onclick="newCustCloudOrder('+c.id+')">🎁 新客优惠</button>':'')+
     '<button class="btn" style="background:#555;color:#fff" onclick="printCloudOrder('+c.id+')">🖨 打印</button>'+
     (p.addr && p.mode!=='pickup'?'<button class="btn" onclick="navCloud('+c.id+')">高德导航</button>':'')+
@@ -2130,6 +2173,29 @@ function savePayCfg(){
 }
 function previewPay(){ savePayCfg(); renderPayAdmin(); }
 
+function renderDeliverAdmin(){
+  var html='<div class="panel"><h3>🛵 配送设置</h3><div class="card">'+
+    '<div class="form" style="padding:0">'+
+    '<label>配送口令（配送员登录用，请设独立口令，不要用后台密码）</label><input id="deliverPwdCfg" value="'+esc(deliverCfg.pwd||'')+'" placeholder="例如：8888">'+
+    '<p style="font-size:12px;color:#999;line-height:1.6;margin:6px 0 0">保存后，顾客主页右上角「🛵 配送」入口即可用此口令登录。配送员登录后能看到待配送订单、开始配送并自动上报位置，顾客端实时可见。</p>'+
+    '<div style="margin-top:12px"><button class="btn" onclick="saveDeliverCfg()">保存配送设置</button></div></div></div></div>';
+  return html;
+}
+function saveDeliverCfg(){
+  deliverCfg.pwd=document.getElementById('deliverPwdCfg').value.trim();
+  save(LS_DELIVER, deliverCfg); pushShopCloud();
+  renderAdmin(); alert('配送口令已保存并同步云端');
+}
+function markDelivered(id){
+  if(!confirm('确认该订单已送达？')) return;
+  updateCloudStatus(id,'已送达');
+}
+function closeModal(id){
+  var e=document.getElementById(id); if(e) e.classList.remove('show');
+}
+function showModal(id){
+  var e=document.getElementById(id); if(e) e.classList.add('show');
+}
 function renderShopAdmin(){
   var html='<div class="panel"><h3>店铺设置</h3><div class="card"><div class="form" style="padding:0">'+
     '<label>店铺地址（导航起点，用于外送导航）</label><input id="shopAddr" value="'+esc(shopCfg.address)+'" placeholder="例如：成都市青白江区城厢镇朝阳路16号附1号">'+
@@ -2153,6 +2219,8 @@ function saveShop(){
 }
 /* ===== 云端为主·店铺配置同步 ===== */
 var _shopDirty=false, _localShopTs=0, _wasOnline=true, _lastShopCloudLoad=0;
+var deliverCfg = load(LS_DELIVER, {pwd:''});
+var deliverLogged=false, deliverOrders=[], deliverPwd='', deliverName='', deliverPosTimer=null, myOrdersTimer=null;
 function loadShopCloud(){
   var now=Date.now();
   if(!_shopDirty && now-_lastShopCloudLoad<30000) return;
@@ -2164,6 +2232,7 @@ function loadShopCloud(){
       if(c && (c.shop||c.pay)){
         if(c.shop){ shopCfg=Object.assign({},shopCfg,c.shop); save(LS_SHOP,shopCfg); }
         if(c.pay){ payCfg=Object.assign({},payCfg,c.pay); save(LS_PAY,payCfg); }
+        if(c.deliver){ deliverCfg=Object.assign({},deliverCfg,c.deliver); save(LS_DELIVER,deliverCfg); }
         if(j.updated_at) _localShopTs=new Date(j.updated_at).getTime();
         _shopDirty=false;
         markOnline();
@@ -2173,7 +2242,7 @@ function loadShopCloud(){
 }
 function pushShopCloud(){
   var pwd=localStorage.getItem(LS_CLOUDPWD)||'1986shenhu';
-  var cfg={shop:{address:shopCfg.address||'',shopLat:shopCfg.shopLat||'',shopLng:shopCfg.shopLng||'',amapKey:shopCfg.amapKey||'',jskey:shopCfg.jskey||'',jscode:shopCfg.jscode||''},pay:{payUrl:payCfg.payUrl||'',wxUrl:payCfg.wxUrl||''}};
+  var cfg={shop:{address:shopCfg.address||'',shopLat:shopCfg.shopLat||'',shopLng:shopCfg.shopLng||'',amapKey:shopCfg.amapKey||'',jskey:shopCfg.jskey||'',jscode:shopCfg.jscode||''},pay:{payUrl:payCfg.payUrl||'',wxUrl:payCfg.wxUrl||''},deliver:{pwd:deliverCfg.pwd||''}};
   fetch(SB_URL+'/rest/v1/rpc/save_shop_config',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({p_admin:pwd,p_cfg:cfg})})
     .then(function(r){ return r.json(); })
     .then(function(j){
@@ -2227,6 +2296,229 @@ function hideSyncTip(){
 }
 window.addEventListener('online', function(){ markOnline(); });
 window.addEventListener('offline', function(){ markOffline(); });
+/* ===== 配送追踪：配送员工作台 + 顾客我的订单 + 定位 + 地图 ===== */
+function distKm(lat1,lng1,lat2,lng2){
+  var R=6371, dLat=(lat2-lat1)*Math.PI/180, dLng=(lng2-lng1)*Math.PI/180;
+  var a=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)*Math.sin(dLng/2);
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+function etaMin(o){
+  if(o && o.mode==='pickup') return 20;
+  var d=parseFloat(o&&o.dist)||0;
+  if(d<=3) return 40;
+  return 40+Math.ceil(d-3)*8;
+}
+function openDeliverLogin(){ showModal('deliverLoginModal'); }
+function doDeliverLogin(){
+  var pwd=document.getElementById('deliverPwd').value.trim();
+  var name=document.getElementById('deliverName').value.trim();
+  if(!pwd){ alert('请输入配送口令'); return; }
+  if(!name){ alert('请输入配送员姓名'); return; }
+  fetch(SB_URL+'/rest/v1/rpc/get_deliver_orders',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({p_phone:pwd})})
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      if(j && j.ok){
+        deliverLogged=true; deliverPwd=pwd; deliverName=name;
+        localStorage.setItem('zz_deliver_name',name);
+        closeModal('deliverLoginModal');
+        location.hash='#/deliver';
+        renderDeliverView();
+      } else { alert((j&&j.msg)||'配送口令错误'); }
+    })
+    .catch(function(){ alert('登录失败，请检查网络'); });
+}
+function deliverLogout(){
+  stopPosLoop();
+  deliverLogged=false; deliverPwd=''; deliverName='';
+  if(deliverTimer){ clearInterval(deliverTimer); deliverTimer=null; }
+  location.hash='#/';
+}
+function showDeliverView(){
+  var v=document.getElementById('deliverView');
+  if(v) v.style.display='block';
+  document.getElementById('deliverWho').textContent='｜'+deliverName;
+  renderDeliverView();
+}
+function hideDeliverView(){
+  var v=document.getElementById('deliverView');
+  if(v) v.style.display='none';
+}
+function renderDeliverView(){
+  var body=document.getElementById('deliverBody');
+  if(!body) return;
+  body.innerHTML='<div style="text-align:center;color:#999;padding:20px">加载订单中…</div>';
+  fetch(SB_URL+'/rest/v1/rpc/get_deliver_orders',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({p_phone:deliverPwd})})
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      if(!j || !j.ok){ body.innerHTML='<div style="color:#c62828;padding:12px">'+(j&&j.msg||'加载失败')+'</div>'; return; }
+      var arr=j.orders||[];
+      deliverOrders=arr;
+      var _delivering=arr.filter(function(o){ return o.status==='配送中'; });
+      if(_delivering.length===1 && deliverPosTimer===null) startPosLoop(_delivering[0].id);
+      if(!arr.length){ body.innerHTML='<div style="text-align:center;color:#999;padding:30px">当前没有待配送订单<br><span style="font-size:12px">有订单会自动刷新显示</span></div>'; return; }
+      var html='';
+      arr.forEach(function(o){ html+=deliverOrderCard(o); });
+      body.innerHTML='<div style="font-size:12px;color:#999;margin:0 0 8px">待配送订单 '+arr.length+' 单 · 每 20 秒自动刷新</div>'+html;
+    })
+    .catch(function(){ body.innerHTML='<div style="color:#c62828;padding:12px">加载失败，请检查网络</div>'; });
+  if(deliverTimer){ clearInterval(deliverTimer); deliverTimer=null; }
+  deliverTimer=setInterval(function(){ renderDeliverView(); }, 20000);
+}
+function deliverOrderCard(o){
+  var p=o;
+  var items=(p.items||[]).map(function(it){ var s=(it.name||''); if(it.qty!=null) s+=' x'+it.qty+(it.unit?it.unit:''); return s; }).join('、')||'（无商品）';
+  var st=(p.status==='配送中')?'<span class="badge paid">配送中</span>':'<span class="badge new">'+esc(p.status||'待配送')+'</span>';
+  var btn=(p.status==='配送中')
+    ? '<button class="btn" style="background:#2e7d32;color:#fff" onclick="deliverDone('+p.id+')">✅ 已送达</button><button class="btn" onclick="startPosLoop('+p.id+')">📍 上报位置</button>'
+    : '<button class="btn" style="background:#00897b;color:#fff" onclick="deliverStart('+p.id+')">🛵 开始配送</button>';
+  return '<div class="card" style="background:#fff;margin-bottom:10px"><h3>订单 #'+(p.no||p.id)+' '+st+'</h3>'+
+    '<div class="rowline"><span>下单时间</span><span>'+esc(String(p.created||'').replace('T',' ').slice(0,19))+'</span></div>'+
+    '<div class="rowline"><span>方式</span><span>'+(p.mode==='pickup'?'🏪 到店自提':'🛵 外送')+'</span></div>'+
+    (p.addr?'<div class="rowline"><span>地址</span><span>'+esc(p.addr)+'</span></div>':'')+
+    '<div class="rowline"><span>顾客</span><span>'+esc(p.name||'')+' '+esc(p.phone||'')+'</span></div>'+
+    '<div class="rowline"><span>商品</span><span>'+esc(items)+'</span></div>'+
+    '<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">'+btn+
+    '<button class="btn" data-a="'+esc(p.addr||'')+'" onclick="copyDeliverAddr(this)">复制地址</button></div></div>';
+}
+function copyDeliverAddr(btn){
+  var a=btn?btn.getAttribute('data-a'):'';
+  try{ navigator.clipboard.writeText(a); alert('地址已复制，可粘贴到导航'); }
+  catch(e){ var t=document.createElement('textarea'); t.value=a; document.body.appendChild(t); t.select(); document.execCommand('copy'); document.body.removeChild(t); alert('地址已复制，可粘贴到导航'); }
+}
+function deliverStart(id){
+  fetch(SB_URL+'/rest/v1/rpc/deliver_start',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({p_phone:deliverPwd,order_id:id,p_carrier:deliverName})})
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      if(j && j.ok){ startPosLoop(id); renderDeliverView(); }
+      else { alert((j&&j.msg)||'开始配送失败'); }
+    })
+    .catch(function(){ alert('开始配送失败，请检查网络'); });
+}
+function deliverDone(id){
+  if(!confirm('确认已送达？确认后该单从待配送列表移除')) return;
+  fetch(SB_URL+'/rest/v1/rpc/deliver_done',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({p_phone:deliverPwd,order_id:id})})
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      if(j && j.ok){ stopPosLoop(); renderDeliverView(); }
+      else { alert((j&&j.msg)||'确认送达失败'); }
+    })
+    .catch(function(){ alert('确认送达失败，请检查网络'); });
+}
+function startPosLoop(id){
+  stopPosLoop();
+  if(!navigator.geolocation) return;
+  var up=function(){
+    navigator.geolocation.getCurrentPosition(function(pos){
+      var lat=pos.coords.latitude, lng=pos.coords.longitude;
+      try{
+        fetch(SB_URL+'/rest/v1/rpc/update_delivery_pos',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({p_phone:deliverPwd,order_id:id,lat:String(lat),lng:String(lng)})})
+          .then(function(r){ return r.json(); }).catch(function(){});
+      }catch(e){}
+    }, function(){}, {enableHighAccuracy:true, timeout:15000, maximumAge:30000});
+  };
+  up();
+  deliverPosTimer=setInterval(up, 60000);
+}
+function stopPosLoop(){
+  if(deliverPosTimer){ clearInterval(deliverPosTimer); deliverPosTimer=null; }
+}
+function openMyOrders(){
+  var ph=localStorage.getItem('zz_my_phone')||'';
+  var inp=document.getElementById('myOrderPhone');
+  if(inp && ph) inp.value=ph;
+  showModal('myOrdersModal');
+  loadMyOrders();
+}
+function loadMyOrders(){
+  var phone=document.getElementById('myOrderPhone').value.trim();
+  var res=document.getElementById('myOrdersRes');
+  if(!/^1\d{10}$/.test(phone)){ if(res) res.innerHTML='<div style="color:#999">请输入正确的11位手机号</div>'; return; }
+  if(res) res.innerHTML='<div style="color:#999">查询中…</div>';
+  fetch(SB_URL+'/rest/v1/rpc/get_customer_orders',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({p_phone:phone})})
+    .then(function(r){ return r.json(); })
+    .then(function(arr){
+      if(!Array.isArray(arr)){ if(res) res.innerHTML='<div style="color:#999">查询失败，请稍后再试</div>'; return; }
+      renderMyOrders(arr);
+      if(myOrdersTimer){ clearInterval(myOrdersTimer); myOrdersTimer=null; }
+      myOrdersTimer=setInterval(function(){ loadMyOrdersSilent(phone); }, 30000);
+    })
+    .catch(function(){ if(res) res.innerHTML='<div style="color:#999">查询失败，请检查网络</div>'; });
+}
+function loadMyOrdersSilent(phone){
+  fetch(SB_URL+'/rest/v1/rpc/get_customer_orders',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({p_phone:phone})})
+    .then(function(r){ return r.json(); })
+    .then(function(arr){ if(Array.isArray(arr)) renderMyOrders(arr); })
+    .catch(function(){});
+}
+function renderMyOrders(arr){
+  var res=document.getElementById('myOrdersRes');
+  if(!res) return;
+  if(!arr.length){ res.innerHTML='<div style="color:#999;text-align:center;padding:16px">暂无订单记录</div>'; return; }
+  var html='';
+  arr.forEach(function(o){
+    var items=(o.items||[]).map(function(it){ var s=(it.name||''); if(it.qty!=null) s+=' x'+it.qty+(it.unit?it.unit:''); return s; }).join('、')||'';
+    var st=o.status==='new'?'待处理':o.status;
+    var created=String(o.created||'').replace('T',' ').slice(0,19);
+    var total=parseFloat(o.total)||0;
+    var d=(o.delivery&&o.delivery.lat)?o.delivery:null;
+    html+='<div class="card" style="background:#fff;margin-bottom:10px;border-radius:8px">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center"><b>订单 '+(o.no||('#'+o.id))+'</b><span class="badge '+(st==='已送达'||st==='已完成'?'off':'paid')+'">'+esc(st)+'</span></div>'+
+      '<div style="font-size:12px;color:#888;margin:4px 0">'+esc(created)+' · '+(o.mode==='pickup'?'到店自提':'外送')+' · ¥'+total.toFixed(2)+'</div>'+
+      (items?'<div style="font-size:13px;color:#555">'+esc(items)+'</div>':'')+
+      orderStatusBar(o)+
+      '<div style="font-size:13px">预计送达：约 <b style="color:#e65100">'+etaMin(o)+'</b> 分钟（'+etaTimeStr(o)+' 前后）</div>'+
+      (d?'<div id="mymap_'+o.id+'" style="height:160px;position:relative;background:#eef;border-radius:8px;margin-top:8px;overflow:hidden"></div>':'')+
+      '</div>';
+  });
+  res.innerHTML=html;
+  arr.forEach(function(o){
+    if(o.delivery && o.delivery.lat && o.id){
+      setTimeout(function(){ renderDeliverMap('mymap_'+o.id, o.delivery.lat, o.delivery.lng); }, 100);
+    }
+  });
+}
+function etaTimeStr(o){
+  var base=o.created?new Date(o.created):new Date();
+  var ms=base.getTime()+etaMin(o)*60000;
+  var d=new Date(ms);
+  function p(x){ return (x<10?'0':'')+x; }
+  return p(d.getHours())+':'+p(d.getMinutes());
+}
+function orderStatusBar(o){
+  var seq=(o.mode==='pickup')?['已下单','已接单','制作中','待自提','已完成']:['已下单','已接单','制作中','配送中','已送达'];
+  var cur=o.status==='new'?'已下单':(o.status||'已下单');
+  var idx=seq.indexOf(cur); if(idx<0) idx=0;
+  var steps=seq.map(function(x,i){
+    var st=i<idx?'done':(i===idx?'cur':'todo');
+    var bg=st==='done'?'#2e7d32':(st==='cur'?'#fb8c00':'#e0e0e0');
+    var col=st==='todo'?'#bbb':(st==='cur'?'#e65100':'#2e7d32');
+    return '<div style="flex:1;text-align:center;font-size:11px;color:'+col+'"><div style="width:18px;height:18px;border-radius:50%;margin:0 auto 4px;line-height:18px;background:'+bg+';color:#fff;font-size:10px">'+(st==='done'?'✓':(i+1))+'</div>'+x+'</div>';
+  }).join('');
+  return '<div style="display:flex;gap:2px;margin:10px 0 4px">'+steps+'</div>';
+}
+function renderDeliverMap(divId, dlat, dlng){
+  var div=document.getElementById(divId);
+  if(!div) return;
+  var jskey=shopCfg.jskey, jscode=shopCfg.jscode;
+  if(!jskey||!jscode){ div.innerHTML='<div style="font-size:12px;color:#999;padding:8px">地图未配置（后台「店铺设置」填 JS API Key）</div>'; return; }
+  loadAmap(jskey, jscode, function(){
+    if(!window.AMap){ div.innerHTML='<div style="font-size:12px;color:#999;padding:8px">地图加载失败</div>'; return; }
+    var slat=parseFloat(shopCfg.shopLat)||30.856438, slng=parseFloat(shopCfg.shopLng)||104.323828;
+    var L1=parseFloat(dlat), L2=parseFloat(dlng);
+    if(isNaN(L1)||isNaN(L2)){ div.innerHTML='<div style="font-size:12px;color:#999;padding:8px">配送位置更新中…</div>'; return; }
+    var dkm=distKm(slat,slng,L1,L2);
+    try{
+      div.innerHTML='';
+      var map=new AMap.Map(divId,{zoom:13,center:[L2,L1]});
+      new AMap.Marker({position:[L2,L1],title:'配送员'}).setMap(map);
+      new AMap.Marker({position:[slng,slat],title:'店铺'}).setMap(map);
+      var info=document.createElement('div');
+      info.style.cssText='position:absolute;left:6px;bottom:6px;background:rgba(255,255,255,.94);padding:3px 8px;font-size:12px;border-radius:6px;z-index:3;box-shadow:0 1px 3px rgba(0,0,0,.2)';
+      info.innerHTML='🛵 配送员距店铺约 '+dkm.toFixed(1)+' 公里';
+      div.appendChild(info);
+    }catch(e){ div.innerHTML='<div style="font-size:12px;color:#999;padding:8px">地图渲染失败</div>'; }
+  });
+}
 function changePwd(){
   var v=document.getElementById('newPwd').value.trim();
   if(!v){ alert('请输入新密码'); return; }
