@@ -1774,7 +1774,7 @@ function cloudAmount(c){
   var base;
   if(p.payTotal!=null){ base=Number(p.payTotal); }
   else { base=(p.weightTotal!=null&&p.weightTotal?Number(p.weightTotal):(p.total!=null?Number(p.total):0)); if(p.newcust && p.discount!=null) base=base-Number(p.discount); if(p.referralDeduct) base=base-Number(p.referralDeduct); }
-  return roundHalf(base);
+  return (p.hasWeight?base:roundHalf(base));
 }
 function loadMoreCloudOrders(){
   window.cloudVisibleCount = (window.cloudVisibleCount||5) + 5;
@@ -1823,7 +1823,7 @@ function printCloudOrder(id){
   var note='';
   if(p.remark){ var rm=String(p.remark).trim(); if(rm && !/^https?:\/\/|\.github\.io|\.edgeone\.dev|uri\.amap\.com/i.test(rm)) note=rm; }
   var raw=(p.payTotal!=null)?Number(p.payTotal):((p.weightTotal!=null&&p.weightTotal?Number(p.weightTotal):(p.total!=null?Number(p.total):0))-(p.newcust&&p.discount!=null?Number(p.discount):0)-(p.referralDeduct?Number(p.referralDeduct):0));
-  var amt=roundHalf(raw);
+  var amt=(p.hasWeight?raw:roundHalf(raw));
   var roundAmt=Math.round((raw-amt)*100)/100;
   var paid=(c.status==='已付款');
   var body={ seqNo:String(c.id), title:'榨榨鲜果', lines:lines, note:note, round:(roundAmt>0?('-'+money(roundAmt)):''), amount:'¥'+Number(amt).toFixed(2), newCust:(p.newcust?true:false), newCustDiscount:(p.newcust?(Number(p.discount)||0):0), referralDeduct:(p.referralDeduct?Number(p.referralDeduct):0), time:nowStr(), paid:paid, hasJuice:(p.items||[]).some(function(it){return it.cat==='果汁'||it.cat==='半价';}),
@@ -1843,7 +1843,7 @@ function copyCloudOrderText(id){
   var c=cloudOrders.find(function(x){return x.id===id;}); if(!c) return;
   var p=c.payload||{};
   var raw=(p.payTotal!=null)?Number(p.payTotal):((p.weightTotal!=null&&p.weightTotal?Number(p.weightTotal):(p.total!=null?Number(p.total):0))-(p.newcust&&p.discount!=null?Number(p.discount):0)-(p.referralDeduct?Number(p.referralDeduct):0));
-  var amt=roundHalf(raw); var roundAmt=Math.round((raw-amt)*100)/100;
+  var amt=(p.hasWeight?raw:roundHalf(raw)); var roundAmt=Math.round((raw-amt)*100)/100;
   var t='🍉 榨榨鲜果 外卖订单\n——————————————\n【订单号】'+(p.id||('云端#'+c.id))+'\n【下单时间】'+(p.created||'')+'\n【商品】\n'+
     (p.items||[]).map(function(it){ var dd=byId(it.id); var amt2=(it.per>0&&p.weights&&p.weights[it.id])?(it.per*p.weights[it.id]):(dd?estPrice(dd,it):it.price*it.qty); return '  '+it.name+((it.per>0&&p.weights&&p.weights[it.id])?('（称重'+p.weights[it.id]+'斤×'+it.per+'元/斤）'):((it.note&&it.note.indexOf('按')===0)?('（'+it.note+'）'):(' ×'+it.qty)))+'  '+money(amt2); }).join('\n')+
     '\n——————————————\n'+(p.newcust?'【新客优惠】-'+Number(p.discount||0).toFixed(2)+'\n':'')+(p.referralDeduct?'【推广抵扣】-'+Number(p.referralDeduct).toFixed(2)+'\n':'')+(roundAmt>0?'【抹零】-'+money(roundAmt)+'\n':'')+'【应付合计】'+money(amt)+'\n【顾客】'+(p.name||'')+' '+(p.phone||'')+'\n【地址】'+(p.mode==='pickup'?'到店自提':(p.addr||''))+'\n【预送】'+(p.time||'')+'\n【状态】'+(c.status==='new'?'待处理':c.status);
@@ -1995,7 +1995,9 @@ function calcWeightSub(o){
 }
 function markPaid(i){
   var o=orders[i]; if(!o) return;
-  var total=roundHalf(calcWeightSub(o)+(o.deliveryFee||0));
+  var hasW=o.items.some(function(c){var d=byId(c.id);return d&&d.per>0;});
+  var raw=calcWeightSub(o)+(o.deliveryFee||0);
+  var total=hasW?raw:roundHalf(raw);
   if(confirm('确认顾客已付款 '+money(total)+' 元？')){ o.status='已付款'; o.weightTotal=total; o.total=total; save(LS_ORDERS, orders); printViaAgent(i, true); renderAdmin(); }
 }
 
