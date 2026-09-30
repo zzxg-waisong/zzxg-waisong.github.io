@@ -1005,6 +1005,7 @@ function openCheckout(){
   }
   closeDrawer(); document.getElementById('checkoutModal').classList.add('show'); fillTimeOptions(); hlTimeInit();
   window._delivery=null; document.getElementById('deliveryBox').style.display='none';
+  var _p0=document.getElementById('ckPhone')?document.getElementById('ckPhone').value.trim():''; if(/^1\d{10}$/.test(_p0)) onCkPhone();
 }
 function distKm(a,b){
   var R=6371, dLat=(b.lat-a.lat)*Math.PI/180, dLng=(b.lng-a.lng)*Math.PI/180;
@@ -1335,6 +1336,7 @@ function autoFillCust(){
     if(ad && best.addr && !ad.value) ad.value=best.addr;
     if(de && best.detail && !de.value) de.value=best.detail;
     if(ad && best.addr && !ad.value){} // 已填则不覆盖
+    if(ph && best.phone) onCkPhone(); // 带出手机号后同步查绑定关系
   }
 }
 function noUseNewcust(phone){
@@ -1409,6 +1411,8 @@ function finalSubmit(ded){
   placeCloudOrder(order);
   // 老带新：绑定推荐人 + 生成返款流水（每单都返，次日到账）
   var ref=document.getElementById('ckRefPhone')?document.getElementById('ckRefPhone').value.trim():'';
+  // 已绑定顾客无需再填写：自动用原绑定关系，每单照常返利
+  if(!ref && window._refBoundPhone===phone && window._refOldPhone) ref=window._refOldPhone;
   bindRefAndRecord(phone, ref, order.id, total);
   cart={};
   saveCart();
@@ -2471,11 +2475,15 @@ function onCkPhone(){
   var ph=document.getElementById('ckPhone').value.trim();
   var tip=document.getElementById('refWalletTip');
   if(!tip) return;
-  if(!/^1\d{10}$/.test(ph)){ tip.style.display='none'; return; }
+  if(!/^1\d{10}$/.test(ph)){ tip.style.display='none'; window._refBoundPhone=null; window._refOldPhone=''; var w0=document.getElementById('refPhoneWrap'); if(w0) w0.style.display='block'; return; }
   fetch(SB_URL+'/rest/v1/rpc/get_bind',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({p_phone:ph})})
     .then(function(r){ return r.json(); })
     .then(function(jb){
-      var bindHtml=(jb&&jb.bound)?('您已绑定推荐人 '+esc(jb.old_phone||'')+'，不可更改'):'';
+      window._refBoundPhone=ph; window._refOldPhone=(jb&&jb.old_phone)||'';
+      var w=document.getElementById('refPhoneWrap');
+      if(w) w.style.display=(jb&&jb.bound)?'none':'block';
+      if(jb&&jb.bound){ var rf=document.getElementById('ckRefPhone'); if(rf) rf.value=''; }
+      var bindHtml=(jb&&jb.bound)?('✔ 您已绑定推荐人 '+esc(jb.old_phone||'')+'，后续下单自动返利，无需再填写'):'';
       // 同时结算到期返利（次日到账）并刷新钱包
       fetch(SB_URL+'/rest/v1/rpc/settle_referral',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({p_phone:ph})})
         .then(function(r){ return r.json(); })
@@ -2502,6 +2510,11 @@ function checkRefWallet(){
 function bindRefAndRecord(phone, ref, orderId, total){
   if(!ref || !/^1\d{10}$/.test(ref)) return;
   if(ref===phone){ alert('推荐人不能是您自己'); return; }
+  if(window._refBoundPhone===phone && window._refOldPhone===ref){
+    // 已绑定顾客：跳过重复绑定，直接按原绑定关系记录返利（每单都返，次日到账）
+    fetch(SB_URL+'/rest/v1/rpc/record_referral',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({p_new:phone,p_old:ref,p_order_id:orderId,p_amount:total})}).catch(function(){});
+    return;
+  }
   fetch(SB_URL+'/rest/v1/rpc/bind_referral',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({p_new:phone,p_old:ref})})
     .then(function(r){ return r.json(); })
     .then(function(j){
