@@ -477,7 +477,7 @@ function route(){
   var h=location.hash||'#/';
   if(h.indexOf('#/admin')===0){ if(location.href.indexOf('autologin=1')<0){ location.hash='#/'; return; } showAdmin(); }
   else if(h.indexOf('#/deliver')===0){ if(!deliverLogged){ location.hash='#/'; return; } showDeliverView(); }
-  else { stopCloudTimer(); showCustomer(); }
+  else { stopCloudTimer(); hideDeliverView(); showCustomer(); }
 }
 window.addEventListener('hashchange', route);
 
