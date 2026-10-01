@@ -2753,7 +2753,7 @@ function renderReferralAdmin(){
     '<div class="rowline"><span>抵扣比例（%）</span><span><input id="refDeductRate" type="number" step="1" min="0" style="width:70px;border:1px solid #ddd;border-radius:6px;padding:6px"></span></div>'+
     '<div class="rowline"><span>单笔抵扣上限（元）</span><span><input id="refMax" type="number" step="0.5" min="0" style="width:70px;border:1px solid #ddd;border-radius:6px;padding:6px"></span></div>'+
     '<div style="font-size:12px;color:#888;margin:6px 0;line-height:1.8">说明：朋友下单填您手机号 → 您得「返点比例」返利（次日到账）；您下单自动按「抵扣比例」抵扣，最高「单笔上限」元，不超钱包余额。</div>'+
-    '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn" onclick="saveReferralCfg()">保存设置</button><button class="btn" onclick="openRefCfgWindow()">👨‍💼 老板查询·修改窗口</button><span id="refSaveRes" style="font-size:13px;color:#2e7d32;line-height:34px"></span></div>'+
+    '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn" onclick="saveReferralCfg()">保存设置</button><button class="btn" onclick="openRefCfgWindow()">查询</button><span id="refSaveRes" style="font-size:13px;color:#2e7d32;line-height:34px"></span></div>'+
     '</div></div></div>';
   fetch(SB_URL+'/rest/v1/rpc/get_referral_cfg',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:'{}'})
     .then(function(r){ return r.json(); })
@@ -2788,12 +2788,14 @@ function openRefCfgWindow(){
   m.id='refCfgModal';
   m.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center;';
   var mm=document.createElement('div');
-  mm.style.cssText='background:#fff;border-radius:16px;width:90%;max-width:360px;padding:20px 18px;box-sizing:border-box;max-height:90vh;overflow:auto;';
+  mm.style.cssText='background:#fff;border-radius:16px;width:94%;max-width:480px;padding:20px 18px;box-sizing:border-box;max-height:90vh;overflow:auto;';
   mm.innerHTML=
-    '<div style="font-size:17px;font-weight:600;color:#222;margin-bottom:12px">老板查询·修改（拉新分成）</div>'+
-    '<div style="font-size:13px;color:#666;font-weight:600;margin:4px 0 6px">📊 当前设置查询</div>'+
-    '<div id="refCfgQry" style="font-size:13px;color:#333;background:#f7f7f7;border-radius:8px;padding:10px;line-height:1.9;margin-bottom:8px">正在查询云端…</div>'+
+    '<div style="font-size:17px;font-weight:600;color:#222;margin-bottom:12px">查询</div>'+
+    '<div style="font-size:13px;color:#666;font-weight:600;margin:4px 0 6px">📊 老客数据</div>'+
+    '<div id="refMemberWrap" style="font-size:13px;color:#333;background:#f7f7f7;border-radius:8px;padding:10px;line-height:1.9;margin-bottom:8px;overflow:auto">正在查询云端…</div>'+
     '<button class="btn" style="width:100%;margin-bottom:12px" onclick="loadRefCfgWindow()">🔄 刷新查询</button>'+
+    '<div style="font-size:13px;color:#666;font-weight:600;margin:4px 0 6px">📊 当前设置</div>'+
+    '<div id="refCfgQry" style="font-size:13px;color:#333;background:#f7f7f7;border-radius:8px;padding:10px;line-height:1.9;margin-bottom:8px">正在查询云端…</div>'+
     '<div style="font-size:13px;color:#666;font-weight:600;margin:4px 0 6px">✏️ 修改设置</div>'+
     '<div class="rowline"><span>功能开关</span><span><select id="refCfgEn" style="border:1px solid #ddd;border-radius:6px;padding:6px"><option value="1">开启</option><option value="0">关闭</option></select></span></div>'+
     '<div class="rowline"><span>返点比例（%）</span><span><input id="refCfgRate" type="number" step="0.5" min="0" style="width:70px;border:1px solid #ddd;border-radius:6px;padding:6px"></span></div>'+
@@ -2811,6 +2813,7 @@ function openRefCfgWindow(){
 function loadRefCfgWindow(){
   var q=document.getElementById('refCfgQry');
   if(q) q.textContent='正在查询云端…';
+  loadRefMembers();
   fetch(SB_URL+'/rest/v1/rpc/get_referral_cfg',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:'{}'})
     .then(function(r){ return r.json(); })
     .then(function(j){
@@ -2845,6 +2848,44 @@ function saveRefCfgWindow(){
         setTimeout(function(){ if(res) res.textContent=''; },2000);
       } else if(j && j.msg){ alert(j.msg); }
     }).catch(function(){ alert('保存失败：请确认云端已执行拉新SQL'); });
+}
+function loadRefMembers(){
+  var w=document.getElementById('refMemberWrap');
+  if(!w) return;
+  w.innerHTML='正在查询云端…';
+  fetch(SB_URL+'/rest/v1/rpc/list_referral_members',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({p_admin:localStorage.getItem(LS_CLOUDPWD)||'1986shenhu'})})
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      var arr=Array.isArray(j)?j:(j&&j.data?j.data:null);
+      if(!arr){ w.innerHTML='⚠ 查询失败（请确认云端已执行拉新SQL）'; return; }
+      if(arr.length===0){ w.innerHTML='<div style="font-size:13px;color:#999;padding:8px 0">暂无老客数据（有顾客绑定后自动出现，可用余额可在本窗口调整并同步云端）</div>'; return; }
+      var h='<table style="width:100%;border-collapse:collapse;font-size:12px">'+
+        '<tr style="background:#eef6ee"><th style="padding:5px;border:1px solid #ddd">手机号</th><th style="padding:5px;border:1px solid #ddd">绑定新客</th><th style="padding:5px;border:1px solid #ddd">累计返现</th><th style="padding:5px;border:1px solid #ddd">累计抵扣</th><th style="padding:5px;border:1px solid #ddd">可用余额(可改)</th><th style="padding:5px;border:1px solid #ddd"></th></tr>';
+      for(var i=0;i<arr.length;i++){
+        var o=arr[i];
+        var bal=o.balance==null?0:Number(o.balance);
+        h+='<tr><td style="padding:5px;border:1px solid #ddd">'+esc(o.phone)+'</td>'+
+           '<td style="padding:5px;border:1px solid #ddd;text-align:center">'+(o.bind_count||0)+'</td>'+
+           '<td style="padding:5px;border:1px solid #ddd;text-align:right">¥'+(Number(o.total_rebate||0)).toFixed(2)+'</td>'+
+           '<td style="padding:5px;border:1px solid #ddd;text-align:right">¥'+(Number(o.total_deduct||0)).toFixed(2)+'</td>'+
+           '<td style="padding:5px;border:1px solid #ddd;text-align:center"><input id="bal_'+esc(o.phone)+'" type="number" step="0.01" min="0" value="'+bal.toFixed(2)+'" style="width:80px;border:1px solid #ddd;border-radius:6px;padding:4px;box-sizing:border-box"></td>'+
+           '<td style="padding:5px;border:1px solid #ddd;text-align:center"><button class="btn" style="padding:4px 10px;font-size:12px" onclick="saveRefMember(\''+esc(o.phone)+'\')">保存</button></td></tr>';
+      }
+      h+='</table><div style="font-size:11px;color:#999;margin-top:6px">累计返现/抵扣为流水实账自动累计，只读；可用余额可调整，点保存立即同步云端（抵扣按此余额计算）</div>';
+      w.innerHTML=h;
+    }).catch(function(){ w.innerHTML='⚠ 查询失败：网络异常'; });
+}
+function saveRefMember(phone){
+  var inp=document.getElementById('bal_'+phone);
+  if(!inp) return;
+  var bal=parseFloat(inp.value);
+  if(!(bal>=0)){ alert('请输入有效余额'); return; }
+  fetch(SB_URL+'/rest/v1/rpc/update_referral_balance',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({p_admin:localStorage.getItem(LS_CLOUDPWD)||'1986shenhu',p_phone:phone,p_balance:bal})})
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      if(j && j.ok){ alert('✓ 已保存，已同步云端'); loadRefMembers(); }
+      else if(j && j.msg){ alert(j.msg); }
+    }).catch(function(){ alert('保存失败：网络异常'); });
 }
 function renderSetAdmin(){
   var html='<div class="panel"><h3>设置</h3><div class="card">'+
