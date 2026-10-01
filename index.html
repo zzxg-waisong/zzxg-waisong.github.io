@@ -358,7 +358,7 @@ var cloudOrders=[]; // 顾客手机下单的云端订单
 var cloudPhoneCount={}; // 手机号出现次数
 var cloudBalances={}; // 新客优惠余额（云端账户）
 var cloudTimer=null, cloudSeen=(function(){try{return JSON.parse(localStorage.getItem('zz_cloud_seen')||'{}');}catch(e){return {};}})(), autoAlarm=(localStorage.getItem('zz_auto_alarm')!=='0'), alarmTimer=null, alarmOrder=null, cloudWorker=null, localAlarmed=(function(){try{return JSON.parse(localStorage.getItem('zz_local_alarmed')||'{}');}catch(e){return {};}})(); // 本机已提示过的本地单（去重，本地优先）
-var IMG_VER='20261001dxx'; // 图片版本号：更新商品图后递增，用于强制刷新浏览器缓存
+var IMG_VER='20261001dxxx'; // 图片版本号：更新商品图后递增，用于强制刷新浏览器缓存
 
 function defaultDishes(){
   return []; // 菜单全部由云端管理，本地不再硬编码旧菜单
@@ -1844,6 +1844,34 @@ function renderCloudB(){
       .catch(function(){ renderAdmin(); });
   }catch(e){ renderAdmin(); }
 }
+var _vq=[], _vqPlaying=false;
+function _vqPlay(src, vol){
+  _vq.push({src:src, vol:(vol==null?1:vol)});
+  _vqNext();
+}
+function _vqNext(){
+  if(_vqPlaying || _vq.length===0) return;
+  var it=_vq.shift(); _vqPlaying=true;
+  try{
+    var a=new Audio(it.src);
+    a.volume=Math.max(0,Math.min(1,it.vol));
+    a.onended=function(){ _vqPlaying=false; _vqNext(); };
+    a.onerror=function(){ _vqPlaying=false; _vqNext(); };
+    var p=a.play();
+    if(p && p.catch){ p.catch(function(err){ _vqPlaying=false; if(err&&err.name==='NotAllowedError') showVoiceBlockTip(); _vqNext(); }); }
+  }catch(e){ _vqPlaying=false; _vqNext(); }
+}
+var _voiceUnlocked=false;
+function unlockVoice(){
+  if(_voiceUnlocked) return; _voiceUnlocked=true;
+  try{ var _u=new Audio(); _u.muted=true; var _pp=_u.play(); if(_pp&&_pp.then) _pp.then(function(){ _u.pause(); }).catch(function(){}); }catch(e){}
+  var tip=document.getElementById('voiceBlockTip'); if(tip) tip.remove();
+  if(alarmOrder) speakNewOrder(alarmOrder);
+}
+if(document.addEventListener){
+  document.addEventListener('click', unlockVoice, {passive:true});
+  document.addEventListener('touchstart', unlockVoice, {passive:true});
+}
 function speakNewOrder(id){
   try{
     if(alarmTimer){ clearInterval(alarmTimer); alarmTimer=null; }
@@ -1851,9 +1879,7 @@ function speakNewOrder(id){
     var times=0;
     var play=function(){
       if(alarmOrder!==(id==null?0:id)) return;
-      var a=new Audio('https://zzxg-waisong.github.io/voice_new_order.wav');
-      a.volume=Math.max(0,Math.min(1,parseInt(localStorage.getItem('zz_voice_vol')||'100',10)/100));
-      a.play().catch(function(err){ if(err&&err.name==='NotAllowedError') showVoiceBlockTip(); });
+      _vqPlay('https://zzxg-waisong.github.io/voice_new_order.wav', parseInt(localStorage.getItem('zz_voice_vol')||'100',10)/100);
     };
     play();
     alarmTimer=setInterval(function(){
@@ -1869,7 +1895,7 @@ function showVoiceBlockTip(){
   tip.id='voiceBlockTip';
   tip.style='position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:99999;background:#fff3e0;border:1px solid #fb8c00;color:#e65100;border-radius:8px;padding:8px 14px;font-size:13px;box-shadow:0 2px 10px rgba(0,0,0,.15);cursor:pointer';
   tip.innerHTML='⚠ 浏览器拦截了语音提醒，点击此处解锁';
-  tip.onclick=function(){ try{ var a=new Audio('https://zzxg-waisong.github.io/voice_new_order.wav'); a.volume=0.01; a.play(); }catch(e){} if(alarmOrder) speakNewOrder(alarmOrder); this.remove(); };
+  tip.onclick=unlockVoice;
   document.body.appendChild(tip);
 }
 
@@ -1916,7 +1942,7 @@ function acceptCloudOrder(id){
   if(alarmTimer){ clearInterval(alarmTimer); alarmTimer=null; }
   updateCloudStatus(id,'已接单');
   try{ printCloudOrder(id); }catch(e){}
-  try{ var _aa=new Audio('https://zzxg-waisong.github.io/voice_accepted.wav'); _aa.volume=Math.max(0,Math.min(1,parseInt(localStorage.getItem('zz_voice_vol')||'100',10)/100)); _aa.play(); }catch(e){}
+  try{ _vqPlay('https://zzxg-waisong.github.io/voice_accepted.wav', parseInt(localStorage.getItem('zz_voice_vol')||'100',10)/100); }catch(e){}
 }
 function newCustCloudOrder(id){
   var c=cloudOrders.find(function(x){return x.id===id;}); if(!c) return;
