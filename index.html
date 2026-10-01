@@ -2027,12 +2027,6 @@ function renderOrders(){
     '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><b>📱 顾客手机下的单（云端）</b>'+
     '<button class="btn" style="background:#1a73e8;color:#fff" onclick="fetchCloudOrders()">🔄 刷新云端订单</button></div>'+
     (aliveCloud.length?'<div style="font-size:12px;color:#555;margin:8px 0">共 '+aliveCloud.length+' 单（顾客微信扫码下单后，点「刷新云端订单」即可看到）</div>':'<div style="font-size:12px;color:#888;margin:8px 0">云端未拉取（点击刷新查看顾客手机下的单）</div>')+
-    '<div style="display:flex;gap:6px;margin:10px 0;flex-wrap:wrap;align-items:center;background:#eef4fb;border:1px solid #d0e0f5;border-radius:8px;padding:8px">'+
-      '<b style="font-size:13px">🎁 加优惠额度</b>'+
-      '<input id="addBalPhone" type="tel" maxlength="11" placeholder="手机号" value="'+esc(window._addBalPhone||'')+'" oninput="window._addBalPhone=this.value" style="flex:1;min-width:110px;border:1px solid #ddd;border-radius:6px;padding:6px;font-size:13px">'+
-      '<input id="addBalAmt" type="number" min="0.5" step="0.5" placeholder="金额" value="'+esc(window._addBalAmt||'')+'" oninput="window._addBalAmt=this.value" style="width:64px;border:1px solid #ddd;border-radius:6px;padding:6px;font-size:13px">'+
-      '<button class="btn" style="background:#ad1457;color:#fff;font-size:12px;padding:5px 12px" onclick="addBalance()">增加</button>'+
-    '</div>'+
     '<div style="margin:10px 0;padding:10px;background:#e8f5e9;border-radius:8px;font-size:14px"><b>💰 今日营业额</b>：<span style="color:#2e7d32;font-weight:700">¥'+todayTotal+'</span>（已完成 '+todayCount+' 单）</div>'+
 
     '<div style="display:flex;gap:6px;margin:10px 0;flex-wrap:wrap;align-items:center;background:#fff8e1;border:1px solid #ffe082;border-radius:8px;padding:8px">'+
@@ -2754,6 +2748,12 @@ function renderReferralAdmin(){
     '<div class="rowline"><span>单笔抵扣上限（元）</span><span><input id="refMax" type="number" step="0.5" min="0" style="width:70px;border:1px solid #ddd;border-radius:6px;padding:6px"></span></div>'+
     '<div style="font-size:12px;color:#888;margin:6px 0;line-height:1.8">说明：朋友下单填您手机号 → 您得「返点比例」返利（次日到账）；您下单自动按「抵扣比例」抵扣，最高「单笔上限」元，不超钱包余额。</div>'+
     '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn" onclick="saveReferralCfg()">保存设置</button><button class="btn" onclick="openRefCfgWindow()">查询</button><span id="refSaveRes" style="font-size:13px;color:#2e7d32;line-height:34px"></span></div>'+
+    '<div style="display:flex;gap:6px;margin:12px 0 4px;flex-wrap:wrap;align-items:center;background:#eef4fb;border:1px solid #d0e0f5;border-radius:8px;padding:8px">'+
+      '<b style="font-size:13px">🎁 加优惠额度</b>'+
+      '<input id="addBalPhone" type="tel" maxlength="11" placeholder="手机号" value="'+esc(window._addBalPhone||'')+'" oninput="window._addBalPhone=this.value" style="flex:1;min-width:110px;border:1px solid #ddd;border-radius:6px;padding:6px;font-size:13px">'+
+      '<input id="addBalAmt" type="number" min="0.5" step="0.5" placeholder="金额" value="'+esc(window._addBalAmt||'')+'" oninput="window._addBalAmt=this.value" style="width:64px;border:1px solid #ddd;border-radius:6px;padding:6px;font-size:13px">'+
+      '<button class="btn" style="background:#ad1457;color:#fff;font-size:12px;padding:5px 12px" onclick="addBalance()">增加</button>'+
+    '</div>'+
     '</div></div></div>';
   fetch(SB_URL+'/rest/v1/rpc/get_referral_cfg',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:'{}'})
     .then(function(r){ return r.json(); })
