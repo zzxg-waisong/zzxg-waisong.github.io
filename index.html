@@ -117,17 +117,14 @@ button:active{transform:scale(.94);-webkit-transform:scale(.94);opacity:.85}
 <div id="customer">
   <div class="shop-head">
   <div class="topbar">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
-      <div>
-        <h1><span style="cursor:pointer" onclick="document.getElementById('loginModal').classList.add('show')">🍉</span> 榨榨鲜果</h1>
-        <p>新鲜水果 · 鲜果现榨 · 不加糖 · 无科技</p>
+    <div>
+      <h1><span style="cursor:pointer" onclick="document.getElementById('loginModal').classList.add('show')">🍉</span> 榨榨鲜果</h1>
+      <p>新鲜水果 · 鲜果现榨 · 不加糖 · 无科技</p>
+      <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+        <button class="admin-entry" style="color:#00897b" onclick="openMyOrders()">📋 订单查询</button>
+        <button class="admin-entry" style="color:#e65100" onclick="openPromo()">🎁 优惠</button>
+        <button class="admin-entry" style="color:#1565c0" onclick="openDeliverLogin()">🛵 配送</button>
       </div>
-      <div style="display:flex;flex-direction:column;gap:6px;align-items:stretch">
-      <button class="admin-entry" style="color:#00897b" onclick="openMyOrders()">📋 顾客查询</button>
-      <button class="admin-entry" style="color:#e65100" onclick="openPromo()">🎁 优惠</button>
-      <button class="admin-entry" style="color:#1565c0" onclick="openDeliverLogin()">🛵 配送</button>
-      
-    </div>
     </div>
   </div>
   <div id="shopBanner" style="display:none;padding:8px 14px;font-size:14px;font-weight:700;text-align:center"></div>
