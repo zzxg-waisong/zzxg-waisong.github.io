@@ -104,17 +104,17 @@
   "on": true,
   "cat": "水果",
   "img": "gansu_pg_xiao.jpg",
-  "per": 0,
+  "per": 6,
   "name": "甘肃苹果（小）",
   "unit": "斤",
-  "price": 5
+  "price": 6
  },
  {
   "id": "f_gansu_pg_da",
   "on": true,
   "cat": "水果",
   "img": "gansu_pg_da.jpg",
-  "per": 0,
+  "per": 6,
   "name": "甘肃苹果（大）尾货",
   "unit": "斤",
   "price": 6
@@ -124,11 +124,12 @@
   "on": true,
   "cat": "水果",
   "img": "ganzhe.jpg",
-  "per": 0,
+  "per": 4,
   "desc": "",
-  "name": "云南黄金甘蔗 尾货",
+  "name": "云南黄金甘蔗",
   "unit": "盒",
-  "price": 10
+  "price": 15,
+  "stock": null
  },
  {
   "id": "f_sanhongyou",
@@ -217,7 +218,7 @@
   "cat": "果汁",
   "img": "xuelizhi.jpg",
   "per": 0,
-  "name": "雪梨汁（500ml）",
+  "name": "梨汁（500ml）",
   "unit": "杯",
   "price": 10
  },
@@ -227,17 +228,7 @@
   "cat": "果汁",
   "img": "pingguozhi.jpg",
   "per": 0,
-  "name": "甘肃苹果汁（500ml）",
-  "unit": "杯",
-  "price": 18
- },
- {
-  "id": "j_mht",
-  "on": false,
-  "cat": "果汁",
-  "img": "mihoutaozhi.jpg",
-  "per": 0,
-  "name": "红心猕猴桃汁（500ml）",
+  "name": "苹果汁（500ml）",
   "unit": "杯",
   "price": 18
  },
@@ -262,16 +253,6 @@
   "price": 16
  },
  {
-  "id": "j_ly",
-  "on": false,
-  "cat": "果汁",
-  "img": "liyusheyouzhi.jpg",
-  "per": 0,
-  "name": "礼遇奢柚汁（500ml）",
-  "unit": "杯",
-  "price": 19
- },
- {
   "id": "j_danxia",
   "on": false,
   "cat": "果汁",
@@ -293,7 +274,7 @@
  },
  {
   "id": "j_hjmigua",
-  "on": true,
+  "on": false,
   "cat": "果汁",
   "img": "huangpihamiguazhi.jpg",
   "per": 0,
@@ -310,5 +291,59 @@
   "name": "石榴汁（500ml）",
   "unit": "杯",
   "price": 15
+ },
+ {
+  "id": "f_xiaofanqie",
+  "on": true,
+  "cat": "水果",
+  "img": "xiaofanqie.jpg",
+  "per": 10,
+  "name": "小番茄（圣女果）",
+  "unit": "斤",
+  "price": 10
+ },
+ {
+  "id": "f_ningmeng",
+  "on": true,
+  "cat": "水果",
+  "img": "ningmeng.png",
+  "per": 11,
+  "name": "柠檬",
+  "unit": "斤",
+  "price": 11
+ },
+ {
+  "id": "g_kivi12",
+  "on": true,
+  "cat": "礼盒",
+  "img": "gift_kivi12_out.jpg",
+  "per": 0,
+  "img2": "gift_kivi12_in.jpg",
+  "name": "红心猕猴桃礼盒（12粒）",
+  "unit": "盒",
+  "price": 68,
+  "stock": 2
+ },
+ {
+  "id": "g_kivi20",
+  "on": true,
+  "cat": "礼盒",
+  "img": "gift_kivi20_out.jpg",
+  "per": 0,
+  "img2": "gift_kivi20_in.jpg",
+  "name": "红心猕猴桃礼盒（20粒）",
+  "unit": "盒",
+  "price": 98,
+  "stock": 2
+ },
+ {
+  "id": "f_hongxin_hlg",
+  "on": true,
+  "cat": "水果",
+  "img": "hongxin_huolongguo.jpg",
+  "per": 0,
+  "name": "红心火龙果",
+  "unit": "个",
+  "price": 2.5
  }
 ]
