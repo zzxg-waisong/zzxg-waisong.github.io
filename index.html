@@ -1,4 +1,4 @@
-﻿﻿<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -356,7 +356,7 @@ var cloudOrders=[]; // 顾客手机下单的云端订单
 var cloudPhoneCount={}; // 手机号出现次数
 var cloudBalances={}; // 新客优惠余额（云端账户）
 var cloudTimer=null, cloudSeen=(function(){try{return JSON.parse(localStorage.getItem('zz_cloud_seen')||'{}');}catch(e){return {};}})(), autoAlarm=(localStorage.getItem('zz_auto_alarm')!=='0'), alarmTimer=null, alarmOrder=null, cloudWorker=null, localAlarmed=(function(){try{return JSON.parse(localStorage.getItem('zz_local_alarmed')||'{}');}catch(e){return {};}})(); // 本机已提示过的本地单（去重，本地优先）
-var IMG_VER='20261001b'; // 图片版本号：更新商品图后递增，用于强制刷新浏览器缓存
+var IMG_VER='20261001d'; // 图片版本号：更新商品图后递增，用于强制刷新浏览器缓存
 
 function defaultDishes(){
   return []; // 菜单全部由云端管理，本地不再硬编码旧菜单
@@ -1562,7 +1562,7 @@ function payDone(){
   // 同步云端订单状态为已付款（店主后台可见）
   try{
     var pwd=localStorage.getItem(LS_CLOUDPWD)||'1986shenhu';
-    fetch(SB_URL+'/rest/v1/rpc/update_order_status',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({admin_pwd:pwd,order_id:order.id,status:'已付款'})}).catch(function(){});
+    fetch(SB_URL+'/rest/v1/rpc/update_order_status',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({admin_pwd:pwd,order_id:(order.cid||order.id),status:'已付款'})}).catch(function(){});
   }catch(e){}
   var text=formatOrderText(order);
   document.getElementById('payModal').classList.remove('show');
@@ -1750,6 +1750,7 @@ function placeCloudOrder(o){
         if(!j || !j.ok) throw 0;
         // 顾客已用首单优惠：用云端订单id扣余额并标记（上传不带优惠标记，否则云端判定 already 拒绝扣减）
         var cid=(j.id!=null)?j.id:0;
+        o.cid=cid; if(curOrder===o) curOrder.cid=cid;
         if(o.newcust && o.discount>0 && cid){
           fetch(SB_URL+'/rest/v1/rpc/apply_newcust',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({admin_pwd:'1986shenhu',order_id:cid,min_free:0})})
             .then(function(r){ return r.json(); })
