@@ -358,7 +358,7 @@ var cloudOrders=[]; // 顾客手机下单的云端订单
 var cloudPhoneCount={}; // 手机号出现次数
 var cloudBalances={}; // 新客优惠余额（云端账户）
 var cloudTimer=null, cloudSeen=(function(){try{return JSON.parse(localStorage.getItem('zz_cloud_seen')||'{}');}catch(e){return {};}})(), autoAlarm=(localStorage.getItem('zz_auto_alarm')!=='0'), alarmTimer=null, alarmOrder=null, cloudWorker=null, localAlarmed=(function(){try{return JSON.parse(localStorage.getItem('zz_local_alarmed')||'{}');}catch(e){return {};}})(); // 本机已提示过的本地单（去重，本地优先）
-var IMG_VER='20261001dxxxxxxx'; // 图片版本号：更新商品图后递增，用于强制刷新浏览器缓存
+var IMG_VER='20261001dxxxxxxxx'; // 图片版本号：更新商品图后递增，用于强制刷新浏览器缓存
 
 function defaultDishes(){
   return []; // 菜单全部由云端管理，本地不再硬编码旧菜单
@@ -530,7 +530,7 @@ function renderDishes(){
   list.forEach(function(d){
     var c=cart[d.id]||{qty:0,note:''};
     var img=(d.img===undefined)?(d.id+'.jpg'):d.img;
-    var imgHtml=img?'<div class="dimg"><img src="'+esc(img)+'?v='+IMG_VER+'" alt="'+esc(d.name)+'" loading="lazy" onerror="this.src=\'data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2286%22 height=%2286%22><rect width=%2286%22 height=%2286%22 fill=%22%23f0f0f0%22/><text x=%2243%22 y=%2248%22 font-size=%2212%22 text-anchor=%22middle%22 fill=%22%23999%22>暂无图片</text></svg>\'" onclick="'+(d.cat==='礼盒'?'showGiftDlg(\''+d.id+'\')':'zoomImg(this.src)')+'"></div>':'';
+    var imgHtml=img?'<div class="dimg"><img src="'+esc(thumbUrl(img))+'?v='+IMG_VER+'" alt="'+esc(d.name)+'" loading="lazy" onerror="this.src=\'data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2286%22 height=%2286%22><rect width=%2286%22 height=%2286%22 fill=%22%23f0f0f0%22/><text x=%2243%22 y=%2248%22 font-size=%2212%22 text-anchor=%22middle%22 fill=%22%23999%22>暂无图片</text></svg>\'" onclick="'+(d.cat==='礼盒'?'showGiftDlg(\''+d.id+'\')':'zoomImg(\''+esc(img)+'?v='+IMG_VER+'\')')+'"></div>':'';
     html+='<div class="dish">'+imgHtml+'<div class="info"><div class="name">'+esc(d.name)+'</div>'+
       '<div class="unit">'+(d.per>0?'':esc(d.unit||''))+(d.id==='f_danggui'?' · 食材/煲汤用':'')+'</div>'+
       (d.desc?'<div style="font-size:11px;color:#e65100;margin-top:2px;line-height:1.5">'+esc(d.desc)+'</div>':'')+
@@ -1548,6 +1548,10 @@ function setUseNewcust(ph,use){
   checkPromo();
 }
 var zoomList=[], zoomIdx=0;
+function thumbUrl(u){
+  if(!u) return u;
+  return u.replace(/\.(jpg|jpeg|png)$/i, '_thumb.jpg');
+}
 function zoomImg(src){
   zoomList=[]; zoomIdx=0;
   var g=document.getElementById('giftModal');
@@ -2169,7 +2173,7 @@ function renderDishesAdmin(){
   var sortedDishes = isOff ? dishes.filter(function(d){ return d.on===false && d.cat!=='半价'; }).slice().sort(function(a,b){ return a.price-b.price; }) : dishes.filter(function(d){ return d.cat===adminDishCat && d.on!==false; }).slice().sort(function(a,b){ return a.price-b.price; });
   sortedDishes.forEach(function(d){
     html+='<div class="card"><div style="display:flex;justify-content:space-between;align-items:center">'+
-      '<div>'+(d.img?'<img src="'+esc(d.img)+'?v='+IMG_VER+'" style="width:44px;height:44px;object-fit:cover;border-radius:6px;vertical-align:middle;margin-right:8px">':'')+'<b>'+esc(d.name)+'</b> <span class="badge '+(d.on?'':'off')+'">'+(d.on?'上架':'下架')+'</span>'+
+      '<div>'+(d.img?'<img src="'+esc(thumbUrl(d.img))+'?v='+IMG_VER+'" style="width:44px;height:44px;object-fit:cover;border-radius:6px;vertical-align:middle;margin-right:8px">':'')+'<b>'+esc(d.name)+'</b> <span class="badge '+(d.on?'':'off')+'">'+(d.on?'上架':'下架')+'</span>'+
       '<div style="font-size:12px;color:#888;margin-top:3px">'+esc(catLabel(d.cat))+' · '+money(d.price)+' / '+esc(d.unit||'份')+(d.per?' · 称重'+d.per+'元/斤':'')+(d.stock!=null?' · 库存'+d.stock:'')+'</div></div>'+
       (isHalf?'<span style="font-size:11px;color:#fb8c00;font-weight:600">自动同步</span>':
       (isOff?'<div><button class="btn" style="font-size:12px;padding:4px 10px;background:#2e7d32;color:#fff;border:none;border-radius:6px;cursor:pointer" onclick="relistDish(\''+d.id+'\')">↩ 重新上架</button> '+
