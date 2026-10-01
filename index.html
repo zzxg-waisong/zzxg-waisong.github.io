@@ -358,7 +358,7 @@ var cloudOrders=[]; // 顾客手机下单的云端订单
 var cloudPhoneCount={}; // 手机号出现次数
 var cloudBalances={}; // 新客优惠余额（云端账户）
 var cloudTimer=null, cloudSeen=(function(){try{return JSON.parse(localStorage.getItem('zz_cloud_seen')||'{}');}catch(e){return {};}})(), autoAlarm=(localStorage.getItem('zz_auto_alarm')!=='0'), alarmTimer=null, alarmOrder=null, cloudWorker=null, localAlarmed=(function(){try{return JSON.parse(localStorage.getItem('zz_local_alarmed')||'{}');}catch(e){return {};}})(); // 本机已提示过的本地单（去重，本地优先）
-var IMG_VER='20261001dxxxx'; // 图片版本号：更新商品图后递增，用于强制刷新浏览器缓存
+var IMG_VER='20261001dxxxxx'; // 图片版本号：更新商品图后递增，用于强制刷新浏览器缓存
 
 function defaultDishes(){
   return []; // 菜单全部由云端管理，本地不再硬编码旧菜单
@@ -951,7 +951,7 @@ function renderShopBanner(){
   var el=document.getElementById('shopBanner'); if(!el) return;
   if(!_shopLoaded){ el.style.display='block'; el.style.background='#ffffff'; el.style.color='#1b5e20'; el.innerHTML='🟢 营业中 · 欢迎下单'; return; }
   if(shopOpen){ el.style.display='block'; el.style.background='#ffffff'; el.style.color='#1b5e20'; el.innerHTML='🟢 营业中 · 欢迎下单'; }
-  else { el.style.display='block'; el.style.background='#ffffff'; el.style.color='#c62828'; el.innerHTML='🔴 已打烊（可选「次日」时间段下单）'; }
+  else { el.style.display='block'; el.style.background='#ffffff'; el.style.color='#c62828'; el.innerHTML='🔴 已打烊（可选「次日」下单）'; }
 }
 function loadAdminShopStatus(){
   try{
