@@ -310,7 +310,7 @@ button:active{transform:scale(.94);-webkit-transform:scale(.94);opacity:.85}
 </div>
 
 <!-- 图片放大 -->
-<div class="modal" id="zoomModal" onclick="if(event.target===this)this.classList.remove('show')">
+<div class="modal" id="zoomModal" style="z-index:10000" onclick="if(event.target===this)this.classList.remove('show')">
   <div class="box" style="max-width:480px;background:#000;padding:8px;position:relative">
     <button onclick="document.getElementById('zoomModal').classList.remove('show')" style="position:absolute;top:12px;right:12px;z-index:9;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;width:32px;height:32px;font-size:18px;line-height:1;cursor:pointer">×</button>
     <img id="zoomImg" src="" style="width:100%;border-radius:8px;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;pointer-events:none">
@@ -356,7 +356,7 @@ var cloudOrders=[]; // 顾客手机下单的云端订单
 var cloudPhoneCount={}; // 手机号出现次数
 var cloudBalances={}; // 新客优惠余额（云端账户）
 var cloudTimer=null, cloudSeen=(function(){try{return JSON.parse(localStorage.getItem('zz_cloud_seen')||'{}');}catch(e){return {};}})(), autoAlarm=(localStorage.getItem('zz_auto_alarm')!=='0'), alarmTimer=null, alarmOrder=null, cloudWorker=null, localAlarmed=(function(){try{return JSON.parse(localStorage.getItem('zz_local_alarmed')||'{}');}catch(e){return {};}})(); // 本机已提示过的本地单（去重，本地优先）
-var IMG_VER='20261001d'; // 图片版本号：更新商品图后递增，用于强制刷新浏览器缓存
+var IMG_VER='20261001dx'; // 图片版本号：更新商品图后递增，用于强制刷新浏览器缓存
 
 function defaultDishes(){
   return []; // 菜单全部由云端管理，本地不再硬编码旧菜单
