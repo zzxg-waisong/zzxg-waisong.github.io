@@ -117,6 +117,7 @@ button:active{transform:scale(.94);-webkit-transform:scale(.94);opacity:.85}
 <div id="customer">
   <div class="shop-head">
   <div class="topbar">
+    <div id="shopBanner" style="display:block;background:#ffffff;color:#1b5e20;padding:5px 10px;margin:0 0 8px;border-radius:8px;font-size:13px;font-weight:700;text-align:center">🟢 营业中 · 欢迎下单</div>
     <div>
       <h1><span style="cursor:pointer" onclick="document.getElementById('loginModal').classList.add('show')">🍉</span> 榨榨鲜果</h1>
       <p>新鲜水果 · 鲜果现榨 · 不加糖 · 无科技</p>
@@ -135,7 +136,6 @@ button:active{transform:scale(.94);-webkit-transform:scale(.94);opacity:.85}
     <span>超10 公里 不配送</span>✦
     <span>店址：城厢镇朝阳路 16 号附 1 号</span>✦
   </div></div>
-  <div id="shopBanner" style="display:none;padding:8px 14px;font-size:14px;font-weight:700;text-align:center"></div>
   <div class="cats" id="cats"></div>
   </div>
   <div class="list" id="dishList"></div>
@@ -910,9 +910,9 @@ function refreshShopStatus(){
 }
 function renderShopBanner(){
   var el=document.getElementById('shopBanner'); if(!el) return;
-  if(!_shopLoaded){ el.style.display='none'; return; }
-  if(shopOpen){ el.style.display='block'; el.style.background='#e8f5e9'; el.style.color='#2e7d32'; el.innerHTML='🟢 营业中 · 欢迎下单'; }
-  else { el.style.display='block'; el.style.background='#ffebee'; el.style.color='#c62828'; el.innerHTML='🔴 已打烊 · 暂不接即时单（可选「次日」时间段下单）'; }
+  if(!_shopLoaded){ el.style.display='block'; el.style.background='#ffffff'; el.style.color='#1b5e20'; el.innerHTML='🟢 营业中 · 欢迎下单'; return; }
+  if(shopOpen){ el.style.display='block'; el.style.background='#ffffff'; el.style.color='#1b5e20'; el.innerHTML='🟢 营业中 · 欢迎下单'; }
+  else { el.style.display='block'; el.style.background='#ffffff'; el.style.color='#c62828'; el.innerHTML='🔴 已打烊 · 暂不接即时单（可选「次日」时间段下单）'; }
 }
 function loadAdminShopStatus(){
   try{
