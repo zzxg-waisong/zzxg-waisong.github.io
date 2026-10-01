@@ -1395,13 +1395,14 @@ function showRefBindConfirm(phone, ref){
   var b1=document.createElement('button');
   b1.textContent='修改';
   b1.style.cssText='flex:1;padding:11px 0;border:1px solid #ddd;border-radius:10px;background:#fff;color:#666;font-size:15px;';
-  b1.onclick=function(){ m.remove(); };
+  b1.onclick=function(){ m.remove(); window._refConfirmed=false; };
   var b2=document.createElement('button');
   b2.textContent='确定绑定';
   b2.style.cssText='flex:1;padding:11px 0;border:none;border-radius:10px;background:#e65100;color:#fff;font-size:15px;font-weight:600;';
   b2.onclick=function(){
     m.remove();
     window._refConfirmAsk=ref;
+    window._refConfirmed=true;
     finalSubmit();
   };
   row.appendChild(b1); row.appendChild(b2);
@@ -1425,11 +1426,10 @@ function finalSubmit(ded){
   var ref0=document.getElementById('ckRefPhone')?document.getElementById('ckRefPhone').value.trim():'';
   if(ref0 && ref0===phone){ alert('推荐人不能是您自己，请重新填写'); return; }
   // 未绑定新客填写推荐人时：提交前弹确认（确定→绑定并继续下单；修改→返回重填）
-  if(ref0 && window._refBoundPhone!==phone && window._refConfirmAsk!==ref0){
+  if(ref0 && window._refBoundPhone!==phone && !window._refConfirmed){
     showRefBindConfirm(phone, ref0);
     return;
   }
-  window._refConfirmAsk=null;
   var total=0;
   items.forEach(function(it){ var d=byId(it.id); total+=estPrice(d,it); });
   // 配送费（与配送信息页显示一致）
