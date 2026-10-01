@@ -356,7 +356,7 @@ var cloudOrders=[]; // 顾客手机下单的云端订单
 var cloudPhoneCount={}; // 手机号出现次数
 var cloudBalances={}; // 新客优惠余额（云端账户）
 var cloudTimer=null, cloudSeen=(function(){try{return JSON.parse(localStorage.getItem('zz_cloud_seen')||'{}');}catch(e){return {};}})(), autoAlarm=(localStorage.getItem('zz_auto_alarm')!=='0'), alarmTimer=null, alarmOrder=null, cloudWorker=null, localAlarmed=(function(){try{return JSON.parse(localStorage.getItem('zz_local_alarmed')||'{}');}catch(e){return {};}})(); // 本机已提示过的本地单（去重，本地优先）
-var IMG_VER='20260930a'; // 图片版本号：更新商品图后递增，用于强制刷新浏览器缓存
+var IMG_VER='20261001b'; // 图片版本号：更新商品图后递增，用于强制刷新浏览器缓存
 
 function defaultDishes(){
   return []; // 菜单全部由云端管理，本地不再硬编码旧菜单
@@ -497,8 +497,8 @@ function showCustomer(){
   renderCats(); renderDishes(); renderCartbar();
   loadCloud();
 }
-function cats(){ var order=['水果','打折','果汁','半价'], c=[]; order.forEach(function(cat){ if(cat==='半价' && !halfEnabled) return; if(dishes.some(function(d){return d.on && d.cat===cat;})) c.push(cat); }); return c; }
-function catLabel(c){ return c==='水果'?'新鲜水果':(c==='果汁'?'现榨果汁':(c==='打折'?'打折水果':(c==='半价'?'第二杯半价':(c==='off'?'已下架':c)))); }
+function cats(){ var order=['水果','打折','果汁','礼盒','半价'], c=[]; order.forEach(function(cat){ if(cat==='半价' && !halfEnabled) return; if(dishes.some(function(d){return d.on && d.cat===cat;})) c.push(cat); }); return c; }
+function catLabel(c){ return c==='水果'?'新鲜水果':(c==='果汁'?'现榨果汁':(c==='打折'?'打折水果':(c==='礼盒'?'礼盒套装':(c==='半价'?'第二杯半价':(c==='off'?'已下架':c))))); }
 /* 第二杯半价：从现榨果汁自动同步生成，价格自动×0.5 */
 function syncHalfPrice(){
   dishes = dishes.filter(function(d){ return d.cat!=='半价'; });
@@ -535,17 +535,48 @@ function renderDishes(){
   list.forEach(function(d){
     var c=cart[d.id]||{qty:0,note:''};
     var img=(d.img===undefined)?(d.id+'.jpg'):d.img;
-    var imgHtml=img?'<div class="dimg"><img src="'+esc(img)+'?v='+IMG_VER+'" alt="'+esc(d.name)+'" loading="lazy" onerror="this.src=\'data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2286%22 height=%2286%22><rect width=%2286%22 height=%2286%22 fill=%22%23f0f0f0%22/><text x=%2243%22 y=%2248%22 font-size=%2212%22 text-anchor=%22middle%22 fill=%22%23999%22>暂无图片</text></svg>\'" onclick="zoomImg(this.src)"></div>':'';
+    var imgHtml=img?'<div class="dimg"><img src="'+esc(img)+'?v='+IMG_VER+'" alt="'+esc(d.name)+'" loading="lazy" onerror="this.src=\'data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2286%22 height=%2286%22><rect width=%2286%22 height=%2286%22 fill=%22%23f0f0f0%22/><text x=%2243%22 y=%2248%22 font-size=%2212%22 text-anchor=%22middle%22 fill=%22%23999%22>暂无图片</text></svg>\'" onclick="'+(d.cat==='礼盒'?'showGiftDlg(\''+d.id+'\')':'zoomImg(this.src)')+'"></div>':'';
     html+='<div class="dish">'+imgHtml+'<div class="info"><div class="name">'+esc(d.name)+'</div>'+
       '<div class="unit">'+(d.per>0?'':esc(d.unit||''))+(d.id==='f_danggui'?' · 食材/煲汤用':'')+'</div>'+
       (d.desc?'<div style="font-size:11px;color:#e65100;margin-top:2px;line-height:1.5">'+esc(d.desc)+'</div>':'')+
-      '<div class="price">'+(d.cat==='半价'?'<span style="background:#fb8c00;color:#fff;font-size:10px;padding:1px 5px;border-radius:3px;margin-right:4px;vertical-align:middle">半价</span>':'')+money(d.price)+'<small> / '+esc(d.unit||'份')+'</small></div></div>'+
+      '<div class="price">'+(d.cat==='半价'?'<span style="background:#fb8c00;color:#fff;font-size:10px;padding:1px 5px;border-radius:3px;margin-right:4px;vertical-align:middle">半价</span>':'')+money(d.price)+'<small> / '+esc(d.unit||'份')+'</small></div>'+
+      (d.cat==='礼盒'&&d.stock!=null?'<div style="font-size:11px;color:'+(d.stock>0?'#e65100':'#999')+';margin-top:2px">'+(d.stock>0?'仅剩 '+d.stock+' 盒':'已售罄')+'</div>':'')+
+      '</div>'+
       '<div class="ctrl">'+(d.cat==='果汁'?'<input class="note" placeholder="常温" value="'+esc(c.note)+'" onchange="setNote(\''+d.id+'\',this.value)">':'')+
 
-      (d.cat==='半价'?(canAddHalf(d)?'<button class="btn" style="background:#fb8c00" onclick="addToCart(\''+d.id+'\')">加入购物车</button>':'<button class="btn" style="background:#ccc;cursor:not-allowed;color:#999" onclick="alert(\'需选一杯价格相同或更高的原价果汁解锁~\')">原价果汁解锁</button>'):'<button class="btn" onclick="addToCart(\''+d.id+'\')">加入购物车</button>')+
+      (d.cat==='半价'?(canAddHalf(d)?'<button class="btn" style="background:#fb8c00" onclick="addToCart(\''+d.id+'\')">加入购物车</button>':'<button class="btn" style="background:#ccc;cursor:not-allowed;color:#999" onclick="alert(\'需选一杯价格相同或更高的原价果汁解锁~\')">原价果汁解锁</button>'):(d.cat==='礼盒'?(d.stock!=null&&d.stock<=0?'<button class="btn" style="background:#ccc;cursor:not-allowed;color:#999" disabled>已售罄</button>':'<button class="btn" style="background:#fb8c00" onclick="giftAdd(\''+d.id+'\')">加入购物车</button>'):'<button class="btn" onclick="addToCart(\''+d.id+'\')">加入购物车</button>'))+
       '</div></div>';
   });
   box.innerHTML=html || (cats().length? '<div style="text-align:center;color:#999;padding:40px">该分类暂无商品</div>' : '');
+}
+function showGiftDlg(id){
+  var d=byId(id); if(!d) return;
+  var old=document.getElementById('giftModal'); if(old) old.remove();
+  var soldOut=(d.stock!=null && d.stock<=0);
+  var stockTxt=(d.stock!=null)?(soldOut?'已售罄':'仅剩 '+d.stock+' 盒'):'';
+  var box=document.createElement('div'); box.id='giftModal'; box.className='modal show';
+  box.style.cssText='display:flex;align-items:center;justify-content:center;z-index:9999';
+  box.innerHTML='<div style="background:#fff;border-radius:14px;padding:20px;width:92%;max-width:420px;max-height:88vh;overflow-y:auto;box-sizing:border-box">'+
+    '<h3 style="margin:0 0 4px">'+esc(d.name)+'</h3>'+
+    '<div style="color:#e65100;font-size:20px;font-weight:900;margin-bottom:4px">'+money(d.price)+' <small style="font-size:13px;color:#666;font-weight:400">/ 盒</small></div>'+
+    (stockTxt?'<div style="font-size:13px;color:'+(soldOut?'#999':'#e65100')+';margin-bottom:10px">'+stockTxt+'</div>':'')+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'+
+      '<div style="text-align:center"><img src="'+esc(d.img)+'?v='+IMG_VER+'" style="width:100%;height:auto;border-radius:8px;border:1px solid #eee;cursor:zoom-in" onclick="zoomImg(this.src)" alt="外壳"><div style="font-size:12px;color:#888;margin-top:4px">外壳</div></div>'+
+      '<div style="text-align:center"><img src="'+esc(d.img2||d.img)+'?v='+IMG_VER+'" style="width:100%;height:auto;border-radius:8px;border:1px solid #eee;cursor:zoom-in" onclick="zoomImg(this.src)" alt="里面"><div style="font-size:12px;color:#888;margin-top:4px">里面</div></div>'+
+    '</div>'+
+    '<div style="display:flex;gap:8px;margin-top:14px">'+
+      (soldOut?'<button class="btn" style="flex:1;background:#ccc;color:#999;cursor:not-allowed" disabled>已售罄</button>':'<button class="btn" style="flex:1;background:#fb8c00" onclick="giftAdd(\''+d.id+'\')">加入购物车</button>')+
+      '<button class="btn gray" style="flex:1" onclick="document.getElementById(\'giftModal\').remove()">关闭</button>'+
+    '</div></div>';
+  document.body.appendChild(box);
+}
+function giftAdd(id){
+  var d=byId(id); if(!d) return;
+  var cur=(cart[id]||{}).qty||0;
+  if(d.stock!=null && (cur+1)>d.stock){ alert('该礼盒仅剩 '+d.stock+' 盒，已售罄'); return; }
+  cart[id]={qty:cur+1,note:''};
+  saveCart(); renderCartItems(); renderCartbar(); renderDishes();
+  var m=document.getElementById('giftModal'); if(m) m.remove();
 }
 function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function saveCart(){ try{ localStorage.setItem('fruit_cart', JSON.stringify(cart)); }catch(e){} }
@@ -785,6 +816,8 @@ function addToCart(id){
   var d=byId(id);
   // 只有水果类柚子弹剥开选项
   if(d && d.cat==="水果" && d.name && d.name.indexOf("柚")>=0){ showPeelDlg(d); return; }
+  // 礼盒：直接加购（库存校验在 giftAdd）
+  if(d && d.cat==='礼盒'){ giftAdd(d.id); return; }
   // 按个卖的商品弹数量选择
   if(d && !d.per && id!=='f_ganzhe'){ showCountDlg(d); return; }
   if(d&&d.cat==='半价'&&!canAddHalf(d)){ alert('第二杯半价只能选价格相同或更低的果汁哦~'); return; }
@@ -796,6 +829,8 @@ function changeQty(id,delta,note){
   if(note!==undefined && note) key=id+'_'+note;
   if(!cart[key]){ for(var k in cart){ if(k.indexOf(id+'_')===0 || k===id){ key=k; break; } } }
   if(!cart[key]) cart[key]={qty:0,note:note||''};
+  var dd=byId(id);
+  if(dd && dd.cat==='礼盒' && delta>0 && dd.stock!=null && (cart[key].qty+delta)>dd.stock){ alert('该礼盒仅剩 '+dd.stock+' 盒，不能再加购'); return; }
   cart[key].qty+=delta;
   if(cart[key].qty<=0) delete cart[key];
   var d=byId(id); if(d&&d.cat==='果汁'&&delta<0){ fixHalfCart(); }
@@ -1721,6 +1756,20 @@ function placeCloudOrder(o){
             .then(function(j){ if(j && j.ok){ fetch(SB_URL+'/rest/v1/rpc/mark_newcust_order',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({p_admin:'1986shenhu',p_order_id:cid})}).catch(function(){}); } })
             .catch(function(){});
         }
+        // 礼盒库存扣减（云端原子扣减；售罄则删除该订单并提示）
+        var gItems=upItems.filter(function(it){ return it.cat==='礼盒'; });
+        if(gItems.length){
+          gItems.forEach(function(it){
+            fetch(SB_URL+'/rest/v1/rpc/dec_stock',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({p_admin:'1986shenhu',p_id:it.id,p_qty:it.qty})})
+              .then(function(r){ return r.json(); })
+              .then(function(jj){
+                if(!jj || !jj.ok){
+                  fetch(SB_URL+'/rest/v1/rpc/delete_order',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({admin_pwd:'1986shenhu',order_id:cid})}).catch(function(){});
+                  alert('抱歉，您选择的礼盒已售罄，该订单已自动取消');
+                }
+              }).catch(function(){});
+          });
+        }
       }).catch(function(){});
   }catch(e){}
 }
@@ -2053,7 +2102,7 @@ function sortDishesByPrice(){
   renderAdmin();
 }
 function renderDishesAdmin(){
-  var cats=[['水果','新鲜水果'],['打折','打折水果'],['果汁','现榨果汁'],['半价','第二杯半价'],['off','已下架']];
+  var cats=[['水果','新鲜水果'],['打折','打折水果'],['果汁','现榨果汁'],['礼盒','礼盒套装'],['半价','第二杯半价'],['off','已下架']];
   var isHalf = adminDishCat==='半价'; var isOff = adminDishCat==='off';
   var html='<div class="panel"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><h3>菜品管理</h3>'+
     ((isHalf||isOff)?'':'<button class="btn" onclick="editDish()">＋ 新增菜品</button>')+'</div>'+
@@ -2071,7 +2120,7 @@ function renderDishesAdmin(){
   sortedDishes.forEach(function(d){
     html+='<div class="card"><div style="display:flex;justify-content:space-between;align-items:center">'+
       '<div>'+(d.img?'<img src="'+esc(d.img)+'?v='+IMG_VER+'" style="width:44px;height:44px;object-fit:cover;border-radius:6px;vertical-align:middle;margin-right:8px">':'')+'<b>'+esc(d.name)+'</b> <span class="badge '+(d.on?'':'off')+'">'+(d.on?'上架':'下架')+'</span>'+
-      '<div style="font-size:12px;color:#888;margin-top:3px">'+esc(catLabel(d.cat))+' · '+money(d.price)+' / '+esc(d.unit||'份')+(d.per?' · 称重'+d.per+'元/斤':'')+'</div></div>'+
+      '<div style="font-size:12px;color:#888;margin-top:3px">'+esc(catLabel(d.cat))+' · '+money(d.price)+' / '+esc(d.unit||'份')+(d.per?' · 称重'+d.per+'元/斤':'')+(d.stock!=null?' · 库存'+d.stock:'')+'</div></div>'+
       (isHalf?'<span style="font-size:11px;color:#fb8c00;font-weight:600">自动同步</span>':
       (isOff?'<div><button class="btn" style="font-size:12px;padding:4px 10px;background:#2e7d32;color:#fff;border:none;border-radius:6px;cursor:pointer" onclick="relistDish(\''+d.id+'\')">↩ 重新上架</button> '+
       '<button class="btn red" style="font-size:12px;padding:4px 10px" onclick="delDish(\''+d.id+'\')">删除</button></div>':
@@ -2100,7 +2149,10 @@ function editDish(id){
     '<option value="水果"'+(defCat==='水果'?' selected':'')+'>新鲜水果</option>'+
     '<option value="果汁"'+(defCat==='果汁'?' selected':'')+'>现榨果汁</option>'+
     '<option value="打折"'+(defCat==='打折'?' selected':'')+'>打折水果</option>'+
+    '<option value="礼盒"'+(defCat==='礼盒'?' selected':'')+'>礼盒套装</option>'+
     '</select>'+
+    '<label>库存（限购/售罄用，如：2；留空不限）</label><input id="dStock" type="number" min="0" value="'+(d&&d.stock!=null?d.stock:'')+'">'+
+    '<label>第二张图（礼盒内部图，URL或相对路径，留空无）</label><input id="dImg2" value="'+(d?esc(d.img2||''):'')+'">'+
     '<label><input type="checkbox" id="dOn"'+(d?((d.on?' checked':'')):' checked')+'> 上架（顾客可见）</label>'+
     '<div style="display:flex;gap:8px;margin-top:14px"><button class="btn gray" style="flex:1" onclick="document.getElementById(\'dishModal\').remove()">取消</button>'+
     '<button class="btn" style="flex:1" onclick="saveDish(\''+(d?d.id:'')+'\')">保存</button></div></div></div>';
@@ -2138,9 +2190,12 @@ function saveDish(id){
   var on=document.getElementById('dOn').checked;
   var per=parseFloat(document.getElementById('dPer').value);
   if(isNaN(per)||per<0) per=0;
+  var stockEl=document.getElementById('dStock'); var stock=stockEl?parseInt(stockEl.value,10):null;
+  if(stock!=null && (isNaN(stock)||stock<0)) stock=null;
+  var img2El=document.getElementById('dImg2'); var img2=img2El?img2El.value.trim():'';
   if(!name||isNaN(price)||price<0){ alert('请填写名称和正确的价格'); return; }
-  if(id){ var d=byId(id); d.name=name; d.price=price; d.unit=unit; d.img=img; d.cat=cat; d.on=on; d.per=per; }
-  else { dishes.push({id:'d'+Date.now(),name:name,price:price,unit:unit,img:img,cat:cat,on:on,per:per}); }
+  if(id){ var d=byId(id); d.name=name; d.price=price; d.unit=unit; d.img=img; d.cat=cat; d.on=on; d.per=per; d.stock=stock; if(img2){ d.img2=img2; } else { delete d.img2; } }
+  else { var nd={id:'d'+Date.now(),name:name,price:price,unit:unit,img:img,cat:cat,on:on,per:per,stock:stock}; if(img2){ nd.img2=img2; } dishes.push(nd); }
   dishes=groupSort(dishes); save(LS_DISHES,dishes); syncHalfPrice(); document.getElementById('dishModal').remove(); renderAdmin(); renderCats(); renderDishes();
 }
 function delDish(id){ if(confirm('确认删除该菜品？')){ dishes=dishes.filter(function(d){return d.id!==id;}); dishes=groupSort(dishes); save(LS_DISHES,dishes); syncHalfPrice(); renderAdmin(); renderCats(); renderDishes(); } }
