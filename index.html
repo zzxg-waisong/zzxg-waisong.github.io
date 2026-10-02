@@ -325,6 +325,7 @@ button:active{transform:scale(.94);-webkit-transform:scale(.94);opacity:.85}
     <h2>商家后台</h2>
     <div>
       <button class="btn" id="shopToggleBtn" style="font-size:12px;padding:4px 10px;background:#2e7d32" onclick="toggleShopStatus()">🟢 营业中</button>
+      <button class="btn" id="voiceStateBtn" style="font-size:12px;padding:4px 10px;background:#2e7d32" onclick="tapVoiceState()">🔊 语音提醒</button>
       <button class="btn" style="font-size:12px;padding:4px 10px;background:#2e7d32" onclick="adminRefresh()">🔄 刷新同步</button>
       <button class="btn gray" style="font-size:12px;padding:4px 10px;margin-left:6px" onclick="backToShop()">返回点单页</button>
       <button class="btn red" style="font-size:12px;padding:4px 10px;margin-left:6px" onclick="adminLogout()">退出</button>
@@ -1779,6 +1780,7 @@ function fmtLocal(s){
   return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes());
 }
 function renderAdmin(){
+  renderVoiceState();
   // 计算今日营业额（按成都本地日期；已送达=已卖出同样计入）
   var _d=new Date();
   var _today=_d.getFullYear()+'-'+((_d.getMonth()+1)<10?'0':'')+(_d.getMonth()+1)+'-'+(_d.getDate()<10?'0':'')+_d.getDate();
@@ -1910,14 +1912,28 @@ function _vqNext(){
   try{
     var a=new Audio(it.src);
     a.volume=Math.max(0,Math.min(1,it.vol));
-    a.onended=function(){ _vqPlaying=false; _vqNext(); };
+    a.onended=function(){ _voiceBlocked=false; renderVoiceState(); _vqPlaying=false; _vqNext(); };
     a.onerror=function(){ _vqPlaying=false; _vqNext(); };
     var p=a.play();
-    if(p && p.catch){ p.catch(function(err){ _vqPlaying=false; if(err&&err.name==='NotAllowedError') showVoiceBlockTip(); _vqNext(); }); }
+    if(p && p.catch){ p.catch(function(err){ _vqPlaying=false; _voiceBlocked=true; renderVoiceState(); if(err&&err.name==='NotAllowedError') showVoiceBlockTip(); _vqNext(); }); }
   }catch(e){ _vqPlaying=false; _vqNext(); }
 }
 var _voiceUnlocked=false;
+var _voiceBlocked=false; // 语音是否被浏览器自动播放策略拦截
+function voiceAlarmOn(){ return (localStorage.getItem('zz_auto_alarm')!=='0'); }
+function renderVoiceState(){
+  var el=document.getElementById('voiceStateBtn'); if(!el) return;
+  if(!voiceAlarmOn()){ el.style.background='#757575'; el.textContent='🔕 语音提醒已关'; return; }
+  if(_voiceBlocked){ el.style.background='#e65100'; el.textContent='⚠️ 语音被拦截·点击解锁'; return; }
+  el.style.background='#2e7d32'; el.textContent='🔊 语音提醒正常';
+}
+function tapVoiceState(){
+  if(!voiceAlarmOn()){ alert('语音提醒已关闭：新订单到店将不播报语音。可在「设置 → 新订单自动刷新+语音提醒」开启。'); return; }
+  if(_voiceBlocked){ unlockVoice(); return; }
+  alert('语音提醒正常：新订单到来自动播报。若听不到声音，点击此按钮可解锁浏览器语音。');
+}
 function unlockVoice(){
+  _voiceBlocked=false; renderVoiceState();
   if(_voiceUnlocked) return; _voiceUnlocked=true;
   try{ var _u=new Audio(); _u.muted=true; var _pp=_u.play(); if(_pp&&_pp.then) _pp.then(function(){ _u.pause(); }).catch(function(){}); }catch(e){}
   var tip=document.getElementById('voiceBlockTip'); if(tip) tip.remove();
@@ -1935,6 +1951,7 @@ function speakNewOrder(id){
   }catch(e){}
 }
 function showVoiceBlockTip(){
+  _voiceBlocked=true; renderVoiceState();
   var old=document.getElementById('voiceBlockTip'); if(old) return;
   var tip=document.createElement('div');
   tip.id='voiceBlockTip';
