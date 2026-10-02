@@ -358,7 +358,7 @@ var cloudOrders=[]; // 顾客手机下单的云端订单
 var cloudPhoneCount={}; // 手机号出现次数
 var cloudBalances={}; // 新客优惠余额（云端账户）
 var cloudTimer=null, cloudSeen=(function(){try{return JSON.parse(localStorage.getItem('zz_cloud_seen')||'{}');}catch(e){return {};}})(), autoAlarm=(localStorage.getItem('zz_auto_alarm')!=='0'), alarmTimer=null, alarmOrder=null, cloudWorker=null, localAlarmed=(function(){try{return JSON.parse(localStorage.getItem('zz_local_alarmed')||'{}');}catch(e){return {};}})(); // 本机已提示过的本地单（去重，本地优先）
-var IMG_VER='20261001dxxxxxxxxxx'; // 图片版本号：更新商品图后递增，用于强制刷新浏览器缓存
+var IMG_VER='20261001dxxxxxxxxxxx'; // 图片版本号：更新商品图后递增，用于强制刷新浏览器缓存
 
 function defaultDishes(){
   return []; // 菜单全部由云端管理，本地不再硬编码旧菜单
@@ -2801,7 +2801,9 @@ function checkRefWallet(){
         .then(function(j){
           if(j && j.ok){ res.innerHTML='🎁 推广钱包余额：<b style="color:#e65100">'+money(Number(j.balance)||0)+'</b> 元'+(j.pending>0?('<br>待入账返利 <b>'+j.pending+'</b> 笔（次日到账）'):''); }
           else res.innerHTML='<span style="color:#888">暂无返利记录</span>';
-    }).catch(function(){ res.innerHTML='<span style="color:#e65100">查询失败</span>'; });
+        })
+        .catch(function(){ res.innerHTML='<span style="color:#e65100">查询失败</span>'; });
+    });
 }
 function bindRefAndRecord(phone, ref, orderId, total){
   if(!ref || !/^1\d{10}$/.test(ref)) return;
