@@ -926,7 +926,7 @@ function renderCartItems(){
       qtyHtml='<div style="display:flex;gap:6px;flex-shrink:0;width:max-content"><button onclick="changeQty(\''+c.id+'\',-999,\''+(c.note||'')+'\')" style="width:auto!important;height:auto!important;border-radius:16px;background:#eee;color:#666;padding:6px 14px;font-size:13px;border:none;white-space:nowrap">删除</button><button onclick="adjustItem(\''+c.id+'\',\''+(c.note||'')+'\')" style="width:auto!important;height:auto!important;border-radius:16px;background:#fff3e0;color:#e65100;padding:6px 14px;font-size:13px;border:1px solid #ffcc80;white-space:nowrap">调整</button></div>';
     }
     html+='<div class="cart-item"><div class="n">'+esc(d.name)+
-      (c.note?'<small>'+esc(c.note)+'</small>':'')+'</div>'+
+      (c.note?'<small>'+esc(c.note)+'</small>':((d.per>0)?'':'<small>×'+(c.qty!=null?c.qty:'')+(d.unit||'')+'</small>'))+'</div>'+
       qtyHtml+
       '<div style="min-width:64px;text-align:right;font-weight:600">'+money(estPrice(d,c))+'</div></div>';
   });
@@ -2056,7 +2056,22 @@ function printTicket(p, status){
   var amt=(p.hasWeight?raw:roundHalf(raw));
   var roundAmt=Math.round((raw-amt)*100)/100;
   var paid=(status==='已付款');
-  var body={ seqNo:String(p.id||''), title:'榨榨鲜果', lines:lines, note:note, round:(roundAmt>0?('-'+money(roundAmt)):''), amount:'¥'+Number(amt).toFixed(2), newCust:(p.newcust?true:false), newCustDiscount:(p.newcust?(Number(p.discount)||0):0), referralDeduct:(p.referralDeduct?Number(p.referralDeduct):0), time:nowStr(), paid:paid, hasJuice:(p.items||[]).some(function(it){return it.cat==='果汁'||it.cat==='半价';}),
+  // 小票左上角号码：自然日(MMDD) + 24小时制时间 + 当日单号（每日从1起计算，不累计）
+  var _n2=new Date();
+  var _ds2=new Date(_n2.getFullYear(),_n2.getMonth(),_n2.getDate());
+  var _cnt2=1;
+  try{
+    var _allO=(typeof cloudOrders!=='undefined'&&Array.isArray(cloudOrders)?cloudOrders:[]).concat((typeof orders!=='undefined'&&Array.isArray(orders)?orders:[]));
+    var _seen2={};
+    _allO.forEach(function(o){
+      var _dt=new Date((o.created_at||((o.payload||{}).created))||o.created||'');
+      if(!isNaN(_dt.getTime()) && _dt.getTime()>=_ds2.getTime() && _dt.getTime()<_ds2.getTime()+86400000){
+        var _k=String(o.id||o.cid||''); if(_k && !_seen2[_k]){ _seen2[_k]=1; _cnt2++; }
+      }
+    });
+  }catch(e){}
+  var seqNo=('0'+(_n2.getMonth()+1)).slice(-2)+('0'+_n2.getDate()).slice(-2)+' '+('0'+_n2.getHours()).slice(-2)+':'+('0'+_n2.getMinutes()).slice(-2)+' #'+_cnt2;
+  var body={ seqNo:seqNo, title:'榨榨鲜果', lines:lines, note:note, round:(roundAmt>0?('-'+money(roundAmt)):''), amount:'¥'+Number(amt).toFixed(2), newCust:(p.newcust?true:false), newCustDiscount:(p.newcust?(Number(p.discount)||0):0), referralDeduct:(p.referralDeduct?Number(p.referralDeduct):0), time:nowStr(), paid:paid, hasJuice:(p.items||[]).some(function(it){return it.cat==='果汁'||it.cat==='半价';}),
     orderNo:(p.id||''), created:fmtLocal(p.created||''), subtotal:'', total:'', customer:(p.name||'')+' '+(p.phone||''), addr:(p.mode==='pickup'?'到店自提':(p.addr||'')), deliveryTime:(p.time||''), status:(status==='new'?'待处理':status) };
   fetch('http://localhost:8899/print',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
     .then(function(r){ return r.json(); }).then(function(j){ if(!j||!j.ok){ throw 0; } }).catch(function(){ alert('打印失败：请确认本机打印代理已启动（桌面「榨榨鲜果外送」）'); });
