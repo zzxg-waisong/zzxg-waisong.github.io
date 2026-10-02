@@ -112,12 +112,14 @@
  {
   "id": "f_gansu_pg_da",
   "on": true,
-  "cat": "水果",
+  "cat": "打折",
   "img": "gansu_pg_da.jpg",
   "per": 6,
   "name": "甘肃苹果（大）尾货",
   "unit": "斤",
-  "price": 6
+  "price": 6,
+  "orig": 12,
+  "stock": 4
  },
  {
   "id": "f_ganzhe",
@@ -130,6 +132,32 @@
   "unit": "盒",
   "price": 15,
   "stock": null
+ },
+ {
+  "id": "f_ganzhe_wx_s",
+  "on": true,
+  "cat": "打折",
+  "img": "ganzhe.jpg",
+  "per": 0,
+  "desc": "",
+  "name": "云南黄金甘蔗（尾货·小根）",
+  "unit": "根",
+  "price": 10,
+  "orig": 25,
+  "stock": 3
+ },
+ {
+  "id": "f_ganzhe_wx_l",
+  "on": true,
+  "cat": "打折",
+  "img": "ganzhe.jpg",
+  "per": 0,
+  "desc": "",
+  "name": "云南黄金甘蔗（尾货·大根）",
+  "unit": "根",
+  "price": 15,
+  "orig": 35,
+  "stock": 4
  },
  {
   "id": "f_sanhongyou",
@@ -339,11 +367,13 @@
  {
   "id": "f_hongxin_hlg",
   "on": true,
-  "cat": "水果",
+  "cat": "打折",
   "img": "hongxin_huolongguo.jpg",
   "per": 0,
   "name": "红心火龙果",
   "unit": "个",
-  "price": 2.5
+  "price": 2,
+  "orig": 3.5,
+  "stock": 11
  }
 ]
