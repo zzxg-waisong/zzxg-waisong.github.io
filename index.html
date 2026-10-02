@@ -358,7 +358,7 @@ var cloudOrders=[]; // 顾客手机下单的云端订单
 var cloudPhoneCount={}; // 手机号出现次数
 var cloudBalances={}; // 新客优惠余额（云端账户）
 var cloudTimer=null, cloudSeen=(function(){try{return JSON.parse(localStorage.getItem('zz_cloud_seen')||'{}');}catch(e){return {};}})(), autoAlarm=(localStorage.getItem('zz_auto_alarm')!=='0'), alarmTimer=null, alarmOrder=null, cloudWorker=null, localAlarmed=(function(){try{return JSON.parse(localStorage.getItem('zz_local_alarmed')||'{}');}catch(e){return {};}})(); // 本机已提示过的本地单（去重，本地优先）
-var IMG_VER='20261001dxxxxxxxxxxxx'; // 图片版本号：更新商品图后递增，用于强制刷新浏览器缓存
+var IMG_VER='20261001dxxxxxxxxxxxxx'; // 图片版本号：更新商品图后递增，用于强制刷新浏览器缓存
 
 function defaultDishes(){
   return []; // 菜单全部由云端管理，本地不再硬编码旧菜单
@@ -944,7 +944,7 @@ function refreshShopStatus(){
 }
 function renderShopBanner(){
   var el=document.getElementById('shopBanner'); if(!el) return;
-  if(!_shopLoaded){ el.style.display='block'; el.style.background='#ffffff'; el.style.color='#1b5e20'; el.innerHTML='🟢 营业中 · 欢迎下单'; return; }
+  if(!_shopLoaded){ var _op0=inShopWindow(); el.style.display='block'; el.style.background='#ffffff'; el.style.color=(_op0?'#1b5e20':'#c62828'); el.innerHTML=_op0?'🟢 营业中 · 欢迎下单':'🔴 已打烊（可选「次日」下单）'; return; }
   if(shopOpen){ el.style.display='block'; el.style.background='#ffffff'; el.style.color='#1b5e20'; el.innerHTML='🟢 营业中 · 欢迎下单'; }
   else { el.style.display='block'; el.style.background='#ffffff'; el.style.color='#c62828'; el.innerHTML='🔴 已打烊（可选「次日」下单）'; }
 }
@@ -974,16 +974,16 @@ function toggleShopStatus(silent){
       .catch(function(){ if(!silent) alert('切换失败：网络问题'); });
   }catch(e){}
 }
-/* 自动营业时间：9:00 自动营业，21:00 自动打烊（只在跨整点边界时切，不覆盖手动临时切换） */
-var _lastAutoHour = new Date().getHours();
+/* 自动营业时间：08:30 自动营业，22:00 自动打烊（只在跨半点/整点边界时切，不覆盖手动临时切换；外送时段 09:00-21:30 由顾客端下单校验） */
+var _lastAutoMin = new Date().getHours()*60+new Date().getMinutes();
 function autoCheckShopHours(){
-  var h = new Date().getHours();
-  if(_lastAutoHour === h) return;
-  // 跨过 9:00（从 <9 到 >=9）→ 自动营业
-  if(_lastAutoHour < 9 && h >= 9 && !adminShopOpen){ toggleShopStatus(true); }
-  // 跨过 21:00（从 <21 到 >=21）→ 自动打烊
-  if(_lastAutoHour < 21 && h >= 21 && adminShopOpen){ toggleShopStatus(true); }
-  _lastAutoHour = h;
+  var m=nowMin();
+  if(_lastAutoMin===m) return;
+  // 跨过 08:30（从 <510 到 >=510）→ 自动营业
+  if(_lastAutoMin < 510 && m >= 510 && !adminShopOpen){ toggleShopStatus(true); }
+  // 跨过 22:00（从 <1320 到 >=1320）→ 自动打烊
+  if(_lastAutoMin < 1320 && m >= 1320 && adminShopOpen){ toggleShopStatus(true); }
+  _lastAutoMin=m;
 }
 window.setInterval(function(){ if(adminOk) autoCheckShopHours(); }, 60000);
 window.setInterval(function(){ if(!adminOk) refreshShopStatus(); }, 60000);
@@ -1027,6 +1027,14 @@ function setCkMode(m){
   if(b2){ b2.style.borderColor=(m==='pickup')?'#2e7d32':'#ccc'; b2.style.background=(m==='pickup')?'#e8f5e9':'#fff'; }
   if(m==='pickup'){ window._delivery={dist:0,fee:0,mode:'pickup'}; if(typeof updateCkAmt==='function') updateCkAmt(); }
   else { if(typeof calcDelivery==='function') calcDelivery(); }
+  // 外送/营业时段提示（自动规则：外送 09:00-21:30、自提 08:30-22:00，老板不动手）
+  var ta=document.getElementById('ckModeTip');
+  if(!ta){ var area=document.getElementById('ckAddrArea'); if(area && area.parentNode){ ta=document.createElement('div'); ta.id='ckModeTip'; area.parentNode.insertBefore(ta, area); } }
+  if(ta){
+    if(m==='delivery' && !inDlvWindow()){ ta.style.cssText='font-size:12px;color:#e65100;background:#fff3e0;border-radius:6px;padding:5px 8px;margin:4px 0;line-height:1.6'; ta.innerHTML='⏰ 当前不在外送时段（9:00-21:30）：可到店自提，或外送选择「明天」时间段'; }
+    else if(m==='pickup' && !inPickWindow()){ ta.style.cssText='font-size:12px;color:#e65100;background:#fff3e0;border-radius:6px;padding:5px 8px;margin:4px 0;line-height:1.6'; ta.innerHTML='⏰ 店铺营业时间 8:30-22:00，当前可预约「明天」时间段'; }
+    else { ta.innerHTML=''; }
+  }
 }
 function openCheckout(){
   if(!cartList().length){ alert('购物车是空的'); return; }
@@ -1044,12 +1052,20 @@ function openCheckout(){
   window._delivery=null; document.getElementById('deliveryBox').style.display='none';
   var _p0=document.getElementById('ckPhone')?document.getElementById('ckPhone').value.trim():''; if(/^1\d{10}$/.test(_p0)) onCkPhone();
 }
+/* 营业时段（成都本地时间，自动规则，老板无需手动改）：
+   店铺营业 08:30-22:00；外送单 09:00-21:30；到店自提 08:30-22:00 */
+function nowMin(){ var d=new Date(); return d.getHours()*60+d.getMinutes(); }
+function inShopWindow(){ var m=nowMin(); return m>=510 && m<1320; }
+function inPickWindow(){ return inShopWindow(); }
+function inDlvWindow(){ var m=nowMin(); return m>=540 && m<1290; }
+function inModeWindow(mode){ return (mode==='pickup')?inPickWindow():inDlvWindow(); }
 function distKm(a,b){
   var R=6371, dLat=(b.lat-a.lat)*Math.PI/180, dLng=(b.lng-a.lng)*Math.PI/180;
   var s=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(a.lat*Math.PI/180)*Math.cos(b.lat*Math.PI/180)*Math.sin(dLng/2)*Math.sin(dLng/2);
   return R*2*Math.atan2(Math.sqrt(s),Math.sqrt(1-s));
 }
-function deliveryFee(dist, subtotal){ if(dist<=3) return 0; if(dist<=5) return (subtotal>=30?0:3); if(dist<=10) return 3+Math.ceil(dist-5)*2; return -1; }
+/* 配送费（隐藏规则）：3km内免；3-5km满30免否则3；5-10km=3+(实际距离-5)×2，按实际公里数精确计价（页面说明文案保留“每1公里加2元”给客人看） */
+function deliveryFee(dist, subtotal){ if(dist<=3) return 0; if(dist<=5) return (subtotal>=30?0:3); if(dist<=10) return Math.round((3+(dist-5)*2)*100)/100; return -1; }
 function calcDelivery(){
   if(_ckMode==='pickup'){ window._delivery={dist:0,fee:0,mode:'pickup'}; return; }
   var addr=document.getElementById('ckAddr').value.trim(); var detail=document.getElementById('ckAddrDetail')?document.getElementById('ckAddrDetail').value.trim():''; if(detail) addr+=' '+detail;
@@ -1266,10 +1282,12 @@ function submitOrder(){
   if(window._ckMode!=='pickup' && window._delivery && window._delivery.dist>10){ showOutOfRange(); return; }
   var sub0=cartTotal();
   if(sub0<20){ alert('还差 '+money(20-sub0)+' 元起送（满 20 元起送），已返回首页'); closeCheckout(); window.scrollTo(0,0); return; }
-  // 打烊时只允许「明天」时间段（到店自提不受配送时间限制，放行）
-  if(!shopOpen && _shopLoaded && window._ckMode!=='pickup'){
-    var _tm=document.getElementById('ckTime').value;
-    if(String(_tm||'').indexOf('尽快')===0){ alert('店铺已打烊，请选择「明天」的时间段'); return; }
+  // 营业/外送窗口校验：非窗口内选「尽快」→ 提示改选明天（外送 09:00-21:30、自提 08:30-22:00；店铺打烊一律只允许「明天」）
+  var _tm=document.getElementById('ckTime').value;
+  if(String(_tm||'').indexOf('尽快')===0){
+    if(!shopOpen && _shopLoaded){ alert('店铺已打烊，请选择「明天」的时间段'); return; }
+    if(window._ckMode!=='pickup' && !inDlvWindow()){ alert('外送服务时间 9:00-21:30，当前请选择「明天」的时间段，或改为到店自提'); return; }
+    if(window._ckMode==='pickup' && !inPickWindow()){ alert('店铺营业时间 8:30-22:00，当前请选择「明天」的时间段'); return; }
   }
   // 高德Key已配置但配送费尚未算出（地址识别失败/仍在计算）时拦截，避免配送费按0提交
   if(window._ckMode!=='pickup' && addr && !window._delivery && shopCfg.amapKey){
@@ -1845,7 +1863,12 @@ function fetchCloudOrders(silent){
         maybeResyncShop();
         var pc={}; j.forEach(function(cc){ var ph=String(((cc.payload||{}).phone)||'').trim(); if(ph) pc[ph]=(pc[ph]||0)+1; }); cloudPhoneCount=pc;
         if(silent && fresh.length===0){ renderCloudB(); return; }
-        if(fresh.length>0 && autoAlarm) speakNewOrder(fresh[0]);
+        if(fresh.length>0){
+          // 语音：每单播一次（多单顺序各播一次，不再重复重播）
+          if(autoAlarm){ fresh.forEach(function(fid){ speakNewOrder(fid); }); }
+          // 直接出单：新单到达自动打印小票（本地打印代理，静默出票；老板收款后再点接单，点接单不再重复出票）
+          fresh.forEach(function(fid){ try{ printCloudOrder(fid); }catch(e){} });
+        }
         renderCloudB();
       })
       .catch(function(){ if(!silent) alert('云端订单拉取失败，请检查网络'); markOffline(); });
@@ -1892,17 +1915,7 @@ function speakNewOrder(id){
   try{
     if(alarmTimer){ clearInterval(alarmTimer); alarmTimer=null; }
     alarmOrder=(id==null?0:id);
-    var times=0;
-    var play=function(){
-      if(alarmOrder!==(id==null?0:id)) return;
-      _vqPlay('https://zzxg-waisong.github.io/voice_new_order.wav', parseInt(localStorage.getItem('zz_voice_vol')||'100',10)/100);
-    };
-    play();
-    alarmTimer=setInterval(function(){
-      times++;
-      if(alarmOrder!==(id==null?0:id) || times>=3){ clearInterval(alarmTimer); alarmTimer=null; return; }
-      play();
-    },15000);
+    _vqPlay('https://zzxg-waisong.github.io/voice_new_order.wav', parseInt(localStorage.getItem('zz_voice_vol')||'100',10)/100);
   }catch(e){}
 }
 function showVoiceBlockTip(){
@@ -1957,7 +1970,7 @@ function acceptCloudOrder(id){
   alarmOrder=null;
   if(alarmTimer){ clearInterval(alarmTimer); alarmTimer=null; }
   updateCloudStatus(id,'已接单');
-  try{ printCloudOrder(id); }catch(e){}
+  // 点接单不再打印（小票已在新单到达时自动出，防重复出票）
   try{ _vqPlay('https://zzxg-waisong.github.io/voice_accepted.wav', parseInt(localStorage.getItem('zz_voice_vol')||'100',10)/100); }catch(e){}
 }
 function newCustCloudOrder(id){
