@@ -1,4 +1,4 @@
-﻿﻿<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -411,17 +411,26 @@ function loadCloud(force){
   var now=Date.now();
   if(!force && now-_lastLoad<30000) return;
   _lastLoad=now;
-  // 先读GitHub的dishes.json（快，同域名）
+  // 兜底：GitHub与Supabase都失败时，用本地缓存（最近一次云端成功快照）渲染，避免首页缺商品
+  function cacheFallback(){
+    try{ var c=load(LS_DISHES, null); if(c && Array.isArray(c) && c.length) applyCloudMenu(c); }catch(e){}
+  }
+  // 先读GitHub的dishes.json（快，同域名）；仅当不比本地缓存旧时才应用，防止旧数据回退覆盖导致缺商品
   fetch('dishes.json?v='+Date.now(), {cache:'no-store'})
     .then(function(r){ if(!r.ok) throw 0; return r.json(); })
-    .then(function(arr){ applyCloudMenu(arr); })
-    .catch(function(){})
+    .then(function(arr){
+      if(Array.isArray(arr) && arr.length){
+        var cached=load(LS_DISHES, null);
+        if(!cached || !Array.isArray(cached) || !cached.length || arr.length>=cached.length) applyCloudMenu(arr);
+      }
+    })
+    .catch(function(){ cacheFallback(); })
     .finally(function(){
-      // 再读Supabase备份
+      // 再读Supabase备份（云端为权威，成功则无条件覆盖）
       fetch(SB_URL+'/rest/v1/rpc/get_menu',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:'{}'})
         .then(function(r){ return r.json(); })
         .then(function(arr){ if(Array.isArray(arr)&&arr.length) applyCloudMenu(arr); })
-        .catch(function(){});
+        .catch(function(){ cacheFallback(); });
     });
 }
 
@@ -1475,6 +1484,7 @@ function finalSubmit(ded){
   if(window._ckMode==='pickup') addr='到店自提';
   var time=document.getElementById('ckTime').value;
   if(window._ckMode==='pickup') time='';
+  else if(!time) time='尽快送达';
   var items=cartList();
   if(items.length===0){ alert('购物车是空的'); return; }
   var ref0=document.getElementById('ckRefPhone')?document.getElementById('ckRefPhone').value.trim():'';
@@ -2056,19 +2066,22 @@ function printTicket(p, status){
   var amt=(p.hasWeight?raw:roundHalf(raw));
   var roundAmt=Math.round((raw-amt)*100)/100;
   var paid=(status==='已付款');
-  // 小票左上角号码：自然日(MMDD) + 24小时制时间 + 当日单号（每日从1起计算，不累计）
+  // 小票左上角号码：自然日(MMDD) + 24小时制时间 + 当日单号（按当日创建时间排序取实际序号，每日从1起不累计）
   var _n2=new Date();
   var _ds2=new Date(_n2.getFullYear(),_n2.getMonth(),_n2.getDate());
   var _cnt2=1;
   try{
     var _allO=(typeof cloudOrders!=='undefined'&&Array.isArray(cloudOrders)?cloudOrders:[]).concat((typeof orders!=='undefined'&&Array.isArray(orders)?orders:[]));
-    var _seen2={};
+    var _seen2={}, _todayList=[];
     _allO.forEach(function(o){
       var _dt=new Date((o.created_at||((o.payload||{}).created))||o.created||'');
       if(!isNaN(_dt.getTime()) && _dt.getTime()>=_ds2.getTime() && _dt.getTime()<_ds2.getTime()+86400000){
-        var _k=String(o.id||o.cid||''); if(_k && !_seen2[_k]){ _seen2[_k]=1; _cnt2++; }
+        var _k=String(((o.payload||{}).id)||o.id||o.cid||''); if(_k && !_seen2[_k]){ _seen2[_k]=1; _todayList.push({t:_dt.getTime(), k:_k}); }
       }
     });
+    _todayList.sort(function(a,b){ return a.t-b.t; });
+    var _myK=String(p.id||'');
+    for(var i=0;i<_todayList.length;i++){ if(_todayList[i].k===_myK){ _cnt2=i+1; break; } }
   }catch(e){}
   var seqNo=('0'+(_n2.getMonth()+1)).slice(-2)+('0'+_n2.getDate()).slice(-2)+' '+('0'+_n2.getHours()).slice(-2)+':'+('0'+_n2.getMinutes()).slice(-2)+' #'+_cnt2;
   var body={ seqNo:seqNo, title:'榨榨鲜果', lines:lines, note:note, round:(roundAmt>0?('-'+money(roundAmt)):''), amount:'¥'+Number(amt).toFixed(2), newCust:(p.newcust?true:false), newCustDiscount:(p.newcust?(Number(p.discount)||0):0), referralDeduct:(p.referralDeduct?Number(p.referralDeduct):0), time:nowStr(), paid:paid, hasJuice:(p.items||[]).some(function(it){return it.cat==='果汁'||it.cat==='半价';}),
