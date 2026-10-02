@@ -1507,6 +1507,9 @@ function finalSubmit(ded){
   // 本单订单号：整个提交流程（含抵扣查询回调）共用同一个
   if(!window._submittingOid) window._submittingOid='o'+Date.now();
   if(ded==null){
+    // 防重复提交锁：抵扣查询为异步，期间再次提交会并发双单，加锁拦截
+    if(window._submitting){ alert('订单正在提交，请稍候…'); return; }
+    window._submitting=true;
     // 所有校验（含绑定确认）通过后才查钱包/执行抵扣，防止校验失败白扣钱包
     tryReferralDeduct(phone, finalTotal, window._submittingOid, function(d2){ finalSubmit(d2); });
     return;
@@ -1539,6 +1542,7 @@ function finalSubmit(ded){
   window._newcustAsked=false;
   // 首单优惠仅限一次：提交成功后清除本地记忆，下次重新按云端余额判断
   localStorage.removeItem('zz_use_newcust_'+phone);
+  window._submitting=false;
   showPay(order);
 }
 function showPay(order){
