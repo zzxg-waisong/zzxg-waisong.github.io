@@ -2264,7 +2264,7 @@ function renderDishesAdmin(){
     '<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">'+
     '<button class="btn orange" onclick="cloudPull()">☁️ 抓取云端菜单</button></div>'+
     '<div id="cloudStatus" style="font-size:12px;color:#666;margin-top:8px"></div></div>'+
-    (isHalf?'<p style="font-size:12px;color:#fb8c00;margin-bottom:10px">本分类由「现榨果汁」自动同步生成，价格自动为半价，无需手动编辑。</p>':(isOff?'<p style="font-size:12px;color:#e65100;margin-bottom:10px">已下架商品仅在后台可见，顾客端不会显示。菜单以云端为准，如需上架请联系豆包修改云端，本地自动更新。</p>':'<p style="font-size:12px;color:#888;margin-bottom:10px">菜单以云端为准，本机自动抓取云端最新菜单（约每1分钟自动更新）。本机修改不会上传云端，需要改菜单请联系豆包。</p>'));
+    (isHalf?'<p style="font-size:12px;color:#fb8c00;margin-bottom:10px">本分类由「现榨果汁」自动同步生成，价格自动为半价，无需手动编辑。</p>':(isOff?'<p style="font-size:12px;color:#e65100;margin-bottom:10px">已下架商品仅在后台可见，顾客端不会显示。点「重新上架」后自动同步云端，顾客端约1分钟内恢复显示。</p>':'<p style="font-size:12px;color:#888;margin-bottom:10px">新增/编辑/删除/改价/改单位都会自动保存本地并同步云端，顾客端约1分钟内自动更新。断网时先保存本地，恢复网络后重新点「保存」即可补同步。</p>'));
   var sortedDishes = isOff ? dishes.filter(function(d){ return d.on===false && d.cat!=='半价'; }).slice().sort(function(a,b){ return a.price-b.price; }) : dishes.filter(function(d){ return d.cat===adminDishCat && d.on!==false; }).slice().sort(function(a,b){ return a.price-b.price; });
   sortedDishes.forEach(function(d){
     html+='<div class="card"><div style="display:flex;justify-content:space-between;align-items:center">'+
@@ -2330,6 +2330,18 @@ function onDishImgPick(input){
   };
   reader.readAsDataURL(file);
 }
+function syncMenuToCloud(){
+  var pwd=localStorage.getItem(LS_CLOUDPWD)||'1986shenhu';
+  var menu=dishes.filter(function(d){return d.cat!=='半价';});
+  setCloudStatus('☁️ 正在同步云端菜单…');
+  fetch(SB_URL+'/rest/v1/rpc/save_menu',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({admin_pwd:pwd,p_dishes:menu})})
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      if(j && j.ok){ setCloudStatus('✅ 已保存并同步云端（共 '+j.count+' 项），顾客端约1分钟内自动更新'); }
+      else { setCloudStatus('❌ 云端同步失败：'+(j&&j.msg||'云端拒绝')+'（本地已保存，请恢复网络后重新点「保存」重试）'); }
+    })
+    .catch(function(){ setCloudStatus('❌ 云端同步失败：网络异常（本地已保存，请恢复网络后重新点「保存」重试）'); });
+}
 function saveDish(id){
   var name=document.getElementById('dName').value.trim();
   var price=parseFloat(document.getElementById('dPrice').value);
@@ -2345,11 +2357,11 @@ function saveDish(id){
   if(!name||isNaN(price)||price<0){ alert('请填写名称和正确的价格'); return; }
   if(id){ var d=byId(id); d.name=name; d.price=price; d.unit=unit; d.img=img; d.cat=cat; d.on=on; d.per=per; d.stock=stock; if(img2){ d.img2=img2; } else { delete d.img2; } }
   else { var nd={id:'d'+Date.now(),name:name,price:price,unit:unit,img:img,cat:cat,on:on,per:per,stock:stock}; if(img2){ nd.img2=img2; } dishes.push(nd); }
-  dishes=groupSort(dishes); save(LS_DISHES,dishes); syncHalfPrice(); document.getElementById('dishModal').remove(); renderAdmin(); renderCats(); renderDishes();
+  dishes=groupSort(dishes); save(LS_DISHES,dishes); syncHalfPrice(); document.getElementById('dishModal').remove(); renderAdmin(); renderCats(); renderDishes(); syncMenuToCloud();
 }
-function delDish(id){ if(confirm('确认删除该菜品？')){ dishes=dishes.filter(function(d){return d.id!==id;}); dishes=groupSort(dishes); save(LS_DISHES,dishes); syncHalfPrice(); renderAdmin(); renderCats(); renderDishes(); } }
+function delDish(id){ if(confirm('确认删除该菜品？')){ dishes=dishes.filter(function(d){return d.id!==id;}); dishes=groupSort(dishes); save(LS_DISHES,dishes); syncHalfPrice(); renderAdmin(); renderCats(); renderDishes(); syncMenuToCloud(); } }
 
-function relistDish(id){ var d=byId(id); if(!d) return; d.on=true; dishes=groupSort(dishes); save(LS_DISHES,dishes); syncHalfPrice(); renderAdmin(); renderCats(); renderDishes(); }
+function relistDish(id){ var d=byId(id); if(!d) return; d.on=true; dishes=groupSort(dishes); save(LS_DISHES,dishes); syncHalfPrice(); renderAdmin(); renderCats(); renderDishes(); syncMenuToCloud(); }
 
 function renderPayAdmin(){
   var html='<div class="panel"><h3>收款码设置</h3>'+
