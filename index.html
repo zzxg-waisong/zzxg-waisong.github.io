@@ -2269,7 +2269,7 @@ function renderDishesAdmin(){
   sortedDishes.forEach(function(d){
     html+='<div class="card"><div style="display:flex;justify-content:space-between;align-items:center">'+
       '<div>'+(d.img?'<img src="'+esc(thumbUrl(d.img))+'?v='+IMG_VER+'" style="width:44px;height:44px;object-fit:cover;border-radius:6px;vertical-align:middle;margin-right:8px">':'')+'<b>'+esc(d.name)+'</b> <span class="badge '+(d.on?'':'off')+'">'+(d.on?'上架':'下架')+'</span>'+
-      '<div style="font-size:12px;color:#888;margin-top:3px">'+esc(catLabel(d.cat))+' · '+money(d.price)+' / '+esc(d.unit||'份')+(d.per?' · 称重'+d.per+'元/斤':'')+(d.stock!=null?' · 库存'+d.stock:'')+'</div></div>'+
+      '<div style="font-size:12px;color:#888;margin-top:3px">'+esc(catLabel(d.cat))+' · '+money(d.price)+' / '+esc(d.unit||'份')+(d.orig?' · 原价'+money(d.orig):'')+(d.per?' · 称重'+d.per+'元/斤':'')+(d.stock!=null?' · 库存'+d.stock:'')+'</div></div>'+
       (isHalf?'<span style="font-size:11px;color:#fb8c00;font-weight:600">自动同步</span>':
       (isOff?'<div><button class="btn" style="font-size:12px;padding:4px 10px;background:#2e7d32;color:#fff;border:none;border-radius:6px;cursor:pointer" onclick="relistDish(\''+d.id+'\')">↩ 重新上架</button> '+
       '<button class="btn red" style="font-size:12px;padding:4px 10px" onclick="delDish(\''+d.id+'\')">删除</button></div>':
@@ -2286,6 +2286,7 @@ function editDish(id){
   box.innerHTML='<div class="box"><h3>'+(d?'编辑菜品':'新增菜品（'+catLabel(defCat)+'）')+'</h3><div class="form" style="padding:0">'+
     '<label>菜品名称</label><input id="dName" value="'+(d?esc(d.name):'')+'">'+
     '<label>价格（元）</label><input id="dPrice" type="number" step="0.1" value="'+(d?d.price:'')+'">'+
+    '<label>原价（元，打折划线显示用；正常商品留空）</label><input id="dOrig" type="number" step="0.1" min="0" value="'+(d&&d.orig!=null?d.orig:'')+'">'+
     '<label>称重单价（元/斤，水果按斤结算时填；果汁/盒装留空）</label><input id="dPer" type="number" step="0.1" min="0" value="'+(d?(d.per||''):'')+'">'+
     '<label>单位 / 重量（如：斤、整颗、杯）</label><input id="dUnit" value="'+(d?esc(d.unit||'份'):'份')+'">'+
     '<label>菜品图片（点右侧按钮选本地图，自动压缩）</label>'+
@@ -2351,12 +2352,14 @@ function saveDish(id){
   var on=document.getElementById('dOn').checked;
   var per=parseFloat(document.getElementById('dPer').value);
   if(isNaN(per)||per<0) per=0;
+  var origEl=document.getElementById('dOrig'); var orig=origEl?parseFloat(origEl.value):null;
+  if(orig!=null && (isNaN(orig)||orig<=0)) orig=null;
   var stockEl=document.getElementById('dStock'); var stock=stockEl?parseInt(stockEl.value,10):null;
   if(stock!=null && (isNaN(stock)||stock<0)) stock=null;
   var img2El=document.getElementById('dImg2'); var img2=img2El?img2El.value.trim():'';
   if(!name||isNaN(price)||price<0){ alert('请填写名称和正确的价格'); return; }
-  if(id){ var d=byId(id); d.name=name; d.price=price; d.unit=unit; d.img=img; d.cat=cat; d.on=on; d.per=per; d.stock=stock; if(img2){ d.img2=img2; } else { delete d.img2; } }
-  else { var nd={id:'d'+Date.now(),name:name,price:price,unit:unit,img:img,cat:cat,on:on,per:per,stock:stock}; if(img2){ nd.img2=img2; } dishes.push(nd); }
+  if(id){ var d=byId(id); d.name=name; d.price=price; d.unit=unit; d.img=img; d.cat=cat; d.on=on; d.per=per; d.stock=stock; if(orig!=null){ d.orig=orig; } else { delete d.orig; } if(img2){ d.img2=img2; } else { delete d.img2; } }
+  else { var nd={id:'d'+Date.now(),name:name,price:price,unit:unit,img:img,cat:cat,on:on,per:per,stock:stock}; if(orig!=null){ nd.orig=orig; } if(img2){ nd.img2=img2; } dishes.push(nd); }
   dishes=groupSort(dishes); save(LS_DISHES,dishes); syncHalfPrice(); document.getElementById('dishModal').remove(); renderAdmin(); renderCats(); renderDishes(); syncMenuToCloud();
 }
 function delDish(id){ if(confirm('确认删除该菜品？')){ dishes=dishes.filter(function(d){return d.id!==id;}); dishes=groupSort(dishes); save(LS_DISHES,dishes); syncHalfPrice(); renderAdmin(); renderCats(); renderDishes(); syncMenuToCloud(); } }
