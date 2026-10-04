@@ -978,21 +978,23 @@ function toggleShopStatus(silent){
     fetch(SB_URL+'/rest/v1/rpc/set_shop_status',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({admin_pwd:pwd, p_open:target})})
       .then(function(r){ return r.json(); })
       .then(function(j){
-        if(j && j.ok){ adminShopOpen=!!j.open; shopOpen=adminShopOpen; renderShopToggle(); renderShopBanner(); if(!silent) alert(adminShopOpen?"✅ 已切换为营业中":"✅ 已切换为已打烊（顾客端将显示打烊，即时单会被拦截）"); }
+        if(j && j.ok){ adminShopOpen=!!j.open; shopOpen=adminShopOpen; localStorage.setItem('zz_manual_shop_date', _autoDateStr()); renderShopToggle(); renderShopBanner(); if(!silent) alert(adminShopOpen?"✅ 已切换为营业中":"✅ 已切换为已打烊（顾客端将显示打烊，即时单会被拦截）"); }
         else if(!silent) alert('切换失败：密码错误或网络问题');
       })
       .catch(function(){ if(!silent) alert('切换失败：网络问题'); });
   }catch(e){}
 }
-/* 自动营业时间：08:30 自动营业，22:00 自动打烊（只在跨半点/整点边界时切，不覆盖手动临时切换；外送时段 09:00-21:30 由顾客端下单校验） */
+/* 自动营业时间：08:30 自动营业，22:00 自动打烊。
+   开机/轮询时直接按“当前是否在营业时段”判断：在营业时段(08:30-22:00)且当前打烊且今天没有手动切过 → 自动营业；不在时段且营业 → 自动打烊。
+   老板当天手动切过状态则不再自动改（尊重手动休息/提前收摊）。 */
 var _lastAutoMin = new Date().getHours()*60+new Date().getMinutes();
+function _autoDateStr(){ var d=new Date(); return d.getFullYear()+'-'+((d.getMonth()+1)<10?'0':'')+(d.getMonth()+1)+'-'+(d.getDate()<10?'0':'')+d.getDate(); }
 function autoCheckShopHours(){
   var m=nowMin();
   if(_lastAutoMin===m) return;
-  // 跨过 08:30（从 <510 到 >=510）→ 自动营业
-  if(_lastAutoMin < 510 && m >= 510 && !adminShopOpen){ toggleShopStatus(true); }
-  // 跨过 22:00（从 <1320 到 >=1320）→ 自动打烊
-  if(_lastAutoMin < 1320 && m >= 1320 && adminShopOpen){ toggleShopStatus(true); }
+  var manualToday=(localStorage.getItem('zz_manual_shop_date')||'')===_autoDateStr();
+  if(adminShopOpen && m>=1320){ toggleShopStatus(true); }
+  else if(!adminShopOpen && m>=510 && m<1320 && !manualToday){ toggleShopStatus(true); }
   _lastAutoMin=m;
 }
 window.setInterval(function(){ if(adminOk) autoCheckShopHours(); }, 60000);
