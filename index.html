@@ -2262,9 +2262,10 @@ function renderDishesAdmin(){
     '</div>'+
     '<div class="card" style="background:#eef8ee;border:1px solid #c8e6c9;margin-bottom:12px">'+
     '<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">'+
-    '<button class="btn orange" onclick="cloudPull()">☁️ 抓取云端菜单</button></div>'+
+    '<button class="btn orange" onclick="cloudPull()">☁️ 抓取云端菜单</button>'+
+    '<button class="btn" style="background:#2e7d32;border-color:#2e7d32" onclick="syncMenuToCloud()">⬆️ 上传全部到云端</button></div>'+
     '<div id="cloudStatus" style="font-size:12px;color:#666;margin-top:8px"></div></div>'+
-    (isHalf?'<p style="font-size:12px;color:#fb8c00;margin-bottom:10px">本分类由「现榨果汁」自动同步生成，价格自动为半价，无需手动编辑。</p>':(isOff?'<p style="font-size:12px;color:#e65100;margin-bottom:10px">已下架商品仅在后台可见，顾客端不会显示。点「重新上架」后自动同步云端，顾客端约1分钟内恢复显示。</p>':'<p style="font-size:12px;color:#888;margin-bottom:10px">新增/编辑/删除/改价/改单位都会自动保存本地并同步云端，顾客端约1分钟内自动更新。断网时先保存本地，恢复网络后重新点「保存」即可补同步。</p>'));
+    (isHalf?'<p style="font-size:12px;color:#fb8c00;margin-bottom:10px">本分类由「现榨果汁」自动同步生成，价格自动为半价，无需手动编辑。</p>':(isOff?'<p style="font-size:12px;color:#e65100;margin-bottom:10px">已下架商品仅在后台可见，顾客端不会显示。点「重新上架」后自动同步云端，顾客端约1分钟内恢复显示。</p>':'<p style="font-size:12px;color:#888;margin-bottom:10px">新增/编辑/删除/改价/改单位都会自动保存本地并同步云端，顾客端约1分钟内自动更新。断网时改的先存本地，恢复网络后点上方「⬆️ 上传全部到云端」一次，全部改动一起传上去。</p>'));
   var sortedDishes = isOff ? dishes.filter(function(d){ return d.on===false && d.cat!=='半价'; }).slice().sort(function(a,b){ return a.price-b.price; }) : dishes.filter(function(d){ return d.cat===adminDishCat && d.on!==false; }).slice().sort(function(a,b){ return a.price-b.price; });
   sortedDishes.forEach(function(d){
     html+='<div class="card"><div style="display:flex;justify-content:space-between;align-items:center">'+
@@ -2339,9 +2340,9 @@ function syncMenuToCloud(){
     .then(function(r){ return r.json(); })
     .then(function(j){
       if(j && j.ok){ setCloudStatus('✅ 已保存并同步云端（共 '+j.count+' 项），顾客端约1分钟内自动更新'); }
-      else { setCloudStatus('❌ 云端同步失败：'+(j&&j.msg||'云端拒绝')+'（本地已保存，请恢复网络后重新点「保存」重试）'); }
+      else { setCloudStatus('❌ 云端同步失败：'+(j&&j.msg||'云端拒绝')+'（本地已保存，恢复网络后点「⬆️ 上传全部到云端」一次即可全部上传）'); }
     })
-    .catch(function(){ setCloudStatus('❌ 云端同步失败：网络异常（本地已保存，请恢复网络后重新点「保存」重试）'); });
+    .catch(function(){ setCloudStatus('❌ 云端同步失败：网络异常（本地已保存，恢复网络后点「⬆️ 上传全部到云端」一次即可全部上传）'); });
 }
 function saveDish(id){
   var name=document.getElementById('dName').value.trim();
