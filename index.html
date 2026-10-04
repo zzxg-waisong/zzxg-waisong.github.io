@@ -354,7 +354,7 @@ button:active{transform:scale(.94);-webkit-transform:scale(.94);opacity:.85}
 /* ==================== 数据层 ==================== */
 var LS_DISHES='fruit_dishes', LS_ORDERS='fruit_orders', LS_PWD='fruit_admin_pwd',
     LS_PAY='fruit_pay', LS_SHOP='fruit_shop', LS_SESSION='fruit_admin_ok', LS_CLOUD='fruit_cloud', LS_DELIVER='fruit_deliver';
-var SB_URL='https://aenrwtwhhuqzmbxsjump.supabase.co', SB_KEY='sb_publishable_TYMADeCoaKMsnJ7INuHnfQ_n9yKIHkl', LS_CLOUDPWD='fruit_cloud_pwd';
+var SB_URL='https://aenrwtwhhuqzmbxsjump.supabase.co', SB_KEY='sb_publishable_TYMADeCoaKMsnJ7INuHnfQ_n9yKIHkl', LS_CLOUDPWD='fruit_cloud_pwd', LS_MENU_PENDING='fruit_menu_pending';
 var cloudOrders=[]; // 顾客手机下单的云端订单
 var cloudPhoneCount={}; // 手机号出现次数
 var cloudBalances={}; // 新客优惠余额（云端账户）
@@ -430,7 +430,7 @@ function loadCloud(force){
       // 再读Supabase备份（云端为权威，成功则无条件覆盖）
       fetch(SB_URL+'/rest/v1/rpc/get_menu',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:'{}'})
         .then(function(r){ return r.json(); })
-        .then(function(arr){ if(Array.isArray(arr)&&arr.length) applyCloudMenu(arr); })
+        .then(function(arr){ if(Array.isArray(arr)&&arr.length) applyCloudMenu(arr); if(window.adminOk && load(LS_MENU_PENDING,null)){ syncMenuToCloud(); renderMenuPendingBar(); } })
         .catch(function(){ cacheFallback(); });
     });
 }
@@ -1801,6 +1801,7 @@ function renderAdmin(){
   var html=''; var cur=adminTab||'orders';
   tabs.forEach(function(t){ html+='<button class="'+(cur===t[0]?'on':'')+'" onclick="adminTab=\''+t[0]+'\';renderAdmin()">'+t[1]+'</button>'; });
   document.getElementById('adminTabs').innerHTML=html;
+  renderMenuPendingBar();
   var panel=document.getElementById('adminPanel');
   if(cur==='orders') panel.innerHTML=renderOrders();
   else if(cur==='dishes') panel.innerHTML=renderDishesAdmin();
@@ -2343,6 +2344,25 @@ function syncMenuToCloud(){
       else { setCloudStatus('❌ 云端同步失败：'+(j&&j.msg||'云端拒绝')+'（本地已保存，恢复网络后点「⬆️ 上传全部到云端」一次即可全部上传）'); }
     })
     .catch(function(){ setCloudStatus('❌ 云端同步失败：网络异常（本地已保存，恢复网络后点「⬆️ 上传全部到云端」一次即可全部上传）'); });
+}
+function syncMenuToCloud(){
+  var pwd=localStorage.getItem(LS_CLOUDPWD)||'1986shenhu';
+  var menu=dishes.filter(function(d){return d.cat!=='半价';});
+  setCloudStatus('☁️ 正在同步云端菜单…');
+  fetch(SB_URL+'/rest/v1/rpc/save_menu',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({admin_pwd:pwd,p_dishes:menu})})
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      if(j && j.ok){ save(LS_MENU_PENDING,null); var b=document.getElementById('menuPendingBar'); if(b) b.remove(); setCloudStatus('✅ 已保存并同步云端（共 '+j.count+' 项），顾客端约1分钟内自动更新'); }
+      else { save(LS_MENU_PENDING,'1'); setCloudStatus('❌ 云端同步失败：'+(j&&j.msg||'云端拒绝')+'（本地已保存，恢复网络后点「⬆️ 上传全部到云端」一次即可全部上传）'); }
+    })
+    .catch(function(){ save(LS_MENU_PENDING,'1'); setCloudStatus('❌ 云端同步失败：网络异常（本地已保存，恢复网络后会自动补传）'); });
+}
+function renderMenuPendingBar(){
+  var oldBar=document.getElementById('menuPendingBar'); if(oldBar) oldBar.remove();
+  if(load(LS_MENU_PENDING,null)){
+    var tb=document.getElementById('adminTabs');
+    if(tb){ tb.insertAdjacentHTML('afterend','<div id="menuPendingBar" style="background:#c62828;color:#fff;padding:10px 14px;border-radius:8px;margin:10px 0;display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:13px;flex-wrap:wrap">⚠️ 有商品改动未同步到云端（断网时保存的），联网后已自动补传或在下面手动上传<button onclick="syncMenuToCloud()" style="background:#fff;color:#c62828;border:none;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer">立即上传全部</button></div>'); }
+  }
 }
 function saveDish(id){
   var name=document.getElementById('dName').value.trim();
