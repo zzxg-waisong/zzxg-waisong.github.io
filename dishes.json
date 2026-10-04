@@ -24,20 +24,20 @@
   "on": true,
   "cat": "水果",
   "img": "hongxin_mihoutao.jpg",
-  "per": 16,
+  "per": 15,
   "name": "红心猕猴桃",
   "unit": "斤",
-  "price": 16
+  "price": 15
  },
  {
   "id": "f_laowo_xj",
   "on": true,
-  "cat": "水果",
+  "cat": "打折",
   "img": "laowo_xiangjiao.jpg",
-  "per": 0,
-  "name": "进口香蕉（老挝）",
+  "per": 3.5,
+  "name": "进口香蕉（老挝）尾货",
   "unit": "斤",
-  "price": 5
+  "price": 3.5
  },
  {
   "id": "f_danxia_hl",
@@ -72,22 +72,22 @@
  {
   "id": "f_cuishi",
   "on": true,
-  "cat": "水果",
+  "cat": "打折",
   "img": "cuishi.jpg",
-  "per": 0,
-  "name": "脆柿",
+  "per": 3,
+  "name": "脆柿 尾货",
   "unit": "斤",
-  "price": 5
+  "price": 3
  },
  {
   "id": "f_bingtangju",
   "on": true,
   "cat": "水果",
   "img": "bingtangju.jpg",
-  "per": 9,
+  "per": 8,
   "name": "冰糖桔",
   "unit": "斤",
-  "price": 9
+  "price": 8
  },
  {
   "id": "f_danggui",
