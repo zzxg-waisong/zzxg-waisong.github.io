@@ -216,7 +216,7 @@
  },
  {
   "id": "f_hamigua",
-  "on": true,
+  "on": false,
   "cat": "水果",
   "img": "hamigua.jpg",
   "per": 0,
@@ -226,7 +226,7 @@
  },
  {
   "id": "f_huangjin_migua",
-  "on": true,
+  "on": false,
   "cat": "水果",
   "img": "huangjin_migua.jpg",
   "per": 0,
@@ -296,7 +296,7 @@
  },
  {
   "id": "j_hamigua",
-  "on": true,
+  "on": false,
   "cat": "果汁",
   "img": "hamiguazhi.jpg",
   "per": 0,
