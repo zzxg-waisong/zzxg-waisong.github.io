@@ -37,7 +37,9 @@
   "per": 3.5,
   "name": "进口香蕉（老挝）尾货",
   "unit": "斤",
-  "price": 3.5
+  "price": 3.5,
+  "orig": 5,
+  "stock": 12
  },
  {
   "id": "f_danxia_hl",
@@ -77,7 +79,9 @@
   "per": 3,
   "name": "脆柿 尾货",
   "unit": "斤",
-  "price": 3
+  "price": 3,
+  "orig": 5,
+  "stock": 5
  },
  {
   "id": "f_bingtangju",
