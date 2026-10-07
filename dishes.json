@@ -1,7 +1,7 @@
 [
  {
   "id": "f_xueli_da",
-  "on": false,
+  "on": true,
   "cat": "水果",
   "img": "xueli_white.jpg",
   "per": 3.5,
@@ -31,14 +31,14 @@
  },
  {
   "id": "f_laowo_xj",
-  "on": true,
+  "on": false,
   "cat": "打折",
   "img": "laowo_xiangjiao.jpg",
   "per": 3.5,
   "name": "进口香蕉（老挝）尾货",
+  "orig": 5,
   "unit": "斤",
   "price": 3.5,
-  "orig": 5,
   "stock": 12
  },
  {
@@ -63,13 +63,14 @@
  },
  {
   "id": "f_huapi_shiliu",
-  "on": true,
+  "on": false,
   "cat": "水果",
   "img": "huapi_shiliu.jpg",
   "per": 0,
   "name": "小花皮石榴",
   "unit": "斤",
-  "price": 4
+  "price": 4,
+  "stock": null
  },
  {
   "id": "f_cuishi",
@@ -78,30 +79,33 @@
   "img": "cuishi.jpg",
   "per": 3,
   "name": "脆柿 尾货",
+  "orig": 5,
   "unit": "斤",
   "price": 3,
-  "orig": 5,
   "stock": 5
  },
  {
   "id": "f_bingtangju",
   "on": true,
-  "cat": "水果",
+  "cat": "打折",
   "img": "bingtangju.jpg",
-  "per": 8,
+  "per": 6,
   "name": "冰糖桔",
+  "orig": 10,
   "unit": "斤",
-  "price": 8
+  "price": 6,
+  "stock": null
  },
  {
   "id": "f_danggui",
-  "on": true,
+  "on": false,
   "cat": "水果",
   "img": "danggui.jpg",
   "per": 15,
   "name": "新鲜当归",
   "unit": "斤",
-  "price": 15
+  "price": 15,
+  "stock": null
  },
  {
   "id": "f_gansu_pg_xiao",
@@ -116,13 +120,12 @@
  {
   "id": "f_gansu_pg_da",
   "on": true,
-  "cat": "打折",
+  "cat": "水果",
   "img": "gansu_pg_da.jpg",
-  "per": 6,
-  "name": "甘肃苹果（大）尾货",
+  "per": 0,
+  "name": "甘肃苹果（大）",
   "unit": "斤",
-  "price": 6,
-  "orig": 12,
+  "price": 8,
   "stock": 4
  },
  {
@@ -145,9 +148,9 @@
   "per": 0,
   "desc": "",
   "name": "云南黄金甘蔗（尾货·小根）",
+  "orig": 25,
   "unit": "根",
   "price": 10,
-  "orig": 25,
   "stock": 3
  },
  {
@@ -158,9 +161,9 @@
   "per": 0,
   "desc": "",
   "name": "云南黄金甘蔗（尾货·大根）",
+  "orig": 35,
   "unit": "根",
   "price": 15,
-  "orig": 35,
   "stock": 4
  },
  {
@@ -216,13 +219,14 @@
  },
  {
   "id": "f_hamigua",
-  "on": false,
+  "on": true,
   "cat": "水果",
   "img": "hamigua.jpg",
   "per": 0,
   "name": "哈密瓜",
   "unit": "个",
-  "price": 10
+  "price": 10,
+  "stock": null
  },
  {
   "id": "f_huangjin_migua",
@@ -296,7 +300,7 @@
  },
  {
   "id": "j_hamigua",
-  "on": false,
+  "on": true,
   "cat": "果汁",
   "img": "hamiguazhi.jpg",
   "per": 0,
@@ -370,14 +374,14 @@
  },
  {
   "id": "f_hongxin_hlg",
-  "on": true,
+  "on": false,
   "cat": "打折",
   "img": "hongxin_huolongguo.jpg",
   "per": 0,
   "name": "红心火龙果",
+  "orig": 3.5,
   "unit": "个",
   "price": 2,
-  "orig": 3.5,
   "stock": 8
  },
  {
