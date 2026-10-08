@@ -6,7 +6,7 @@
 <title>团购管理 · 榨榨鲜果</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{font-family:-apple-system,'Microsoft YaHei',sans-serif;background:#f4f6f2;color:#333;max-width:720px;margin:0 auto;min-height:100vh;padding-bottom:40px}
+body{font-family:-apple-system,'Microsoft YaHei',sans-serif;background:#f4f6f2;color:#333;max-width:760px;margin:0 auto;min-height:100vh;padding-bottom:40px}
 #top{position:sticky;top:0;z-index:9;background:#1b5e20;color:#fff;display:flex;align-items:center;padding:12px 14px;gap:10px}
 #top .back{font-size:20px;cursor:pointer;width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:rgba(255,255,255,.15);flex:none}
 #top .title{font-size:17px;font-weight:700;flex:1;text-align:center}
@@ -23,7 +23,7 @@ body{font-family:-apple-system,'Microsoft YaHei',sans-serif;background:#f4f6f2;c
 .btn-o{background:#fff;color:#2e7d32;border:1.5px solid #2e7d32}
 .btn-r{background:#fff;color:#c62828;border:1.5px solid #c62828}
 .btn-g{background:#eee;color:#666}
-input,select{width:100%;border:1.5px solid #ddd;border-radius:8px;padding:10px;font-size:14px;margin-top:6px;background:#fff}
+input,select,textarea{width:100%;border:1.5px solid #ddd;border-radius:8px;padding:10px;font-size:14px;margin-top:6px;background:#fff}
 label{font-size:13px;color:#666;display:block;margin-top:10px}
 table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
 th,td{padding:8px 6px;border-bottom:1px solid #f0f0f0;text-align:left}
@@ -34,6 +34,14 @@ th{color:#888;font-weight:600;font-size:12px}
 .errbar{background:#fce4ec;color:#c62828;font-size:13px;padding:10px;border-radius:10px;margin-top:10px;display:none}
 .hidden{display:none}
 #quoteBox{border-top:1.5px dashed #e0e0e0;margin-top:10px;padding-top:10px}
+.fil{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.fil button{border:1.5px solid #ccc;background:#fff;color:#666;border-radius:20px;padding:5px 12px;font-size:12.5px;cursor:pointer}
+.fil button.on{background:#2e7d32;border-color:#2e7d32;color:#fff;font-weight:700}
+.stats{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.stat{flex:1;min-width:100px;background:#fff;border-radius:10px;padding:10px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.stat b{display:block;font-size:20px;color:#2e7d32}
+.stat span{font-size:11.5px;color:#888}
+.cover{width:100%;max-height:120px;object-fit:cover;border-radius:10px;margin-bottom:8px;display:none}
 </style>
 </head>
 <body>
@@ -48,15 +56,31 @@ th{color:#888;font-weight:600;font-size:12px}
   <div id="main" class="hidden">
     <div class="card">
       <b style="font-size:15px;">➕ 开新团购</b>
-      <label>活动标题</label>
-      <input id="oTitle" placeholder="如：周末团购·红心猕猴桃" maxlength="30">
-      <label>成团目标（份数/斤数，合计达到即成团）</label>
-      <input id="oTarget" type="number" placeholder="如：10" min="1" step="1">
+      <div style="display:flex;gap:8px;margin-top:6px;">
+        <div style="flex:1.2;"><label>活动标题</label><input id="oTitle" placeholder="如：周末团购·红心猕猴桃" maxlength="30"></div>
+        <div style="flex:0.8;"><label>目标份数（合计达标成团）</label><input id="oTarget" type="number" placeholder="如：10" min="1" step="1"></div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <div style="flex:1;"><label>封面图 URL（可选）</label><input id="oCover" placeholder="https://… 图片链接"></div>
+        <div style="flex:0.8;"><label>每人限购份数（0=不限）</label><input id="oLimit" type="number" placeholder="0" min="0" step="1" value="0"></div>
+      </div>
+      <label>团购说明（可选，显示给顾客，如取货时间/地点）</label>
+      <textarea id="oNote" rows="2" placeholder="如：到货后当天可取，地址 XX路XX号，来取前可电话确认"></textarea>
       <label>接龙截止时间</label>
       <input id="oDeadline" type="datetime-local">
       <button class="btn btn-p" style="width:100%;margin-top:12px;" onclick="doOpen()">发布团购</button>
       <div class="okbar" id="okbar"></div>
       <div class="errbar" id="errbar"></div>
+    </div>
+    <div class="stats" id="stats"></div>
+    <div class="fil" id="filter">
+      <button class="on" data-f="all" onclick="setFilter('all')">全部</button>
+      <button data-f="open" onclick="setFilter('open')">接龙中</button>
+      <button data-f="quoted" onclick="setFilter('quoted')">待确认</button>
+      <button data-f="delivering" onclick="setFilter('delivering')">进货中</button>
+      <button data-f="arrived" onclick="setFilter('arrived')">可取货</button>
+      <button data-f="ended" onclick="setFilter('ended')">已结束</button>
+      <button data-f="cancelled" onclick="setFilter('cancelled')">已取消</button>
     </div>
     <div id="list"></div>
   </div>
@@ -72,14 +96,11 @@ th{color:#888;font-weight:600;font-size:12px}
 var SB_URL='https://aenrwtwhhuqzmbxsjump.supabase.co';
 var SB_KEY='sb_publishable_TYMADeCoaKMsnJ7INuHnfQ_n9yKIHkl';
 var LS_SESSION='fruit_admin_ok';
-var cur=null; var timer=null;
+var cur=null; var timer=null; var filt='all';
 function api(fn,body){
   return fetch(SB_URL+'/rest/v1/rpc/'+fn,{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify(body||{})}).then(function(r){return r.json();});
 }
-function isAdmin(){
-  var ok=(location.href.indexOf('autologin=1')>=0)&&localStorage.getItem(LS_SESSION)==='1';
-  return ok;
-}
+function isAdmin(){ return (location.href.indexOf('autologin=1')>=0)&&localStorage.getItem(LS_SESSION)==='1'; }
 function pwd(){ try{ return localStorage.getItem('fruit_cloud_pwd')||'1986shenhu'; }catch(e){ return '1986shenhu'; } }
 function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function stName(s){ return {open:'接龙中',quoted:'待确认',delivering:'进货中',arrived:'可取货',ended:'已结束',cancelled:'已取消'}[s]||s; }
@@ -89,16 +110,30 @@ function fmtN(n){ var v=Number(n); return (v===Math.floor(v))?String(v):v.toFixe
 function nowLocal(){ var d=new Date(); function p(x){return (x<10?'0':'')+x;} return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+'T'+p(d.getHours())+':'+p(d.getMinutes()); }
 function okbar(on,t){ var e=document.getElementById('okbar'); e.style.display=on?'block':'none'; e.textContent=t; }
 function errbar(on,t){ var e=document.getElementById('errbar'); e.style.display=on?'block':'none'; e.textContent=t; }
-function msgBox(on,t){ okbar(on,t); }
+function setFilter(f){ filt=f; var bs=document.querySelectorAll('#filter button'); for(var i=0;i<bs.length;i++){ bs[i].className=(bs[i].getAttribute('data-f')===f)?'on':''; } showList(); }
 function showList(){
   document.getElementById('main').classList.remove('hidden');
   document.getElementById('detail').classList.add('hidden');
   api('groupon_list',{}).then(function(arr){
+    if(!Array.isArray(arr)) arr=[];
+    // 统计汇总
+    var active=arr.filter(function(s){return s.status==='open'||s.status==='quoted'||s.status==='delivering'||s.status==='arrived';});
+    var people=0, qty=0, picked=0;
+    arr.forEach(function(s){ people+=Number(s.people||0); qty+=Number(s.joined_qty||0); });
+    document.getElementById('stats').innerHTML=
+      '<div class="stat"><b>'+active.length+'</b><span>进行中的团</span></div>'+
+      '<div class="stat"><b>'+arr.length+'</b><span>累计团数</span></div>'+
+      '<div class="stat"><b>'+people+'</b><span>累计参与人次</span></div>'+
+      '<div class="stat"><b>'+qty+'</b><span>累计接龙份数</span></div>';
+    var list=arr.filter(function(s){ return filt==='all'||s.status===filt; });
     var el=document.getElementById('list');
-    if(!Array.isArray(arr)||!arr.length){ el.innerHTML='<div class="card" style="color:#999;text-align:center;">还没有团购，先在上面开一个吧</div>'; return; }
-    el.innerHTML=arr.map(function(s){
-      return '<div class="card"><div class="row"><b>'+esc(s.title)+'</b><span class="badge '+stCls(s.status)+'">'+stName(s.status)+'</span></div>'+
+    if(!list.length){ el.innerHTML='<div class="card" style="color:#999;text-align:center;">当前筛选下没有团购</div>'; return; }
+    el.innerHTML=list.map(function(s){
+      var img=s.cover?'<img class="cover" src="'+esc(s.cover)+'" style="display:block;">':'';
+      return '<div class="card">'+img+
+      '<div class="row"><b>'+esc(s.title)+'</b><span class="badge '+stCls(s.status)+'">'+stName(s.status)+'</span></div>'+
       '<div class="row" style="padding-top:2px;"><span>已接龙 '+fmtN(s.joined_qty)+' / 目标 '+fmtN(s.target_qty)+'</span><span>'+s.people+' 人</span></div>'+
+      (s.per_limit>0?'<div class="row" style="padding-top:0;"><span class="muted">每人限购 '+fmtN(s.per_limit)+' 份</span></div>':'')+
       '<div class="row"><span class="muted">截止 '+fmtT(s.deadline)+(s.unit_price!=null?' · 单价 ¥'+fmtN(s.unit_price):'')+'</span></div>'+
       '<button class="btn btn-p" onclick="openDetail('+s.id+')">查看/操作</button></div>';
     }).join('');
@@ -113,14 +148,21 @@ function showDetail(){
   api('groupon_list',{}).then(function(arr){
     var s=null; (arr||[]).forEach(function(x){ if(x.id===cur) s=x; });
     if(!s){ document.getElementById('dCard').innerHTML='<div class="card">不存在</div>'; return; }
-    document.getElementById('dCard').innerHTML='<div class="card"><div class="row"><b>'+esc(s.title)+'</b><span class="badge '+stCls(s.status)+'">'+stName(s.status)+'</span></div>'+
-      '<div class="row"><span>已接龙</span><b style="color:#43a047;">'+fmtN(s.joined_qty)+' 份 / '+s.people+' 人</b></div>'+
-      '<div class="row"><span>目标</span><b>'+fmtN(s.target_qty)+' 份</b></div>'+
-      '<div class="row"><span>截止</span><b>'+fmtT(s.deadline)+'</b></div>'+
+    var img=s.cover?'<img class="cover" src="'+esc(s.cover)+'" style="display:block;">':'';
+    document.getElementById('dCard').innerHTML='<div class="card">'+img+
+      '<div class="row"><b>'+esc(s.title)+'</b><span class="badge '+stCls(s.status)+'">'+stName(s.status)+'</span></div>'+
+      '<div class="stats" style="margin-bottom:4px;">'+
+        '<div class="stat"><b>'+fmtN(s.joined_qty)+'</b><span>已接龙份数</span></div>'+
+        '<div class="stat"><b>'+s.people+'</b><span>参与人数</span></div>'+
+        '<div class="stat"><b>'+fmtN(s.confirmed_qty)+'</b><span>已确认</span></div>'+
+        '<div class="stat"><b>'+fmtN(s.target_qty)+'</b><span>目标份数</span></div>'+
+      '</div>'+
+      '<div class="row"><span>截止时间</span><b>'+fmtT(s.deadline)+'</b></div>'+
+      (s.per_limit>0?'<div class="row"><span>每人限购</span><b>'+fmtN(s.per_limit)+' 份</b></div>':'')+
+      (s.note?'<div class="row" style="align-items:flex-start;"><span>说明</span><b style="text-align:right;font-weight:600;">'+esc(s.note)+'</b></div>':'')+
       (s.unit_price!=null?'<div class="row"><span>单价</span><span class="price">¥'+fmtN(s.unit_price)+'</span></div>':'')+
       (s.status==='quoted'?'<div class="row"><span>确认截止</span><b>'+fmtT(s.confirm_deadline)+'</b></div>':'')+
       '</div>';
-    // 操作区
     var ops=document.getElementById('dOps');
     var h='<div class="card" id="opsCard"><b>操作</b>';
     if(s.status==='open'){
@@ -139,19 +181,28 @@ function showDetail(){
     }else if(s.status==='cancelled'||s.status==='ended'){
       h+='<div class="muted" style="margin:6px 0;">本团已'+stName(s.status)+'，只读。</div>';
     }
-    ops.innerHTML=h+'</div>';
+    ops.innerHTML=h+'<button class="btn btn-g" onclick="copyDetail()">📄 复制明细文本</button></div>';
     return api('groupon_requests_list',{p_admin:pwd(),p_session_id:cur});
   }).then(function(r){
     if(!Array.isArray(r)) return;
     var el=document.getElementById('dReq');
     if(!r.length){ el.innerHTML='<div class="card" style="color:#999;">暂无参与记录</div>'; return; }
-    el.innerHTML='<div class="card"><b>参与明细（'+r.length+' 条）</b><table><tr><th>手机号</th><th>商品</th><th>数量</th><th>状态</th></tr>'+
+    var pickedN=r.filter(function(x){return x.status==='picked';}).length;
+    el.innerHTML='<div class="card"><b>参与明细（'+r.length+' 条 · 已核销 '+pickedN+'）</b><table><tr><th>手机号</th><th>商品</th><th>数量</th><th>状态</th></tr>'+
       r.map(function(x){
         var st={joined:'已参与',confirmed:'已确认',picked:'已取',missed:'未取',withdrawn:'退出',cancelled:'取消'}[x.status]||x.status;
         var sc={joined:'s-joined',confirmed:'s-confirmed',picked:'s-picked',missed:'s-missed',withdrawn:'s-withdrawn',cancelled:'s-cancelled'}[x.status]||'s-cancelled';
         return '<tr><td>'+esc(x.phone)+'</td><td>'+esc(x.item_name)+'</td><td>'+fmtN(x.qty)+' '+esc(x.unit)+'</td><td><span class="st '+sc+'">'+st+'</span></td></tr>';
       }).join('')+'</table></div>';
   }).catch(function(){});
+}
+function copyDetail(){
+  api('groupon_requests_list',{p_admin:pwd(),p_session_id:cur}).then(function(r){
+    if(!Array.isArray(r)||!r.length){ alert('无明细'); return; }
+    var txt=r.map(function(x){ return x.phone+' '+x.item_name+' '+fmtN(x.qty)+x.unit+' ['+x.status+']'; }).join('\n');
+    if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(txt).then(function(){ alert('已复制 '+r.length+' 条明细'); },function(){ alert(txt); }); }
+    else alert(txt);
+  });
 }
 function doOpen(){
   var t=document.getElementById('oTitle').value.trim();
@@ -160,8 +211,10 @@ function doOpen(){
   if(!t){ errbar(true,'请填写活动标题'); return; }
   if(!g||Number(g)<=0){ errbar(true,'请填写目标份数'); return; }
   if(!d){ errbar(true,'请选择截止时间'); return; }
-  api('groupon_open',{p_admin:pwd(),p_title:t,p_target_qty:Number(g),p_deadline:new Date(d).toISOString()}).then(function(r){
-    if(r.ok){ okbar(true,'✅ 团购已发布！'); document.getElementById('oTitle').value=''; document.getElementById('oTarget').value=''; showList(); }
+  api('groupon_open',{p_admin:pwd(),p_title:t,p_target_qty:Number(g),p_deadline:new Date(d).toISOString(),
+    p_cover:document.getElementById('oCover').value.trim(),p_note:document.getElementById('oNote').value.trim(),
+    p_per_limit:Number(document.getElementById('oLimit').value)||0}).then(function(r){
+    if(r.ok){ okbar(true,'✅ 团购已发布！'); document.getElementById('oTitle').value=''; document.getElementById('oTarget').value=''; document.getElementById('oCover').value=''; document.getElementById('oNote').value=''; document.getElementById('oLimit').value='0'; showList(); }
     else errbar(true,r.msg||'发布失败');
   }).catch(function(){ errbar(true,'网络异常'); });
 }
@@ -215,7 +268,6 @@ function doEnd(){
     else errbar(true,r.msg||'结束失败');
   }).catch(function(){ errbar(true,'网络异常'); });
 }
-// 初始化
 if(isAdmin()){
   document.getElementById('login').classList.add('hidden');
   document.getElementById('main').classList.remove('hidden');
