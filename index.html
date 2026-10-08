@@ -159,7 +159,7 @@ button:active{transform:scale(.94);-webkit-transform:scale(.94)}
     </div>
   </div>
   <div class="ticker"><div class="tk">
-    <span>🔥 新客首单，立享 5 元优惠</span>✦
+    <span id="tk1">🔥 新客首单，立享 5 元优惠</span>✦
     <span id="tk2">3 公里内 满 20 元 免配送费</span>✦
     <span id="tk3">3-5 公里 3 元 / 单 满 30 元 免配送费</span>✦
     <span id="tk4">超5公里 每公里 2 元</span>✦
@@ -314,7 +314,7 @@ button:active{transform:scale(.94);-webkit-transform:scale(.94)}
     <button title="关闭" style="position:absolute;top:10px;right:10px;width:32px;height:32px;border:none;background:#f0f0f0;border-radius:50%;font-size:16px;color:#888;cursor:pointer;z-index:5;line-height:1" onclick="closePromo()">✕</button>
     <h3 style="text-align:center;margin:4px 0 12px;font-size:17px">🎁 优惠说明</h3>
     <div style="background:#fff8e1;border:1px solid #f0e0b0;border-radius:10px;padding:12px 14px;font-size:14px;line-height:2.1">
-      <div>① <b style="color:#e65100">新客首单立享 5 元优惠</b></div>
+      <div id="pr1">① <b style="color:#e65100">新客首单立享 5 元优惠</b></div>
       <div>② 满 <b>20</b> 元起送</div>
       <div>③ <b id="pr3">3 公里内</b>满 20 元 <b>免配送费</b></div>
       <div>④ <b id="pr4">3-5 公里</b> 3 元/单，满 30 元 <b>免配送费</b></div>
@@ -1080,6 +1080,7 @@ function hmToMin(s){ if(!s) return -1; var p=String(s).split(':'); if(p.length<2
 function minToHm(m){ if(m==null||isNaN(m)||m<0) return ''; var h=Math.floor(m/60), mm=m%60; return (h<10?'0':'')+h+':'+(mm<10?'0':'')+mm; }
 var shopHours = load('zz_shop_hours', {openStart:510, openEnd:1320, dlvStart:540, dlvEnd:1290});
 var dlvFee = load('zz_dlv_fee', {freeKm:3, baseFee:3, freeOver:30, perKm:2, maxKm:10});
+var newCustAmt = load('zz_newcust_amt', 5);
 function inShopWindow(){ var m=nowMin(); return m>=shopHours.openStart && m<shopHours.openEnd; }
 function inDlvWindow(){ var m=nowMin(); return m>=shopHours.dlvStart && m<shopHours.dlvEnd; }
 function inModeWindow(mode){ return (mode==='pickup')?inShopWindow():inDlvWindow(); }
@@ -1339,7 +1340,7 @@ function submitOrder(){
   var _fee2=(window._ckMode!=='pickup'&&window._delivery&&window._delivery.dist<=10)?deliveryFee(window._delivery.dist,total):0; if(_fee2<0)_fee2=0;
   var totCk=total+_fee2;
   if(totCk>=25){
-    if(window._newcustAsked){ var uf=localStorage.getItem('zz_use_newcust_'+phone)==='1'; window._disc=uf?5:0; doRealSubmit(); return; }
+    if(window._newcustAsked){ var uf=localStorage.getItem('zz_use_newcust_'+phone)==='1'; window._disc=uf?newCustAmt:0; doRealSubmit(); return; }
     checkNewcust(phone);
     return;
   }
@@ -1585,10 +1586,10 @@ function checkPromo(){
     fetch(SB_URL+'/rest/v1/rpc/get_balance_public',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({phone:ph})})
       .then(function(r){ return r.json(); })
       .then(function(j){
-        var b=(j&&j.balance!=null)?Number(j.balance):0; var used=5-b;
+        var b=(j&&j.balance!=null)?Number(j.balance):0; var used=newCustAmt-b;
         if(j && j.new===true){
         var useDisc=localStorage.getItem('zz_use_newcust_'+ph)==='1';
-        var h='<div style="background:#e8f5e9;border:1px solid #c8e6c9;border-radius:8px;padding:12px">您是<b>新客</b>，首单立享 <b style="color:#e65100">5 元</b>优惠！<br>满 20 元起送，3 公里内免配送费～<br><div style="display:flex;gap:8px;margin-top:10px">';
+        var h='<div style="background:#e8f5e9;border:1px solid #c8e6c9;border-radius:8px;padding:12px">您是<b>新客</b>，首单立享 <b style="color:#e65100">'+newCustAmt+' 元</b>优惠！<br>满 20 元起送，3 公里内免配送费～<br><div style="display:flex;gap:8px;margin-top:10px">';
         if(useDisc){
           h+='<button onclick="setUseNewcust(\''+ph+'\',0)" style="flex:1;background:#fff;color:#666;border:1px solid #ccc;border-radius:6px;padding:8px">不使用（保留）</button><b style="flex:1;text-align:center;color:#2e7d32;line-height:34px">已选使用</b>';
         } else {
@@ -1598,14 +1599,14 @@ function checkPromo(){
         res.innerHTML=h;
       }
         else if(b>0){ res.innerHTML='<div style="background:#fff8e1;border:1px solid #f0e0b0;border-radius:8px;padding:12px">您已累计优惠 <b style="color:#e65100">'+money(used)+'</b> 元，还剩余 <b style="color:#2e7d32">'+money(b)+'</b> 元优惠额度，<b>下次下单继续抵用</b>！<br>下单后记得提醒店主点「新客优惠」哦～</div>'; }
-        else { res.innerHTML='<div style="background:#f5f5f5;border:1px solid #ddd;border-radius:8px;padding:12px">您的新客 5 元优惠已<b>全部用完</b>，承蒙惠顾！<br><b style="color:#2e7d32">加好友进群，可增加优惠额度～</b></div>'; }
+        else { res.innerHTML='<div style="background:#f5f5f5;border:1px solid #ddd;border-radius:8px;padding:12px">您的新客 '+newCustAmt+' 元优惠已<b>全部用完</b>，承蒙惠顾！<br><b style="color:#2e7d32">加好友进群，可增加优惠额度～</b></div>'; }
       })
       .catch(function(){ res.innerHTML='<span style="color:#e65100">查询失败，请检查网络</span>'; });
   }catch(e){ res.innerHTML='<span style="color:#e65100">查询失败</span>'; }
 }
 function setUseNewcust(ph,use){
   window._newcustAsked=true;
-  window._disc=use?5:0;
+  window._disc=use?newCustAmt:0;
   if(use) localStorage.setItem('zz_use_newcust_'+ph,'1');
   else localStorage.removeItem('zz_use_newcust_'+ph);
   checkPromo();
@@ -2605,6 +2606,8 @@ function renderFeeTexts(){
   set('pr4', f.freeKm+'-'+km2+' 公里');
   set('pr5', km2+'-'+f.maxKm+' 公里');
   set('pr6', f.maxKm+' 公里');
+  var e1=document.getElementById('tk1'); if(e1) e1.textContent=(newCustAmt>0)?('🔥 新客首单，立享 '+newCustAmt+' 元优惠'):'';
+  var e1b=document.getElementById('pr1'); if(e1b){ e1b.style.display=(newCustAmt>0)?'':'none'; e1b.innerHTML='① <b style="color:#e65100">新客首单立享 '+newCustAmt+' 元优惠</b>'; }
 }
 function loadShopCloud(){
   var now=Date.now();
@@ -2620,6 +2623,7 @@ function loadShopCloud(){
         if(c.deliver){ deliverCfg=Object.assign({},deliverCfg,c.deliver); save(LS_DELIVER,deliverCfg); }
         if(c.hours){ shopHours=Object.assign({},shopHours,c.hours); save('zz_shop_hours',shopHours); }
         if(c.fee){ dlvFee=Object.assign({},dlvFee,c.fee); save('zz_dlv_fee',dlvFee); renderFeeTexts(); }
+        if(c.promo){ newCustAmt=Object.assign({},newCustAmt,c.promo).newAmt; save('zz_newcust_amt',newCustAmt); renderFeeTexts(); }
         if(j.updated_at) _localShopTs=new Date(j.updated_at).getTime();
         _shopDirty=false;
         markOnline();
@@ -2629,7 +2633,7 @@ function loadShopCloud(){
 }
 function pushShopCloud(){
   var pwd=localStorage.getItem(LS_CLOUDPWD)||'1986shenhu';
-  var cfg={shop:{address:shopCfg.address||'',shopLat:shopCfg.shopLat||'',shopLng:shopCfg.shopLng||'',amapKey:shopCfg.amapKey||'',jskey:shopCfg.jskey||'',jscode:shopCfg.jscode||''},pay:{payUrl:payCfg.payUrl||'',wxUrl:payCfg.wxUrl||''},deliver:{pwd:deliverCfg.pwd||''},hours:{openStart:shopHours.openStart||510,openEnd:shopHours.openEnd||1320,dlvStart:shopHours.dlvStart||540,dlvEnd:shopHours.dlvEnd||1290},fee:{freeKm:dlvFee.freeKm||3,baseFee:dlvFee.baseFee||3,freeOver:dlvFee.freeOver||30,perKm:dlvFee.perKm||2,maxKm:dlvFee.maxKm||10}};
+  var cfg={shop:{address:shopCfg.address||'',shopLat:shopCfg.shopLat||'',shopLng:shopCfg.shopLng||'',amapKey:shopCfg.amapKey||'',jskey:shopCfg.jskey||'',jscode:shopCfg.jscode||''},pay:{payUrl:payCfg.payUrl||'',wxUrl:payCfg.wxUrl||''},deliver:{pwd:deliverCfg.pwd||''},hours:{openStart:shopHours.openStart||510,openEnd:shopHours.openEnd||1320,dlvStart:shopHours.dlvStart||540,dlvEnd:shopHours.dlvEnd||1290},fee:{freeKm:dlvFee.freeKm||3,baseFee:dlvFee.baseFee||3,freeOver:dlvFee.freeOver||30,perKm:dlvFee.perKm||2,maxKm:dlvFee.maxKm||10},promo:{newAmt:newCustAmt||5}};
   fetch(SB_URL+'/rest/v1/rpc/save_shop_config',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({p_admin:pwd,p_cfg:cfg})})
     .then(function(r){ return r.json(); })
     .then(function(j){
@@ -3155,6 +3159,8 @@ function renderReferralAdmin(){
     '<div class="rowline"><span>返点比例（%）</span><span><input id="refRate" type="number" step="0.5" min="0" style="width:70px;border:1px solid #ddd;border-radius:6px;padding:6px"></span></div>'+
     '<div class="rowline"><span>抵扣比例（%）</span><span><input id="refDeductRate" type="number" step="1" min="0" style="width:70px;border:1px solid #ddd;border-radius:6px;padding:6px"></span></div>'+
     '<div class="rowline"><span>单笔抵扣上限（元）</span><span><input id="refMax" type="number" step="0.5" min="0" style="width:70px;border:1px solid #ddd;border-radius:6px;padding:6px"></span></div>'+
+    '<div class="rowline"><span>新客立减金额（元）</span><span><input id="ncAmt" type="number" step="0.5" min="0" style="width:70px;border:1px solid #ddd;border-radius:6px;padding:6px" value="'+newCustAmt+'"><button class="btn" style="margin-left:8px" onclick="saveNewCustAmt()">保存</button></span></div>'+
+    '<div style="font-size:12px;color:#888;margin:2px 0 6px;line-height:1.8">新客首单立减金额（默认 5 元）；填 0 即关闭新客立减活动。保存后云端三端同步。</div>'+
     '<div style="font-size:12px;color:#888;margin:6px 0;line-height:1.8">说明：朋友下单填您手机号 → 您得「返点比例」返利（次日到账）；您下单自动按「抵扣比例」抵扣，最高「单笔上限」元，不超钱包余额。</div>'+
     '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn" onclick="saveReferralCfg()">保存设置</button><button class="btn" onclick="openRefCfgWindow()">查询</button><span id="refSaveRes" style="font-size:13px;color:#2e7d32;line-height:34px"></span></div>'+
     '<div style="display:flex;gap:6px;margin:12px 0 4px;flex-wrap:wrap;align-items:center;background:#eef4fb;border:1px solid #d0e0f5;border-radius:8px;padding:8px">'+
@@ -3175,6 +3181,15 @@ function renderReferralAdmin(){
       }
     }).catch(function(){});
   return html;
+}
+function saveNewCustAmt(){
+  var v=parseFloat(document.getElementById('ncAmt').value);
+  if(!(v>=0)){ alert('请输入有效的金额（0=关闭）'); return; }
+  newCustAmt=v;
+  save('zz_newcust_amt',newCustAmt);
+  renderFeeTexts();
+  pushShopCloud();
+  alert('新客立减金额已保存：'+(v>0?(v+' 元'):'已关闭'));
 }
 function saveReferralCfg(){
   var pwd=localStorage.getItem(LS_CLOUDPWD)||'1986shenhu';
