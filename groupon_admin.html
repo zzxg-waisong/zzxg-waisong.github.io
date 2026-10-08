@@ -121,8 +121,10 @@ th{color:#999;font-weight:700;font-size:12px;background:#fafcfa}
       <div class="fil" id="flSeason"></div>
       <div class="flSec">按月份（多选 · 上市区间含任一选中月）</div>
       <div class="fil" id="flMonths"></div>
-      <div class="flSec">按产地（多选 · 产地含任一选中词）</div>
+      <div class="flSec">按产地（国内省份 · 多选）</div>
       <div class="fil" id="flOrigins"></div>
+      <div class="flSec">按进口（蒙阳/雨润市场常见 · 多选）</div>
+      <div class="fil" id="flImports"></div>
       <div class="flSec">按口感（多选 · 按上面"按当季"选中月计算）</div>
       <div class="fil" id="flTastes"></div>
       <div class="flGrid" id="flGrid"></div>
@@ -417,15 +419,23 @@ function flToggleMonth(v){
 function flToggleArr(arr,v){ var i=arr.indexOf(v); if(i>=0) arr.splice(i,1); else arr.push(v); renderChips(); renderFruits(); }
 function flToggleMonthPick(v){ flToggleArr(monthPicks,Number(v)); }
 function flToggleOriginIdx(idx){ flToggleArr(originPicks,ORIGIN_TOKENS[idx]); }
+function flToggleOrigin(v){ flToggleArr(originPicks,v); }
 function flToggleTaste(k){ flToggleArr(tastePicks,k); }
+var CN_TOKENS=[], IM_TOKENS=[];
 function flBuildOrigins(){
   var cnt={};
   FRUITS.forEach(function(f){
     String(f.origin||'').split(/[\/、,，]/).forEach(function(t){ t=t.trim(); if(t) cnt[t]=(cnt[t]||0)+1; });
   });
-  var keys=Object.keys(cnt).sort(function(a,b){ return cnt[b]-cnt[a]; }).slice(0,20);
-  if(keys.indexOf('进口')<0) keys.push('进口');
-  ORIGIN_TOKENS=keys;
+  CN_TOKENS=[]; IM_TOKENS=[];
+  var imp=['进口','泰国','越南','智利','秘鲁','美国','南非','以色列','澳大利亚','新西兰','菲律宾','厄瓜多尔','埃及','马来西亚','印尼','伊拉克','沙特','墨西哥','阿根廷','缅甸','老挝','非洲','澳洲','日本','韩国'];
+  Object.keys(cnt).forEach(function(t){
+    var im=false;
+    for(var i=0;i<imp.length;i++){ if(t.indexOf(imp[i])>=0){ im=true; break; } }
+    (im?IM_TOKENS:CN_TOKENS).push(t);
+  });
+  CN_TOKENS.sort(function(a,b){ return cnt[b]-cnt[a]; });
+  IM_TOKENS.sort(function(a,b){ return cnt[b]-cnt[a]; });
 }
 function renderChips(){
   var isDefault=(!kw)&&seasonOn&&seasonM===(new Date().getMonth()+1)&&!monthPicks.length&&!originPicks.length&&!tastePicks.length;
@@ -437,8 +447,11 @@ function renderChips(){
   for(i=1;i<=12;i++){ h+='<button class="'+(monthPicks.indexOf(i)>=0?'on':'')+'" onclick="flToggleMonthPick('+i+')">'+i+'月</button>'; }
   document.getElementById('flMonths').innerHTML=h;
   h='';
-  ORIGIN_TOKENS.forEach(function(t,idx){ h+='<button class="'+(originPicks.indexOf(t)>=0?'on':'')+'" onclick="flToggleOriginIdx('+idx+')">'+esc(t)+'</button>'; });
+  CN_TOKENS.forEach(function(t){ h+='<button class="'+(originPicks.indexOf(t)>=0?'on':'')+'" onclick="flToggleOrigin(\''+esc(t).replace(/'/g,"\\'")+'\')">'+esc(t)+'</button>'; });
   document.getElementById('flOrigins').innerHTML=h;
+  h='';
+  IM_TOKENS.forEach(function(t){ h+='<button class="'+(originPicks.indexOf(t)>=0?'on':'')+'" onclick="flToggleOrigin(\''+esc(t).replace(/'/g,"\\'")+'\')">'+esc(t)+'</button>'; });
+  document.getElementById('flImports').innerHTML=h;
   h='';
   Object.keys(TASTE_META).forEach(function(k){ h+='<button class="'+(tastePicks.indexOf(k)>=0?'on':'')+'" onclick="flToggleTaste(\''+k+'\')">'+TASTE_META[k].t+'</button>'; });
   document.getElementById('flTastes').innerHTML=h;
