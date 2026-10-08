@@ -62,6 +62,23 @@ th{color:#999;font-weight:700;font-size:12px;background:#fafcfa}
 .hd2 .ico{width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,#2e7d32,#43a047);color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;flex:none}
 .empty{padding:26px 10px;text-align:center;color:#aaa}
 .empty .eico{font-size:34px;margin-bottom:8px}
+/* 应季水果库 */
+.flSec{font-size:12px;color:#777;font-weight:700;margin:12px 0 6px}
+.flGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px}
+.flCard{background:#fbfdfb;border:1px solid #e8efe6;border-radius:12px;padding:10px;position:relative}
+.flImg{width:100%;height:84px;border-radius:10px;object-fit:cover;background:#f0f2f0;margin-bottom:8px;display:block}
+.flPh{width:100%;height:84px;border-radius:10px;background:#eceff0;display:flex;align-items:center;justify-content:center;color:#aaa;font-size:12px;margin-bottom:8px}
+.t-best{background:linear-gradient(135deg,#e53935,#fb8c00)}
+.t-good{background:linear-gradient(135deg,#43a047,#66bb6a)}
+.t-tail{background:linear-gradient(135deg,#f9a825,#fbc02d)}
+.t-normal{background:linear-gradient(135deg,#9e9e9e,#bdbdbd)}
+.flAdded{position:absolute;top:8px;right:8px;background:linear-gradient(135deg,#2e7d32,#43a047);color:#fff;font-size:11px;font-weight:800;padding:2px 8px;border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,.15);z-index:2}
+#flBar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:760px;background:#fff;padding:10px 14px calc(10px + env(safe-area-inset-bottom));box-shadow:0 -2px 12px rgba(0,0,0,.12);z-index:100;display:flex;gap:8px;align-items:center}
+#flBar .sel{font-size:13px;font-weight:800;color:#2e7d32;flex:none}
+#flBar select{margin:0;flex:1;padding:9px;font-size:13px}
+#flBar button{flex:none;margin:0;border:none;border-radius:12px;padding:10px 14px;font-size:13px;font-weight:800;cursor:pointer;background:linear-gradient(135deg,#2e7d32,#43a047);color:#fff;box-shadow:0 2px 6px rgba(46,125,50,.3)}
+#flBar button:disabled{background:#cfd8cf;color:#888;box-shadow:none}
+#toast{position:fixed;top:70px;left:50%;transform:translateX(-50%);background:rgba(30,30,30,.88);color:#fff;font-size:13px;padding:9px 18px;border-radius:20px;z-index:200;display:none;max-width:90%;text-align:center}
 </style>
 </head>
 <body>
@@ -92,6 +109,22 @@ th{color:#999;font-weight:700;font-size:12px;background:#fafcfa}
       <div class="okbar" id="okbar"></div>
       <div class="errbar" id="errbar"></div>
     </div>
+
+    <div class="card" id="fruitLib">
+      <div class="hd2"><span class="ico">🍓</span>应季水果库 <span class="muted" id="flCount" style="font-weight:400;"></span></div>
+      <input id="flKw" placeholder="🔍 搜索水果名 / 别名（忽略大小写）" oninput="flSearch(this.value)">
+      <div class="fil" style="margin-top:12px;"><button id="flAllBtn" class="on" onclick="flClearAll()">全部（清除筛选）</button></div>
+      <div class="flSec">按当季（点击月份切换查看该月在市水果；再点一次取消本筛选）</div>
+      <div class="fil" id="flSeason"></div>
+      <div class="flSec">按月份（多选 · 上市区间含任一选中月）</div>
+      <div class="fil" id="flMonths"></div>
+      <div class="flSec">按产地（多选 · 产地含任一选中词）</div>
+      <div class="fil" id="flOrigins"></div>
+      <div class="flSec">按口感（多选 · 按上面"按当季"选中月计算）</div>
+      <div class="fil" id="flTastes"></div>
+      <div class="flGrid" id="flGrid"></div>
+    </div>
+
     <div class="stats" id="stats"></div>
     <div class="fil" id="filter">
       <button class="on" data-f="all" onclick="setFilter('all')">全部</button>
@@ -112,6 +145,12 @@ th{color:#999;font-weight:700;font-size:12px;background:#fafcfa}
     <div id="dOps"></div>
   </div>
 </div>
+<div id="flBar">
+  <span class="sel" id="flSelN">已选 0 种</span>
+  <select id="flSession" onchange="flSessionChange(this.value)"></select>
+  <button id="flAddBtn" onclick="doPlanAdd()">一键加入团购方案</button>
+</div>
+<div id="toast"></div>
 <script>
 var SB_URL='https://aenrwtwhhuqzmbxsjump.supabase.co';
 var SB_KEY='sb_publishable_TYMADeCoaKMsnJ7INuHnfQ_n9yKIHkl';
@@ -291,11 +330,205 @@ function doEnd(){
     else errbar(true,r.msg||'结束失败');
   }).catch(function(){ errbar(true,'网络异常'); });
 }
+/* ===== 应季水果库 ===== */
+var FRUITS=[], planSessionId=null, planIds={};
+var kw='', seasonM=new Date().getMonth()+1, seasonOn=true;
+var monthPicks=[], originPicks=[], tastePicks=[], selIds=[];
+var ORIGIN_TOKENS=[];
+function parseWindows(str){
+  var wins=[];
+  if(!str) return wins;
+  str=String(str).trim();
+  if(str.indexOf('全年')>=0) return [{fullYear:true,start:1,end:12}];
+  str.split(/[,，]/).forEach(function(p){
+    p=p.trim();
+    var m=p.match(/(\d{1,2})\s*[-—~至]\s*(\d{1,2})\s*月?/);
+    if(m){ var x=parseInt(m[1],10), y=parseInt(m[2],10); if(x>=1&&x<=12&&y>=1&&y<=12) wins.push({fullYear:false,start:x,end:y}); }
+    else { var s=p.match(/(\d{1,2})\s*月?/); if(s){ var v=parseInt(s[1],10); if(v>=1&&v<=12) wins.push({fullYear:false,start:v,end:v}); } }
+  });
+  return wins;
+}
+function inWin(w,m){
+  if(w.fullYear) return true;
+  var c=w.start;
+  while(true){ if(c===m) return true; if(c===w.end) break; c=(c%12)+1; }
+  return false;
+}
+function monthsSet(str){
+  var set=[];
+  parseWindows(str).forEach(function(w){
+    if(w.fullYear){ for(var i=1;i<=12;i++) set.push(i); return; }
+    var c=w.start;
+    while(true){ set.push(c); if(c===w.end) break; c=(c%12)+1; }
+  });
+  return set;
+}
+function tasteOf(f,m){
+  var wins=parseWindows(f.months);
+  var inSeason=wins.some(function(w){ return inWin(w,m); });
+  if(!inSeason) return 'normal';
+  if(monthsSet(f.best_months).indexOf(m)>=0) return 'best';
+  var isTail=wins.some(function(w){ return !w.fullYear && w.end===m; });
+  if(isTail) return 'tail';
+  return 'good';
+}
+var TASTE_META={best:{t:'当季最佳',c:'t-best'},good:{t:'不错',c:'t-good'},tail:{t:'尾季',c:'t-tail'},normal:{t:'一般',c:'t-normal'}};
+function flToast(t){ var e=document.getElementById('toast'); e.textContent=t; e.style.display='block'; clearTimeout(e._tm); e._tm=setTimeout(function(){ e.style.display='none'; },2200); }
+function flSearch(v){ kw=v.trim().toLowerCase(); renderChips(); renderFruits(); }
+function flClearAll(){
+  kw=''; document.getElementById('flKw').value='';
+  seasonM=new Date().getMonth()+1; seasonOn=true;
+  monthPicks=[]; originPicks=[]; tastePicks=[];
+  renderChips(); renderFruits();
+}
+function flToggleMonth(v){
+  v=Number(v);
+  if(seasonOn && seasonM===v){ seasonOn=false; } else { seasonM=v; seasonOn=true; }
+  renderChips(); renderFruits();
+}
+function flToggleArr(arr,v){ var i=arr.indexOf(v); if(i>=0) arr.splice(i,1); else arr.push(v); renderChips(); renderFruits(); }
+function flToggleMonthPick(v){ flToggleArr(monthPicks,Number(v)); }
+function flToggleOriginIdx(idx){ flToggleArr(originPicks,ORIGIN_TOKENS[idx]); }
+function flToggleTaste(k){ flToggleArr(tastePicks,k); }
+function flBuildOrigins(){
+  var cnt={};
+  FRUITS.forEach(function(f){
+    String(f.origin||'').split(/[\/、,，]/).forEach(function(t){ t=t.trim(); if(t) cnt[t]=(cnt[t]||0)+1; });
+  });
+  var keys=Object.keys(cnt).sort(function(a,b){ return cnt[b]-cnt[a]; }).slice(0,20);
+  if(keys.indexOf('进口')<0) keys.push('进口');
+  ORIGIN_TOKENS=keys;
+}
+function renderChips(){
+  var isDefault=(!kw)&&seasonOn&&seasonM===(new Date().getMonth()+1)&&!monthPicks.length&&!originPicks.length&&!tastePicks.length;
+  document.getElementById('flAllBtn').className=isDefault?'on':'';
+  var h='', i;
+  for(i=1;i<=12;i++){ h+='<button class="'+((seasonOn&&seasonM===i)?'on':'')+'" onclick="flToggleMonth('+i+')">'+i+'月</button>'; }
+  document.getElementById('flSeason').innerHTML=h;
+  h='';
+  for(i=1;i<=12;i++){ h+='<button class="'+(monthPicks.indexOf(i)>=0?'on':'')+'" onclick="flToggleMonthPick('+i+')">'+i+'月</button>'; }
+  document.getElementById('flMonths').innerHTML=h;
+  h='';
+  ORIGIN_TOKENS.forEach(function(t,idx){ h+='<button class="'+(originPicks.indexOf(t)>=0?'on':'')+'" onclick="flToggleOriginIdx('+idx+')">'+esc(t)+'</button>'; });
+  document.getElementById('flOrigins').innerHTML=h;
+  h='';
+  Object.keys(TASTE_META).forEach(function(k){ h+='<button class="'+(tastePicks.indexOf(k)>=0?'on':'')+'" onclick="flToggleTaste(\''+k+'\')">'+TASTE_META[k].t+'</button>'; });
+  document.getElementById('flTastes').innerHTML=h;
+}
+function flPass(f){
+  if(kw){
+    var hay=String((f.name||'')+' '+(f.aliases||'')).toLowerCase();
+    if(hay.indexOf(kw)<0) return false;
+  }
+  if(seasonOn && monthsSet(f.months).indexOf(seasonM)<0) return false;
+  if(monthPicks.length){
+    var ms=monthsSet(f.months), hit=false;
+    for(var i=0;i<monthPicks.length;i++){ if(ms.indexOf(monthPicks[i])>=0){ hit=true; break; } }
+    if(!hit) return false;
+  }
+  if(originPicks.length){
+    var org=String(f.origin||''), hit2=false;
+    for(var j=0;j<originPicks.length;j++){ if(org.indexOf(originPicks[j])>=0){ hit2=true; break; } }
+    if(!hit2) return false;
+  }
+  if(tastePicks.length && tastePicks.indexOf(tasteOf(f,seasonM))<0) return false;
+  return true;
+}
+function renderFruits(){
+  var curM=new Date().getMonth()+1;
+  var inCur=FRUITS.filter(function(f){ return monthsSet(f.months).indexOf(curM)>=0; }).length;
+  document.getElementById('flCount').textContent='（共 '+FRUITS.length+' 种 · '+curM+'月在市 '+inCur+' 种）';
+  var grid=document.getElementById('flGrid');
+  if(!FRUITS.length){ grid.innerHTML='<div class="empty" style="grid-column:1/-1;"><div class="eico">🍃</div>水果库加载中或暂无数据</div>'; updateFlBar(); return; }
+  var list=FRUITS.filter(flPass);
+  if(!list.length){ grid.innerHTML='<div class="empty" style="grid-column:1/-1;"><div class="eico">🔍</div>没有符合筛选的水果</div>'; updateFlBar(); return; }
+  grid.innerHTML=list.map(function(f){
+    var added=planIds[f.id]===true;
+    var img;
+    if(f.img_url && f.img_status!=='待换图'){
+      img='<div style="position:relative;"><img class="flImg" src="'+esc(f.img_url)+'" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"><div class="flPh" style="position:absolute;top:0;left:0;right:0;margin-bottom:0;display:none;">加载失败</div></div>';
+    } else {
+      img='<div class="flPh">待换图</div>';
+    }
+    var tk=tasteOf(f,seasonM), tm=TASTE_META[tk];
+    var act='<label style="display:flex;align-items:center;gap:5px;margin-top:8px;font-size:12px;color:#666;font-weight:600;"><input type="checkbox" style="width:auto;margin:0;" '+(selIds.indexOf(f.id)>=0?'checked':'')+' onchange="flCheck('+f.id+',this.checked)">选入方案</label>';
+    if(added) act='<button class="btn btn-r" style="padding:5px 10px;font-size:12px;margin:8px 0 0;" onclick="doPlanRemove('+f.id+')">移除</button>';
+    return '<div class="flCard">'+
+      (added?'<span class="flAdded">已加入✓</span>':'')+img+
+      '<div style="font-size:14px;font-weight:800;">'+esc(f.name)+'</div>'+
+      (f.aliases?'<div class="muted" style="margin-top:1px;">'+esc(f.aliases)+'</div>':'')+
+      '<div class="row" style="padding:3px 0;"><span class="muted">上市</span><span style="font-size:12px;">'+esc(f.months||'-')+'</span></div>'+
+      '<div class="row" style="padding:3px 0;"><span class="muted">最佳</span><span style="font-size:12px;color:#e65100;">'+esc(f.best_months||'-')+'</span></div>'+
+      '<div class="row" style="padding:3px 0;"><span class="muted">产地</span><span style="font-size:12px;">'+esc(f.origin||'-')+'</span></div>'+
+      '<div style="margin-top:5px;"><span class="badge '+tm.c+'">'+tm.t+'</span> <span class="muted">按'+seasonM+'月</span></div>'+
+      (f.price_ref?'<div class="muted" style="margin-top:4px;">参考价 '+esc(f.price_ref)+'</div>':'')+
+      act+'</div>';
+  }).join('');
+  updateFlBar();
+}
+function flCheck(id,on){
+  id=Number(id);
+  var i=selIds.indexOf(id);
+  if(on && i<0) selIds.push(id);
+  if(!on && i>=0) selIds.splice(i,1);
+  updateFlBar();
+}
+function updateFlBar(){
+  document.getElementById('flSelN').textContent='已选 '+selIds.length+' 种';
+  document.getElementById('flAddBtn').disabled=(!planSessionId)||(!selIds.length);
+}
+function flSessionChange(v){ planSessionId=v?Number(v):null; loadPlan(); }
+function loadPlan(){
+  if(!planSessionId){ planIds={}; renderFruits(); return; }
+  api('groupon_plan_list',{p_session_id:planSessionId}).then(function(arr){
+    planIds={};
+    (Array.isArray(arr)?arr:[]).forEach(function(x){ planIds[x.fruit_id]=true; });
+    renderFruits();
+  }).catch(function(){ planIds={}; renderFruits(); });
+}
+function doPlanAdd(){
+  if(!planSessionId){ flToast('请先选择团购'); return; }
+  if(!selIds.length){ flToast('请先勾选水果'); return; }
+  api('groupon_plan_add',{p_admin:pwd(),p_session_id:planSessionId,p_fruit_ids:selIds}).then(function(r){
+    if(r&&r.ok){
+      var n=(r.added!=null)?r.added:selIds.length;
+      flToast('已加入 '+n+' 种到团购方案');
+      selIds=[];
+      loadPlan();
+    } else { flToast((r&&r.msg)||('加入失败')); }
+  }).catch(function(){ flToast('网络异常，加入失败'); });
+}
+function doPlanRemove(fid){
+  fid=Number(fid);
+  api('groupon_plan_remove',{p_admin:pwd(),p_session_id:planSessionId,p_fruit_id:fid}).then(function(r){
+    if(r&&r.ok){ flToast('已移除 1 种'); loadPlan(); }
+    else flToast((r&&r.msg)||('移除失败'));
+  }).catch(function(){ flToast('网络异常'); });
+}
+function initFruitLib(){
+  api('groupon_fruits_list',{}).then(function(arr){
+    FRUITS=Array.isArray(arr)?arr:[];
+    flBuildOrigins();
+    renderChips(); renderFruits();
+  }).catch(function(){ renderFruits(); });
+  api('groupon_list',{}).then(function(arr){
+    arr=Array.isArray(arr)?arr:[];
+    var sel=document.getElementById('flSession');
+    if(!arr.length){ sel.innerHTML='<option value="">请先发布团购</option>'; planSessionId=null; updateFlBar(); return; }
+    sel.innerHTML=arr.map(function(s){ return '<option value="'+s.id+'">'+esc(s.title)+'（'+stName(s.status)+'）</option>'; }).join('');
+    var def=null;
+    for(var i=0;i<arr.length;i++){ if(arr[i].status==='open'){ def=arr[i].id; break; } }
+    if(def==null) def=arr[0].id;
+    sel.value=def; planSessionId=def;
+    loadPlan();
+  }).catch(function(){});
+}
 if(isAdmin()){
   document.getElementById('login').classList.add('hidden');
   document.getElementById('main').classList.remove('hidden');
   document.getElementById('oDeadline').value=nowLocal();
   showList();
+  initFruitLib();
 }else{
   document.getElementById('main').classList.add('hidden');
 }
