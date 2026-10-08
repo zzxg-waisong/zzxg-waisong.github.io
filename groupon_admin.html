@@ -533,5 +533,11 @@ if(isAdmin()){
   document.getElementById('main').classList.add('hidden');
 }
 </script>
+<button id="backTopBtn" onclick="backTop()" style="position:fixed;right:18px;bottom:22px;z-index:9999;background:rgba(255,255,255,.6);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.75);border-radius:50px;padding:10px 16px;font-size:14px;font-weight:700;color:#2e7d32;box-shadow:0 6px 18px rgba(0,0,0,.18);cursor:pointer;display:none;">⬆ 到顶</button>
+<script>
+  var btb=document.getElementById('backTopBtn');
+  function backTop(){ window.scrollTo({top:0,behavior:'smooth'}); }
+  window.addEventListener('scroll',function(){ btb.style.display=(window.scrollY>600)?'block':'none'; },{passive:true});
+</script>
 </body>
 </html>
