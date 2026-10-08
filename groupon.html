@@ -49,16 +49,27 @@ label{font-size:12.5px;color:#777;display:block;margin-top:12px;font-weight:600}
 .hd2 .ico{width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,#2e7d32,#43a047);color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;flex:none}
 .empty{padding:26px 10px;text-align:center;color:#aaa}
 .empty .eico{font-size:34px;margin-bottom:8px}
+/* 本月当季推荐 */
+.recStrip{display:flex;overflow-x:auto;gap:10px;padding:4px 2px;-webkit-overflow-scrolling:touch}
+.recItem{flex:0 0 auto;width:104px;text-align:center}
+.recItem .thumb{width:100%;height:74px;border-radius:10px;object-fit:cover;background:#f0f2f0}
+.recItem .ph{width:100%;height:74px;border-radius:10px;background:#eceff0;display:flex;align-items:center;justify-content:center;color:#aaa;font-size:11px}
+.t-best{background:linear-gradient(135deg,#e53935,#fb8c00)}
+.t-good{background:linear-gradient(135deg,#43a047,#66bb6a)}
+.t-tail{background:linear-gradient(135deg,#f9a825,#fbc02d)}
+.t-normal{background:linear-gradient(135deg,#9e9e9e,#bdbdbd)}
 </style>
 </head>
 <body>
 <div id="top"><span class="back" onclick="goHome()">‹</span><span class="title">🍉 团购接龙</span><span class="right"></span></div>
 <div class="pad" id="listView">
   <div class="notice">💡 <b>想买什么就发起接龙</b>，凑够目标份数老板就去进货；不够自动取消。价格=进货价+运费，不赚差价，确认后才进货。</div>
+  <div id="recBox"></div>
   <div id="list"></div>
 </div>
 <div class="pad hidden" id="detailView">
   <div id="dCard"></div>
+  <div id="dPlan"></div>
   <div class="notice hidden" id="dJoinNote">📢 接龙中：发起或跟团，截止后自动判定。</div>
   <div class="notice hidden" id="dQuoteNote">⏳ 已达标！老板正在定价（进货价+运费），定价后请确认。</div>
   <div class="notice hidden" id="dConfirmNote">💰 单价已出：<b id="dPrice"></b> 请确认是否购买（限时24小时，超时自动退出）。</div>
@@ -100,6 +111,7 @@ function fmtN(n){ var v=Number(n); return (v===Math.floor(v))?String(v):v.toFixe
 function showList(){
   document.getElementById('listView').classList.remove('hidden');
   document.getElementById('detailView').classList.add('hidden');
+  loadRec();
   api('groupon_list',{}).then(function(arr){
     var el=document.getElementById('list');
     if(!Array.isArray(arr)||!arr.length){ el.innerHTML='<div class="card empty"><div class="eico">🍃</div>暂无团购活动<br><span style="font-size:12px;color:#bbb;">等老板开团后再来参与吧</span></div>'; return; }
@@ -136,6 +148,7 @@ function showDetail(){
     document.getElementById('dConfirmNote').classList.toggle('hidden', s.status!=='quoted'||s.unit_price==null);
     if(s.unit_price!=null) document.getElementById('dPrice').textContent='¥'+fmtN(s.unit_price);
     document.getElementById('dArriveNote').classList.toggle('hidden', s.status!=='arrived');
+    loadPlanCust();
     var join=document.getElementById('joinBox');
     join.style.display = (s.status==='open')?'block':'none';
     var img=s.cover?'<img src="'+esc(s.cover)+'" style="width:100%;max-height:160px;object-fit:cover;border-radius:12px;margin-bottom:10px;" onerror="this.style.display=\'none\'">':'';
@@ -206,6 +219,99 @@ function doConfirm(phone){
 }
 function okbar(on,t){ var e=document.getElementById('okbar'); e.style.display=on?'block':'none'; e.textContent=t; }
 function errbar(on,t){ var e=document.getElementById('errbar'); e.style.display=on?'block':'none'; e.textContent=t; }
+/* ===== 应季水果库（顾客端） ===== */
+var PLAN_ARR=[];
+function parseWindows(str){
+  var wins=[];
+  if(!str) return wins;
+  str=String(str).trim();
+  if(str.indexOf('全年')>=0) return [{fullYear:true,start:1,end:12}];
+  str.split(/[,，]/).forEach(function(p){
+    p=p.trim();
+    var m=p.match(/(\d{1,2})\s*[-—~至]\s*(\d{1,2})\s*月?/);
+    if(m){ var x=parseInt(m[1],10), y=parseInt(m[2],10); if(x>=1&&x<=12&&y>=1&&y<=12) wins.push({fullYear:false,start:x,end:y}); }
+    else { var s=p.match(/(\d{1,2})\s*月?/); if(s){ var v=parseInt(s[1],10); if(v>=1&&v<=12) wins.push({fullYear:false,start:v,end:v}); } }
+  });
+  return wins;
+}
+function inWin(w,m){
+  if(w.fullYear) return true;
+  var c=w.start;
+  while(true){ if(c===m) return true; if(c===w.end) break; c=(c%12)+1; }
+  return false;
+}
+function monthsSet(str){
+  var set=[];
+  parseWindows(str).forEach(function(w){
+    if(w.fullYear){ for(var i=1;i<=12;i++) set.push(i); return; }
+    var c=w.start;
+    while(true){ set.push(c); if(c===w.end) break; c=(c%12)+1; }
+  });
+  return set;
+}
+function tasteOf(f,m){
+  var wins=parseWindows(f.months);
+  var inSeason=wins.some(function(w){ return inWin(w,m); });
+  if(!inSeason) return 'normal';
+  if(monthsSet(f.best_months).indexOf(m)>=0) return 'best';
+  var isTail=wins.some(function(w){ return !w.fullYear && w.end===m; });
+  if(isTail) return 'tail';
+  return 'good';
+}
+var TASTE_META={best:{t:'当季最佳',c:'t-best'},good:{t:'不错',c:'t-good'},tail:{t:'尾季',c:'t-tail'},normal:{t:'一般',c:'t-normal'}};
+function fruitImg(f,cls){
+  if(f.img_url && f.img_status!=='待换图') return '<img class="'+cls+'" src="'+esc(f.img_url)+'" onerror="this.outerHTML=\'<div class=&quot;ph&quot;>待换图</div>\'">';
+  return '<div class="ph">待换图</div>';
+}
+function loadRec(){
+  var box=document.getElementById('recBox');
+  api('groupon_fruits_list',{}).then(function(arr){
+    arr=Array.isArray(arr)?arr:[];
+    var m=new Date().getMonth()+1;
+    var best=arr.filter(function(f){ return monthsSet(f.best_months).indexOf(m)>=0; });
+    if(best.length<8){
+      var extra=arr.filter(function(f){ return monthsSet(f.months).indexOf(m)>=0 && monthsSet(f.best_months).indexOf(m)<0; });
+      best=best.concat(extra);
+    }
+    best=best.slice(0,8);
+    if(!best.length){ box.innerHTML=''; return; }
+    box.innerHTML='<div class="card"><div class="hd2"><span class="ico">🍎</span>本月当季推荐</div><div class="recStrip">'+
+      best.map(function(f){
+        return '<div class="recItem">'+fruitImg(f,'thumb')+
+          '<div style="font-size:12.5px;font-weight:800;margin-top:5px;">'+esc(f.name)+'</div>'+
+          '<div style="margin-top:4px;"><span class="badge t-best" style="font-size:10px;padding:2px 8px;">当季最佳</span></div></div>';
+      }).join('')+'</div></div>';
+  }).catch(function(){ box.innerHTML=''; });
+}
+function loadPlanCust(){
+  var box=document.getElementById('dPlan');
+  api('groupon_plan_list',{p_session_id:curSession}).then(function(arr){
+    arr=Array.isArray(arr)?arr:[];
+    PLAN_ARR=arr;
+    if(!arr.length){ box.innerHTML=''; return; }
+    var m=new Date().getMonth()+1;
+    box.innerHTML='<div class="card"><div class="hd2"><span class="ico">🍎</span>团购方案 <span class="muted" style="font-weight:400;">（老板精选 '+arr.length+' 种应季水果）</span></div>'+
+      arr.map(function(f,i){
+        var thumb=(f.img_url&&f.img_status!=='待换图')?('<img src="'+esc(f.img_url)+'" style="width:52px;height:52px;object-fit:cover;border-radius:10px;background:#f0f2f0;flex:none;" onerror="this.style.display=\'none\'">'):'<div style="width:52px;height:52px;border-radius:10px;background:#eceff0;display:flex;align-items:center;justify-content:center;color:#aaa;font-size:10px;flex:none;">待换图</div>';
+        var tk=tasteOf(f,m), tm=TASTE_META[tk];
+        return '<div class="item" style="align-items:center;">'+
+          '<div style="display:flex;gap:10px;align-items:center;flex:1;min-width:0;">'+thumb+
+            '<div style="min-width:0;"><b style="font-size:14px;">'+esc(f.name)+'</b>'+
+            '<div class="muted" style="margin-top:2px;">'+esc(f.origin||'-')+' · '+esc(f.months||'-')+'</div>'+
+            '<div style="margin-top:4px;"><span class="badge '+tm.c+'" style="font-size:10px;padding:2px 8px;">'+tm.t+'·按'+m+'月</span>'+
+            (f.price_ref?' <span class="muted">参考价 '+esc(f.price_ref)+'</span>':'')+'</div></div>'+
+          '</div>'+
+          '<button class="btn btn-p" style="width:auto;margin:0 0 0 8px;padding:8px 12px;font-size:12.5px;flex:none;" onclick="pickPlanFruit('+i+')">跟团接龙</button>'+
+        '</div>';
+      }).join('')+'</div>';
+  }).catch(function(){ box.innerHTML=''; });
+}
+function pickPlanFruit(i){
+  var f=PLAN_ARR[i]; if(!f) return;
+  document.getElementById('jName').value=f.name;
+  document.getElementById('joinBox').scrollIntoView({behavior:'smooth',block:'center'});
+  document.getElementById('jName').focus();
+}
 showList();
 </script>
 </body>
