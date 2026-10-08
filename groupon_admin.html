@@ -6,69 +6,89 @@
 <title>团购管理 · 榨榨鲜果</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{font-family:-apple-system,'Microsoft YaHei',sans-serif;background:#f4f6f2;color:#333;max-width:760px;margin:0 auto;min-height:100vh;padding-bottom:40px}
-#top{position:sticky;top:0;z-index:9;background:#1b5e20;color:#fff;display:flex;align-items:center;padding:12px 14px;gap:10px}
-#top .back{font-size:20px;cursor:pointer;width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:rgba(255,255,255,.15);flex:none}
-#top .title{font-size:17px;font-weight:700;flex:1;text-align:center}
-.pad{padding:12px 14px}
-.card{background:#fff;border-radius:12px;padding:14px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
-.badge{display:inline-block;font-size:12px;font-weight:700;padding:3px 10px;border-radius:20px;color:#fff}
-.b-open{background:#43a047}.b-quoted{background:#fb8c00}.b-delivering{background:#1e88e5}.b-arrived{background:#e53935}.b-ended{background:#78909c}.b-cancelled{background:#9e9e9e}
+body{font-family:-apple-system,'Microsoft YaHei',sans-serif;background:linear-gradient(180deg,#e8f5e9 0%,#f7faf5 30%,#f4f6f2 100%);color:#333;max-width:760px;margin:0 auto;min-height:100vh;padding-bottom:60px}
+#top{position:sticky;top:0;z-index:99;background:linear-gradient(135deg,#1b5e20 0%,#2e7d32 55%,#43a047 100%);color:#fff;display:flex;align-items:center;padding:14px 16px;gap:10px;box-shadow:0 4px 14px rgba(27,94,32,.25)}
+#top .back{font-size:20px;cursor:pointer;width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:rgba(255,255,255,.18);flex:none;transition:background .2s}
+#top .back:active{background:rgba(255,255,255,.35)}
+#top .title{font-size:18px;font-weight:800;flex:1;text-align:center;letter-spacing:1px}
+#top .right{width:36px;flex:none}
+.pad{padding:14px 14px}
+.card{background:#fff;border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 2px 10px rgba(27,94,32,.07);border:1px solid rgba(46,125,50,.06);transition:transform .15s,box-shadow .15s}
+.card:active{transform:scale(.995)}
+.badge{display:inline-block;font-size:12px;font-weight:800;padding:3px 12px;border-radius:20px;color:#fff;letter-spacing:.5px;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.b-open{background:linear-gradient(135deg,#43a047,#66bb6a)}
+.b-quoted{background:linear-gradient(135deg,#fb8c00,#ffa726)}
+.b-delivering{background:linear-gradient(135deg,#1e88e5,#42a5f5)}
+.b-arrived{background:linear-gradient(135deg,#e53935,#ef5350)}
+.b-ended{background:linear-gradient(135deg,#78909c,#90a4ae)}
+.b-cancelled{background:linear-gradient(135deg,#9e9e9e,#bdbdbd)}
 .row{display:flex;justify-content:space-between;align-items:center;font-size:14px;padding:6px 0}
 .row b{font-size:15px}
-.muted{color:#888;font-size:12px}
-.price{color:#e53935;font-weight:800}
-.btn{display:inline-block;border:none;border-radius:8px;padding:8px 14px;font-size:13.5px;font-weight:700;cursor:pointer;margin:4px 4px 0 0}
-.btn-p{background:#2e7d32;color:#fff}
+.muted{color:#999;font-size:12px}
+.price{color:#e53935;font-weight:800;font-size:16px}
+.btn{display:inline-block;border:none;border-radius:12px;padding:9px 16px;font-size:13.5px;font-weight:700;cursor:pointer;margin:5px 5px 0 0;transition:all .15s;box-shadow:0 1px 4px rgba(0,0,0,.1)}
+.btn:active{transform:scale(.96)}
+.btn-p{background:linear-gradient(135deg,#2e7d32,#43a047);color:#fff}
 .btn-o{background:#fff;color:#2e7d32;border:1.5px solid #2e7d32}
-.btn-r{background:#fff;color:#c62828;border:1.5px solid #c62828}
-.btn-g{background:#eee;color:#666}
-input,select,textarea{width:100%;border:1.5px solid #ddd;border-radius:8px;padding:10px;font-size:14px;margin-top:6px;background:#fff}
-label{font-size:13px;color:#666;display:block;margin-top:10px}
+.btn-r{background:#fff;color:#c62828;border:1.5px solid #e57373}
+.btn-g{background:#f0f2f0;color:#777}
+input,select,textarea{width:100%;border:1.5px solid #e0e6df;border-radius:12px;padding:11px;font-size:14px;margin-top:6px;background:#fbfdfb;transition:border .2s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:#43a047;background:#fff}
+label{font-size:12.5px;color:#777;display:block;margin-top:12px;font-weight:600}
 table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
-th,td{padding:8px 6px;border-bottom:1px solid #f0f0f0;text-align:left}
-th{color:#888;font-weight:600;font-size:12px}
-.st{font-size:12px;padding:2px 8px;border-radius:12px;color:#fff}
-.s-joined{background:#43a047}.s-confirmed{background:#fb8c00}.s-picked{background:#1e88e5}.s-missed{background:#78909c}.s-withdrawn{background:#bdbdbd}.s-cancelled{background:#9e9e9e}
-.okbar{background:#e8f5e9;color:#2e7d32;font-size:13px;padding:10px;border-radius:10px;margin-top:10px;display:none}
-.errbar{background:#fce4ec;color:#c62828;font-size:13px;padding:10px;border-radius:10px;margin-top:10px;display:none}
+th,td{padding:9px 6px;border-bottom:1px solid #f2f4f1;text-align:left}
+th{color:#999;font-weight:700;font-size:12px;background:#fafcfa}
+.st{font-size:12px;padding:2px 10px;border-radius:12px;color:#fff;font-weight:700;display:inline-block}
+.s-joined{background:linear-gradient(135deg,#43a047,#66bb6a)}
+.s-confirmed{background:linear-gradient(135deg,#fb8c00,#ffa726)}
+.s-picked{background:linear-gradient(135deg,#1e88e5,#42a5f5)}
+.s-missed{background:linear-gradient(135deg,#78909c,#90a4ae)}
+.s-withdrawn{background:linear-gradient(135deg,#bdbdbd,#d7d7d7)}
+.s-cancelled{background:linear-gradient(135deg,#9e9e9e,#bdbdbd)}
+.okbar{background:linear-gradient(135deg,#e8f5e9,#f1f8e9);color:#2e7d32;font-size:13px;padding:11px 14px;border-radius:12px;margin-top:12px;display:none;border:1px solid #c8e6c9;font-weight:600}
+.errbar{background:#fce4ec;color:#c62828;font-size:13px;padding:11px 14px;border-radius:12px;margin-top:12px;display:none;border:1px solid #f8bbd0;font-weight:600}
 .hidden{display:none}
-#quoteBox{border-top:1.5px dashed #e0e0e0;margin-top:10px;padding-top:10px}
-.fil{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
-.fil button{border:1.5px solid #ccc;background:#fff;color:#666;border-radius:20px;padding:5px 12px;font-size:12.5px;cursor:pointer}
-.fil button.on{background:#2e7d32;border-color:#2e7d32;color:#fff;font-weight:700}
-.stats{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
-.stat{flex:1;min-width:100px;background:#fff;border-radius:10px;padding:10px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.05)}
-.stat b{display:block;font-size:20px;color:#2e7d32}
-.stat span{font-size:11.5px;color:#888}
-.cover{width:100%;max-height:120px;object-fit:cover;border-radius:10px;margin-bottom:8px;display:none}
+#quoteBox{border-top:1.5px dashed #e8e6e0;margin-top:12px;padding-top:12px}
+.fil{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px}
+.fil button{border:1.5px solid #d5ddd3;background:#fff;color:#888;border-radius:22px;padding:6px 14px;font-size:12.5px;cursor:pointer;transition:all .15s;font-weight:600}
+.fil button:active{transform:scale(.95)}
+.fil button.on{background:linear-gradient(135deg,#2e7d32,#43a047);border-color:transparent;color:#fff;font-weight:800;box-shadow:0 2px 6px rgba(46,125,50,.3)}
+.stats{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.stat{flex:1;min-width:105px;background:#fff;border-radius:14px;padding:12px 8px;text-align:center;box-shadow:0 2px 8px rgba(27,94,32,.06);border:1px solid rgba(46,125,50,.06)}
+.stat b{display:block;font-size:22px;background:linear-gradient(135deg,#2e7d32,#43a047);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:800}
+.stat span{font-size:11.5px;color:#999}
+.cover{width:100%;max-height:130px;object-fit:cover;border-radius:14px;margin-bottom:10px;display:none}
+.hd2{font-size:15px;font-weight:800;display:flex;align-items:center;gap:6px;margin-bottom:4px}
+.hd2 .ico{width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,#2e7d32,#43a047);color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;flex:none}
+.empty{padding:26px 10px;text-align:center;color:#aaa}
+.empty .eico{font-size:34px;margin-bottom:8px}
 </style>
 </head>
 <body>
-<div id="top"><span class="back" onclick="location.href='index.html?autologin=1#/admin'">‹</span><span class="title">团购接龙管理</span><span class="right" style="width:34px;"></span></div>
+<div id="top"><span class="back" onclick="location.href='index.html?autologin=1#/admin'">‹</span><span class="title">🍉 团购接龙管理</span><span class="right"></span></div>
 <div class="pad">
   <div id="login" class="card">
-    <b style="font-size:15px;">需要登录老板后台</b>
-    <div style="font-size:13px;color:#888;margin-top:6px;">请从「老板后台 → 团购管理」进入，或回到首页重新登录。</div>
-    <button class="btn btn-p" style="width:100%;margin-top:10px;" onclick="location.href='index.html?autologin=1#/admin'">去登录</button>
+    <div class="hd2"><span class="ico">🔒</span>需要登录老板后台</div>
+    <div style="font-size:13px;color:#999;margin-top:8px;">请从「老板后台 → 团购管理」进入，或回到首页重新登录。</div>
+    <button class="btn btn-p" style="width:100%;margin-top:12px;" onclick="location.href='index.html?autologin=1#/admin'">去登录</button>
   </div>
 
   <div id="main" class="hidden">
     <div class="card">
-      <b style="font-size:15px;">➕ 开新团购</b>
-      <div style="display:flex;gap:8px;margin-top:6px;">
-        <div style="flex:1.2;"><label>活动标题</label><input id="oTitle" placeholder="如：周末团购·红心猕猴桃" maxlength="30"></div>
-        <div style="flex:0.8;"><label>目标份数（合计达标成团）</label><input id="oTarget" type="number" placeholder="如：10" min="1" step="1"></div>
+      <div class="hd2"><span class="ico">➕</span>开新团购</div>
+      <div style="display:flex;gap:10px;margin-top:8px;">
+        <div style="flex:1.3;"><label>活动标题</label><input id="oTitle" placeholder="如：周末团购·红心猕猴桃" maxlength="30"></div>
+        <div style="flex:0.8;"><label>目标份数</label><input id="oTarget" type="number" placeholder="如：10" min="1" step="1"></div>
       </div>
-      <div style="display:flex;gap:8px;">
-        <div style="flex:1;"><label>封面图 URL（可选）</label><input id="oCover" placeholder="https://… 图片链接"></div>
-        <div style="flex:0.8;"><label>每人限购份数（0=不限）</label><input id="oLimit" type="number" placeholder="0" min="0" step="1" value="0"></div>
+      <div style="display:flex;gap:10px;">
+        <div style="flex:1.2;"><label>封面图 URL（可选）</label><input id="oCover" placeholder="https://… 图片链接"></div>
+        <div style="flex:0.8;"><label>每人限购（0=不限）</label><input id="oLimit" type="number" placeholder="0" min="0" step="1" value="0"></div>
       </div>
-      <label>团购说明（可选，显示给顾客，如取货时间/地点）</label>
+      <label>团购说明（可选，显示给顾客）</label>
       <textarea id="oNote" rows="2" placeholder="如：到货后当天可取，地址 XX路XX号，来取前可电话确认"></textarea>
       <label>接龙截止时间</label>
       <input id="oDeadline" type="datetime-local">
-      <button class="btn btn-p" style="width:100%;margin-top:12px;" onclick="doOpen()">发布团购</button>
+      <button class="btn btn-p" style="width:100%;margin-top:14px;padding:13px;" onclick="doOpen()">🚀 发布团购</button>
       <div class="okbar" id="okbar"></div>
       <div class="errbar" id="errbar"></div>
     </div>
@@ -116,9 +136,8 @@ function showList(){
   document.getElementById('detail').classList.add('hidden');
   api('groupon_list',{}).then(function(arr){
     if(!Array.isArray(arr)) arr=[];
-    // 统计汇总
     var active=arr.filter(function(s){return s.status==='open'||s.status==='quoted'||s.status==='delivering'||s.status==='arrived';});
-    var people=0, qty=0, picked=0;
+    var people=0, qty=0;
     arr.forEach(function(s){ people+=Number(s.people||0); qty+=Number(s.joined_qty||0); });
     document.getElementById('stats').innerHTML=
       '<div class="stat"><b>'+active.length+'</b><span>进行中的团</span></div>'+
@@ -127,17 +146,21 @@ function showList(){
       '<div class="stat"><b>'+qty+'</b><span>累计接龙份数</span></div>';
     var list=arr.filter(function(s){ return filt==='all'||s.status===filt; });
     var el=document.getElementById('list');
-    if(!list.length){ el.innerHTML='<div class="card" style="color:#999;text-align:center;">当前筛选下没有团购</div>'; return; }
+    if(!list.length){ el.innerHTML='<div class="card empty"><div class="eico">🍃</div>当前筛选下没有团购</div>'; return; }
     el.innerHTML=list.map(function(s){
-      var img=s.cover?'<img class="cover" src="'+esc(s.cover)+'" style="display:block;">':'';
+      var img=s.cover?'<img class="cover" src="'+esc(s.cover)+'" style="display:block;" onerror="this.style.display=\'none\'">':'';
+      var pct=Math.min(100,Math.round(s.joined_qty/s.target_qty*100));
       return '<div class="card">'+img+
       '<div class="row"><b>'+esc(s.title)+'</b><span class="badge '+stCls(s.status)+'">'+stName(s.status)+'</span></div>'+
-      '<div class="row" style="padding-top:2px;"><span>已接龙 '+fmtN(s.joined_qty)+' / 目标 '+fmtN(s.target_qty)+'</span><span>'+s.people+' 人</span></div>'+
-      (s.per_limit>0?'<div class="row" style="padding-top:0;"><span class="muted">每人限购 '+fmtN(s.per_limit)+' 份</span></div>':'')+
-      '<div class="row"><span class="muted">截止 '+fmtT(s.deadline)+(s.unit_price!=null?' · 单价 ¥'+fmtN(s.unit_price):'')+'</span></div>'+
-      '<button class="btn btn-p" onclick="openDetail('+s.id+')">查看/操作</button></div>';
+      '<div style="display:flex;gap:8px;align-items:center;margin:10px 0 4px;">'+
+        '<div style="flex:1;height:10px;background:#f0f4ee;border-radius:8px;overflow:hidden;"><div style="height:100%;width:'+pct+'%;background:linear-gradient(90deg,#43a047,#8bc34a);border-radius:8px;transition:width .5s;"></div></div>'+
+        '<span style="font-size:12.5px;font-weight:800;color:#43a047;">'+fmtN(s.joined_qty)+'/'+fmtN(s.target_qty)+'</span>'+
+      '</div>'+
+      '<div class="row" style="padding-top:2px;"><span class="muted">'+s.people+' 人参与'+(s.per_limit>0?' · 每人限购 '+fmtN(s.per_limit)+' 份':'')+'</span><span class="muted">截止 '+fmtT(s.deadline)+'</span></div>'+
+      (s.unit_price!=null?'<div class="row" style="padding-top:0;"><span class="muted">单价</span><span class="price">¥'+fmtN(s.unit_price)+'</span></div>':'')+
+      '<button class="btn btn-p" style="width:100%;margin-top:8px;" onclick="openDetail('+s.id+')">查看 / 操作</button></div>';
     }).join('');
-  }).catch(function(){ document.getElementById('list').innerHTML='<div class="card" style="color:#c62828;">加载失败</div>'; });
+  }).catch(function(){ document.getElementById('list').innerHTML='<div class="card empty"><div class="eico">📡</div>加载失败，请检查网络</div>'; });
 }
 function openDetail(id){
   cur=id; showDetail(); clearInterval(timer); timer=setInterval(showDetail,60000);
@@ -147,8 +170,8 @@ function showDetail(){
   document.getElementById('detail').classList.remove('hidden');
   api('groupon_list',{}).then(function(arr){
     var s=null; (arr||[]).forEach(function(x){ if(x.id===cur) s=x; });
-    if(!s){ document.getElementById('dCard').innerHTML='<div class="card">不存在</div>'; return; }
-    var img=s.cover?'<img class="cover" src="'+esc(s.cover)+'" style="display:block;">':'';
+    if(!s){ document.getElementById('dCard').innerHTML='<div class="card empty"><div class="eico">🤔</div>团购不存在</div>'; return; }
+    var img=s.cover?'<img class="cover" src="'+esc(s.cover)+'" style="display:block;" onerror="this.style.display=\'none\'">':'';
     document.getElementById('dCard').innerHTML='<div class="card">'+img+
       '<div class="row"><b>'+esc(s.title)+'</b><span class="badge '+stCls(s.status)+'">'+stName(s.status)+'</span></div>'+
       '<div class="stats" style="margin-bottom:4px;">'+
@@ -164,31 +187,31 @@ function showDetail(){
       (s.status==='quoted'?'<div class="row"><span>确认截止</span><b>'+fmtT(s.confirm_deadline)+'</b></div>':'')+
       '</div>';
     var ops=document.getElementById('dOps');
-    var h='<div class="card" id="opsCard"><b>操作</b>';
+    var h='<div class="card"><div class="hd2"><span class="ico">⚙️</span>操作</div>';
     if(s.status==='open'){
-      h+='<div class="muted" style="margin:6px 0;">未到截止可手动判定（提前截止）</div><button class="btn btn-p" onclick="autoCheck()">🕐 截止判定</button><button class="btn btn-r" onclick="doCancel()">取消本团</button>';
+      h+='<div class="muted" style="margin:8px 0;">未到截止可手动判定（提前截止）</div><button class="btn btn-p" onclick="autoCheck()">🕐 截止判定</button><button class="btn btn-r" onclick="doCancel()">取消本团</button>';
     }else if(s.status==='quoted'&&s.unit_price==null){
       h+='<div id="quoteBox"><label>单价 = 进货价 + 运费（成本价）</label><input id="qPrice" type="number" placeholder="如：15.5" step="0.1" min="0.1"><button class="btn btn-p" style="width:100%;" onclick="doQuote()">报价并推送顾客确认</button></div>';
     }else if(s.status==='quoted'&&s.unit_price!=null){
-      h+='<div class="muted" style="margin:6px 0;">已报价 ¥'+fmtN(s.unit_price)+'，顾客确认中（确认 '+fmtN(s.confirmed_qty)+' 份）。达标后点「开始进货」，不足可取消。</div>'+
+      h+='<div class="muted" style="margin:8px 0;">已报价 <span class="price">¥'+fmtN(s.unit_price)+'</span>，顾客确认中（确认 <b>'+fmtN(s.confirmed_qty)+'</b> 份）。达标后点「开始进货」，不足可取消。</div>'+
       '<button class="btn btn-p" onclick="doDeliver()">✅ 确认量达标·开始进货</button><button class="btn btn-r" onclick="doCancel()">取消本团</button>';
     }else if(s.status==='delivering'){
-      h+='<div class="muted" style="margin:6px 0;">进货中。到货后点「已到货」通知顾客来取。</div><button class="btn btn-p" onclick="doArrive()">📦 已到货·通知来取</button>';
+      h+='<div class="muted" style="margin:8px 0;">进货中。到货后点「已到货」通知顾客来取。</div><button class="btn btn-p" onclick="doArrive()">📦 已到货·通知来取</button>';
     }else if(s.status==='arrived'){
-      h+='<div class="muted" style="margin:6px 0;">顾客来取时报手机号核销，全部取完可结束。</div>'+
-      '<div style="display:flex;gap:8px;margin-top:8px;"><input id="pkPhone" type="tel" placeholder="顾客手机号" maxlength="11" style="margin:0;flex:1;"><button class="btn btn-p" onclick="doPick()">核销</button></div>'+
+      h+='<div class="muted" style="margin:8px 0;">顾客来取时报手机号核销，全部取完可结束。</div>'+
+      '<div style="display:flex;gap:8px;margin-top:10px;"><input id="pkPhone" type="tel" placeholder="顾客手机号" maxlength="11" style="margin:0;flex:1;"><button class="btn btn-p" onclick="doPick()">核销</button></div>'+
       '<button class="btn btn-g" onclick="doEnd()">结束本团</button>';
     }else if(s.status==='cancelled'||s.status==='ended'){
-      h+='<div class="muted" style="margin:6px 0;">本团已'+stName(s.status)+'，只读。</div>';
+      h+='<div class="muted" style="margin:8px 0;">本团已'+stName(s.status)+'，只读。</div>';
     }
     ops.innerHTML=h+'<button class="btn btn-g" onclick="copyDetail()">📄 复制明细文本</button></div>';
     return api('groupon_requests_list',{p_admin:pwd(),p_session_id:cur});
   }).then(function(r){
     if(!Array.isArray(r)) return;
     var el=document.getElementById('dReq');
-    if(!r.length){ el.innerHTML='<div class="card" style="color:#999;">暂无参与记录</div>'; return; }
+    if(!r.length){ el.innerHTML='<div class="card empty"><div class="eico">📋</div>暂无参与记录</div>'; return; }
     var pickedN=r.filter(function(x){return x.status==='picked';}).length;
-    el.innerHTML='<div class="card"><b>参与明细（'+r.length+' 条 · 已核销 '+pickedN+'）</b><table><tr><th>手机号</th><th>商品</th><th>数量</th><th>状态</th></tr>'+
+    el.innerHTML='<div class="card"><div class="hd2"><span class="ico">📋</span>参与明细 <span class="muted" style="font-weight:400;">('+r.length+' 条 · 已核销 '+pickedN+')</span></div><table><tr><th>手机号</th><th>商品</th><th>数量</th><th>状态</th></tr>'+
       r.map(function(x){
         var st={joined:'已参与',confirmed:'已确认',picked:'已取',missed:'未取',withdrawn:'退出',cancelled:'取消'}[x.status]||x.status;
         var sc={joined:'s-joined',confirmed:'s-confirmed',picked:'s-picked',missed:'s-missed',withdrawn:'s-withdrawn',cancelled:'s-cancelled'}[x.status]||'s-cancelled';
