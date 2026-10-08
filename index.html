@@ -160,10 +160,10 @@ button:active{transform:scale(.94);-webkit-transform:scale(.94)}
   </div>
   <div class="ticker"><div class="tk">
     <span>🔥 新客首单，立享 5 元优惠</span>✦
-    <span>3 公里内 满 20 元 免配送费</span>✦
-    <span>3-5 公里 3 元 / 单 满 30 元 免配送费</span>✦
-    <span>超5公里 每公里 2 元</span>✦
-    <span>超10 公里 不配送</span>✦
+    <span id="tk2">3 公里内 满 20 元 免配送费</span>✦
+    <span id="tk3">3-5 公里 3 元 / 单 满 30 元 免配送费</span>✦
+    <span id="tk4">超5公里 每公里 2 元</span>✦
+    <span id="tk5">超10 公里 不配送</span>✦
     <span>店址：城厢镇朝阳路 16 号附 1 号</span>✦
   </div></div>
   <div class="cats" id="cats"></div>
@@ -316,10 +316,10 @@ button:active{transform:scale(.94);-webkit-transform:scale(.94)}
     <div style="background:#fff8e1;border:1px solid #f0e0b0;border-radius:10px;padding:12px 14px;font-size:14px;line-height:2.1">
       <div>① <b style="color:#e65100">新客首单立享 5 元优惠</b></div>
       <div>② 满 <b>20</b> 元起送</div>
-      <div>③ <b>3 公里内</b>满 20 元 <b>免配送费</b></div>
-      <div>④ <b>3-5 公里</b> 3 元/单，满 30 元 <b>免配送费</b></div>
-      <div>⑤ <b>5-10 公里</b> 配送费 3 元 + 每超 1 公里加 2 元（不足 1 公里按 1 公里）</div>
-      <div>⑥ 超过 <b>10 公里</b> 暂不配送，<b style="color:#e65100">建议就近购买</b></div>
+      <div>③ <b id="pr3">3 公里内</b>满 20 元 <b>免配送费</b></div>
+      <div>④ <b id="pr4">3-5 公里</b> 3 元/单，满 30 元 <b>免配送费</b></div>
+      <div>⑤ <b id="pr5">5-10 公里</b> 配送费 3 元 + 每超 1 公里加 2 元（不足 1 公里按 1 公里）</div>
+      <div>⑥ 超过 <b id="pr6">10 公里</b> 暂不配送，<b style="color:#e65100">建议就近购买</b></div>
       <div>⑦ 金额自动<b>抹零</b>：0.5 元以下抹到整数，1 元以下抹到 0.5 元</div>
     </div>
     <div style="margin:14px 0 8px;font-size:14px;color:#555">查询我的优惠余额：</div>
@@ -487,6 +487,7 @@ syncHalfPrice();
 setTimeout(function(){ loadCloud(); }, 500);
 setInterval(function(){ loadCloud(); }, 60000); // 菜单以云端为准，每60秒自动抓取一次，及时更新
 setTimeout(function(){ loadShopCloud(); }, 900);
+setTimeout(function(){ renderFeeTexts(); }, 500);
 setTimeout(function(){ refreshShopStatus(); }, 400); // 打开页面立即拉取真实营业状态，避免默认显示“营业中”
 var orders = load(LS_ORDERS, []);
 var payCfg = load(LS_PAY, {payUrl:'收款码.png', wxUrl:'微信二维码.png'});
@@ -1078,6 +1079,7 @@ function nowMin(){ var d=new Date(); return d.getHours()*60+d.getMinutes(); }
 function hmToMin(s){ if(!s) return -1; var p=String(s).split(':'); if(p.length<2) return -1; var h=parseInt(p[0],10), m=parseInt(p[1],10); if(isNaN(h)||isNaN(m)) return -1; return h*60+m; }
 function minToHm(m){ if(m==null||isNaN(m)||m<0) return ''; var h=Math.floor(m/60), mm=m%60; return (h<10?'0':'')+h+':'+(mm<10?'0':'')+mm; }
 var shopHours = load('zz_shop_hours', {openStart:510, openEnd:1320, dlvStart:540, dlvEnd:1290});
+var dlvFee = load('zz_dlv_fee', {freeKm:3, baseFee:3, freeOver:30, perKm:2, maxKm:10});
 function inShopWindow(){ var m=nowMin(); return m>=shopHours.openStart && m<shopHours.openEnd; }
 function inDlvWindow(){ var m=nowMin(); return m>=shopHours.dlvStart && m<shopHours.dlvEnd; }
 function inModeWindow(mode){ return (mode==='pickup')?inShopWindow():inDlvWindow(); }
@@ -1086,8 +1088,14 @@ function distKm(a,b){
   var s=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(a.lat*Math.PI/180)*Math.cos(b.lat*Math.PI/180)*Math.sin(dLng/2)*Math.sin(dLng/2);
   return R*2*Math.atan2(Math.sqrt(s),Math.sqrt(1-s));
 }
-/* 配送费（隐藏规则）：3km内免；3-5km满30免否则3；5-10km=3+(实际距离-5)×2，按实际公里数精确计价（页面说明文案保留“每1公里加2元”给客人看） */
-function deliveryFee(dist, subtotal){ if(dist<=3) return 0; if(dist<=5) return (subtotal>=30?0:3); if(dist<=10) return Math.round((3+(dist-5)*2)*100)/100; return -1; }
+/* 配送费（隐藏规则，参数后台可配）：freeKm内免；freeKm~freeKm+2满freeOver免否则baseFee；freeKm+2~maxKm=baseFee+(实际距离-(freeKm+2))×perKm，按实际公里数精确计价（页面说明文案保留给客人看） */
+function deliveryFee(dist, subtotal){
+  var f=dlvFee, km2=f.freeKm+2;
+  if(dist<=f.freeKm) return 0;
+  if(dist<=km2) return (subtotal>=f.freeOver?0:f.baseFee);
+  if(dist<=f.maxKm) return Math.round((f.baseFee+(dist-km2)*f.perKm)*100)/100;
+  return -1;
+}
 function calcDelivery(){
   if(_ckMode==='pickup'){ window._delivery={dist:0,fee:0,mode:'pickup'}; return; }
   var addr=document.getElementById('ckAddr').value.trim(); var detail=document.getElementById('ckAddrDetail')?document.getElementById('ckAddrDetail').value.trim():''; if(detail) addr+=' '+detail;
@@ -1102,10 +1110,11 @@ function calcDelivery(){
     var fee=deliveryFee(d, sub);
     window._delivery={dist:d,fee:fee};
     var h='🚴 骑行距离：约 '+d.toFixed(1)+' 公里<br>';
-    if(fee<0) h+='<span style="color:#e53935">超出 10 公里配送范围，暂无法配送（建议到店自取）</span>';
-    else if(d<=3) h+='<span style="color:#2e7d32">✔ 3 公里内，免配送费</span>';
-    else if(fee===0) h+='<span style="color:#2e7d32">✔ 满 30 元，免配送费</span>';
-    else if(d<=5) h+='<span style="color:#fb8c00">配送费：'+money(fee)+'（3-5 公里，满30元免）</span>'; else h+='<span style="color:#fb8c00">配送费：'+money(fee)+'（3元+超5公里每1公里加2元）</span>';
+    var f=dlvFee, km2=f.freeKm+2;
+    if(fee<0) h+='<span style="color:#e53935">超出 '+f.maxKm+' 公里配送范围，暂无法配送（建议到店自取）</span>';
+    else if(d<=f.freeKm) h+='<span style="color:#2e7d32">✔ '+f.freeKm+' 公里内，免配送费</span>';
+    else if(fee===0) h+='<span style="color:#2e7d32">✔ 满 '+f.freeOver+' 元，免配送费</span>';
+    else if(d<=km2) h+='<span style="color:#fb8c00">配送费：'+money(fee)+'（'+f.freeKm+'-'+km2+' 公里，满'+f.freeOver+'元免）</span>'; else h+='<span style="color:#fb8c00">配送费：'+money(fee)+'（'+f.baseFee+'元+超'+km2+'公里每1公里加'+f.perKm+'元）</span>';
     box.innerHTML=h;
     if(typeof updateCkAmt==='function') updateCkAmt();
   }
@@ -2547,6 +2556,15 @@ function renderShopAdmin(){
     '<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px"><span style="width:86px;font-size:13px;color:#555">外送开始</span><input type="time" id="dlvStart" value="'+minToHm(shopHours.dlvStart)+'" style="flex:1"></div>'+
     '<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px"><span style="width:86px;font-size:13px;color:#555">外送截止</span><input type="time" id="dlvEnd" value="'+minToHm(shopHours.dlvEnd)+'" style="flex:1"></div>'+
     '</div>'+
+    '<div style="margin-top:14px;border-top:1px dashed rgba(46,125,50,.25);padding-top:10px">'+
+    '<div style="font-size:14px;font-weight:700;color:#2e7d32;margin-bottom:6px">配送费规则</div>'+
+    '<div style="font-size:12px;color:#777;margin-bottom:8px">规则：免配送距离内免费；免配送距离~+2公里 满额免配送费否则收起步费；再往上每公里加价；超出上限不配送。保存后云端三端同步。</div>'+
+    '<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px"><span style="width:86px;font-size:13px;color:#555">免配送距离(km)</span><input type="number" min="0" step="0.1" id="feeFreeKm" value="'+dlvFee.freeKm+'" style="flex:1"></div>'+
+    '<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px"><span style="width:86px;font-size:13px;color:#555">起步配送费(元)</span><input type="number" min="0" step="0.5" id="feeBase" value="'+dlvFee.baseFee+'" style="flex:1"></div>'+
+    '<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px"><span style="width:86px;font-size:13px;color:#555">满额免配送(元)</span><input type="number" min="0" step="1" id="feeFreeOver" value="'+dlvFee.freeOver+'" style="flex:1"></div>'+
+    '<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px"><span style="width:86px;font-size:13px;color:#555">每公里加价(元)</span><input type="number" min="0" step="0.5" id="feePerKm" value="'+dlvFee.perKm+'" style="flex:1"></div>'+
+    '<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px"><span style="width:86px;font-size:13px;color:#555">配送上限(km)</span><input type="number" min="0" step="0.5" id="feeMaxKm" value="'+dlvFee.maxKm+'" style="flex:1"></div>'+
+    '</div>'+
     '<div style="margin-top:12px"><button class="btn" onclick="saveShop()">保存店铺设置</button></div></div></div></div>';
   return html;
 }
@@ -2562,12 +2580,32 @@ function saveShop(){
   if(oS<0||oE<0||dS<0||dE<0||oE<=oS||dE<=dS){ alert('营业时间格式不对：请填写完整时间，且结束必须晚于开始'); return; }
   shopHours={openStart:oS,openEnd:oE,dlvStart:dS,dlvEnd:dE};
   save('zz_shop_hours',shopHours);
+  var nFreeKm=parseFloat(document.getElementById('feeFreeKm').value), nBase=parseFloat(document.getElementById('feeBase').value);
+  var nOver=parseFloat(document.getElementById('feeFreeOver').value), nPer=parseFloat(document.getElementById('feePerKm').value), nMax=parseFloat(document.getElementById('feeMaxKm').value);
+  if(isNaN(nFreeKm)||isNaN(nBase)||isNaN(nOver)||isNaN(nPer)||isNaN(nMax)||nFreeKm<0||nBase<0||nOver<0||nPer<0||nMax<=nFreeKm+2){
+    alert('配送费参数格式不对：请填写有效数字，且配送上限必须大于（免配送距离+2）公里'); return;
+  }
+  dlvFee={freeKm:nFreeKm,baseFee:nBase,freeOver:nOver,perKm:nPer,maxKm:nMax};
+  save('zz_dlv_fee',dlvFee);
+  renderFeeTexts();
   save(LS_SHOP,shopCfg); _localShopTs=Date.now(); pushShopCloud(); renderAdmin(); alert('店铺设置已保存');
 }
 /* ===== 云端为主·店铺配置同步 ===== */
 var _shopDirty=false, _localShopTs=0, _wasOnline=true, _lastShopCloudLoad=0;
 var deliverCfg = load(LS_DELIVER, {pwd:''});
 var deliverLogged=false, deliverOrders=[], deliverPwd='', deliverName='', deliverPosTimer=null, myOrdersTimer=null, deliverTimer=null;
+function renderFeeTexts(){
+  var f=dlvFee, km2=f.freeKm+2;
+  function set(id,t){ var e=document.getElementById(id); if(e) e.textContent=t; }
+  set('tk2', f.freeKm+' 公里内 满 20 元 免配送费');
+  set('tk3', f.freeKm+'-'+km2+' 公里 '+f.baseFee+' 元 / 单 满 '+f.freeOver+' 元 免配送费');
+  set('tk4', '超'+km2+'公里 每公里 '+f.perKm+' 元');
+  set('tk5', '超'+f.maxKm+' 公里 不配送');
+  set('pr3', f.freeKm+' 公里内');
+  set('pr4', f.freeKm+'-'+km2+' 公里');
+  set('pr5', km2+'-'+f.maxKm+' 公里');
+  set('pr6', f.maxKm+' 公里');
+}
 function loadShopCloud(){
   var now=Date.now();
   if(!_shopDirty && now-_lastShopCloudLoad<30000) return;
@@ -2581,6 +2619,7 @@ function loadShopCloud(){
         if(c.pay){ payCfg=Object.assign({},payCfg,c.pay); save(LS_PAY,payCfg); }
         if(c.deliver){ deliverCfg=Object.assign({},deliverCfg,c.deliver); save(LS_DELIVER,deliverCfg); }
         if(c.hours){ shopHours=Object.assign({},shopHours,c.hours); save('zz_shop_hours',shopHours); }
+        if(c.fee){ dlvFee=Object.assign({},dlvFee,c.fee); save('zz_dlv_fee',dlvFee); renderFeeTexts(); }
         if(j.updated_at) _localShopTs=new Date(j.updated_at).getTime();
         _shopDirty=false;
         markOnline();
@@ -2590,7 +2629,7 @@ function loadShopCloud(){
 }
 function pushShopCloud(){
   var pwd=localStorage.getItem(LS_CLOUDPWD)||'1986shenhu';
-  var cfg={shop:{address:shopCfg.address||'',shopLat:shopCfg.shopLat||'',shopLng:shopCfg.shopLng||'',amapKey:shopCfg.amapKey||'',jskey:shopCfg.jskey||'',jscode:shopCfg.jscode||''},pay:{payUrl:payCfg.payUrl||'',wxUrl:payCfg.wxUrl||''},deliver:{pwd:deliverCfg.pwd||''},hours:{openStart:shopHours.openStart||510,openEnd:shopHours.openEnd||1320,dlvStart:shopHours.dlvStart||540,dlvEnd:shopHours.dlvEnd||1290}};
+  var cfg={shop:{address:shopCfg.address||'',shopLat:shopCfg.shopLat||'',shopLng:shopCfg.shopLng||'',amapKey:shopCfg.amapKey||'',jskey:shopCfg.jskey||'',jscode:shopCfg.jscode||''},pay:{payUrl:payCfg.payUrl||'',wxUrl:payCfg.wxUrl||''},deliver:{pwd:deliverCfg.pwd||''},hours:{openStart:shopHours.openStart||510,openEnd:shopHours.openEnd||1320,dlvStart:shopHours.dlvStart||540,dlvEnd:shopHours.dlvEnd||1290},fee:{freeKm:dlvFee.freeKm||3,baseFee:dlvFee.baseFee||3,freeOver:dlvFee.freeOver||30,perKm:dlvFee.perKm||2,maxKm:dlvFee.maxKm||10}};
   fetch(SB_URL+'/rest/v1/rpc/save_shop_config',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({p_admin:pwd,p_cfg:cfg})})
     .then(function(r){ return r.json(); })
     .then(function(j){
