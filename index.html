@@ -485,7 +485,7 @@ if(!dishes||!dishes.length) dishes=defaultDishes();
 syncHalfPrice();
 // 后台异步拉云端菜单，拉到了就更新
 setTimeout(function(){ loadCloud(); }, 500);
-setInterval(function(){ loadCloud(); }, 60000); // 菜单以云端为准，每60秒自动抓取一次，及时更新
+// 菜单以云端为准：60s 档位由统一调度器(startUnifiedTicker)执行，及时更新
 setTimeout(function(){ loadShopCloud(); }, 900);
 setTimeout(function(){ renderFeeTexts(); }, 500);
 setTimeout(function(){ refreshShopStatus(); }, 400); // 打开页面立即拉取真实营业状态，避免默认显示“营业中”
@@ -1006,8 +1006,22 @@ function autoCheckShopHours(){
   else if(!adminShopOpen && m>=shopHours.openStart && m<shopHours.openEnd && !manualToday){ toggleShopStatus(true); }
   _lastAutoMin=m;
 }
-window.setInterval(function(){ if(adminOk) autoCheckShopHours(); }, 60000);
-window.setInterval(function(){ if(!adminOk) refreshShopStatus(); }, 60000);
+/* ===== 统一轮询调度器 =====
+   5s 心跳：60s 档位跑菜单抓取/云端店铺配置/营业状态；后台另由 cloudTimer(Worker) 5s 跑云端订单+语音提醒。
+   原三个 60s 轮询（loadCloud / autoCheckShopHours / refreshShopStatus）合并于此，减少定时器数量。 */
+var _uniTick=0, _uniTicker=null;
+function startUnifiedTicker(){
+  if(_uniTicker) return;
+  _uniTicker=setInterval(function(){
+    _uniTick++;
+    if(_uniTick%12===1){
+      loadCloud();
+      loadShopCloud();
+      if(adminOk) autoCheckShopHours(); else refreshShopStatus();
+    }
+  }, 5000);
+}
+startUnifiedTicker();
 // 电脑端快捷方式打开：无论在哪个界面，都在后台轮询云端订单+语音提醒
 if(location.href.indexOf('autologin=1')>=0){
   adminOk=true; localStorage.setItem('zz_merchant','1'); localStorage.setItem('LS_SESSION','1');
