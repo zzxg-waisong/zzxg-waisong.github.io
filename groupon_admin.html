@@ -112,7 +112,10 @@ th{color:#999;font-weight:700;font-size:12px;background:#fafcfa}
 
     <div class="card" id="fruitLib">
       <div class="hd2"><span class="ico">🍓</span>应季水果库 <span class="muted" id="flCount" style="font-weight:400;"></span></div>
-      <input id="flKw" placeholder="🔍 搜索水果名 / 别名（忽略大小写）" oninput="flSearch(this.value)">
+      <div style="position:relative">
+        <input id="flKw" placeholder="🔍 搜索水果名 / 别名（输入即弹选项）" oninput="flSearch(this.value)" autocomplete="off">
+        <div id="flSuggest" style="position:absolute;top:100%;left:0;right:0;z-index:99;background:rgba(255,255,255,.94);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border:1px solid rgba(0,0,0,.08);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.14);display:none;max-height:300px;overflow:auto;"></div>
+      </div>
       <div class="fil" style="margin-top:12px;"><button id="flAllBtn" class="on" onclick="flClearAll()">全部（清除筛选）</button></div>
       <div class="flSec">按当季（点击月份切换查看该月在市水果；再点一次取消本筛选）</div>
       <div class="fil" id="flSeason"></div>
@@ -374,7 +377,32 @@ function tasteOf(f,m){
 }
 var TASTE_META={best:{t:'当季最佳',c:'t-best'},good:{t:'不错',c:'t-good'},tail:{t:'尾季',c:'t-tail'},normal:{t:'一般',c:'t-normal'}};
 function flToast(t){ var e=document.getElementById('toast'); e.textContent=t; e.style.display='block'; clearTimeout(e._tm); e._tm=setTimeout(function(){ e.style.display='none'; },2200); }
-function flSearch(v){ kw=v.trim().toLowerCase(); renderChips(); renderFruits(); }
+function flSearch(v){ kw=v.trim().toLowerCase(); renderChips(); renderFruits(); flSuggest(v); }
+function flSuggest(v){
+  var box=document.getElementById('flSuggest'); if(!box) return;
+  v=(v||'').trim().toLowerCase();
+  if(!v){ box.style.display='none'; return; }
+  var hits=FRUITS.filter(function(f){ return String(f.name+' '+(f.aliases||'')).toLowerCase().indexOf(v)>=0; }).slice(0,8);
+  if(!hits.length){ box.style.display='none'; return; }
+  box.innerHTML=hits.map(function(f){
+    return '<div onclick="flPickSuggest(\''+esc(f.name).replace(/'/g,"\\'")+'\')" style="display:flex;align-items:center;gap:10px;padding:8px 10px;cursor:pointer;border-bottom:1px solid rgba(0,0,0,.05);" onmouseover="this.style.background=\'rgba(46,125,50,.08)\'" onmouseout="this.style.background=\'transparent\'">'+
+      (f.img_url?'<img src="'+esc(f.img_url)+'" style="width:34px;height:34px;object-fit:cover;border-radius:6px">':'<div style="width:34px;height:34px;border-radius:6px;background:#eee;display:flex;align-items:center;justify-content:center;font-size:16px">🍌</div>')+
+      '<div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:700;color:#2e7d32">'+esc(f.name)+'</div>'+
+      (f.aliases?'<div style="font-size:11px;color:#888;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(f.aliases)+'</div>':'')+'</div>'+
+      '<span style="font-size:11px;color:#aaa">选这个</span></div>';
+  }).join('');
+  box.style.display='block';
+}
+function flPickSuggest(name){
+  document.getElementById('flKw').value=name;
+  kw=name.toLowerCase();
+  renderChips(); renderFruits();
+  var box=document.getElementById('flSuggest'); if(box) box.style.display='none';
+}
+document.addEventListener('click',function(e){
+  var box=document.getElementById('flSuggest'); if(!box) return;
+  if(e.target.closest && !e.target.closest('#flKw') && !e.target.closest('#flSuggest')) box.style.display='none';
+});
 function flClearAll(){
   kw=''; document.getElementById('flKw').value='';
   seasonM=new Date().getMonth()+1; seasonOn=true;
