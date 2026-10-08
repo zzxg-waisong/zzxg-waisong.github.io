@@ -591,7 +591,7 @@ function showGiftDlg(id){
   box.style.cssText='display:flex;align-items:center;justify-content:center;z-index:9999';
   box.innerHTML='<div style="background:rgba(255,255,255,.48);border-radius:20px;-webkit-backdrop-filter:blur(32px) saturate(190%);backdrop-filter:blur(32px) saturate(190%);border:1px solid rgba(255,255,255,.65);box-shadow:0 12px 40px rgba(0,0,0,.16),inset 0 1px 0 rgba(255,255,255,.6);padding:20px;width:92%;max-width:420px;max-height:88vh;overflow-y:auto;box-sizing:border-box">'+
     '<h3 style="margin:0 0 4px">'+esc(d.name)+'</h3>'+
-    '<div style="color:#e65100;font-size:20px;font-weight:900;margin-bottom:4px">'+money(d.price)+' <small style="font-size:13px;color:#666;font-weight:400">/ 盒</small></div>'+
+    '<div style="color:#e65100;font-size:18px;font-weight:900;margin-bottom:4px">'+money(d.price)+' <small style="font-size:13px;color:#666;font-weight:400">/ 盒</small></div>'+
     (stockTxt?'<div style="font-size:13px;color:'+(soldOut?'#999':'#e65100')+';margin-bottom:10px">'+stockTxt+'</div>':'')+
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'+
       '<div style="text-align:center"><img src="'+esc(d.img)+'?v='+IMG_VER+'" style="width:100%;height:auto;border-radius:8px;border:1px solid #eee;cursor:zoom-in" onclick="zoomImg(this.src)" alt="外壳"><div style="font-size:12px;color:#888;margin-top:4px">外壳</div></div>'+
@@ -797,8 +797,8 @@ function pickWeight(id){
     var heBtns=heOpts.map(function(h){return '<button onclick="confirmPickW(\''+id+'\',\'he\','+h+')" style="'+cardS+'">'+h+'盒</button>';}).join('');
     var genBtns=genOpts.map(function(g){return '<button onclick="confirmPickW(\''+id+'\',\'gen\','+g+')" style="'+cardS+'">'+g+'元/根</button>';}).join('');
     inner='<div style="background:rgba(255,255,255,.48);border-radius:20px;-webkit-backdrop-filter:blur(32px) saturate(190%);backdrop-filter:blur(32px) saturate(190%);border:1px solid rgba(255,255,255,.65);box-shadow:0 12px 40px rgba(0,0,0,.16),inset 0 1px 0 rgba(255,255,255,.6);padding:20px;width:88%;max-width:340px">'+
-      '<div style="text-align:center;font-weight:700;font-size:17px;margin-bottom:4px">'+d.name+'</div>'+
-      '<div style="text-align:center;color:#999;font-size:13px;margin-bottom:14px">'+d.price+'元/盒 · 去皮去节</div>'+
+      '<h3 style="text-align:center;margin:0 0 4px">'+esc(d.name)+'</h3>'+
+      '<div style="text-align:center;color:#e65100;font-size:18px;font-weight:900;margin-bottom:14px">¥'+d.price+'/盒 <small style="font-size:12px;color:#999;font-weight:400">· 去皮去节</small></div>'+
       '<div style="font-size:14px;color:#666;margin-bottom:6px">按盒买</div>'+
       '<div style="display:flex;flex-wrap:wrap">'+heBtns+'</div>'+
       '<div style="font-size:14px;color:#666;margin:12px 0 6px">按根买</div>'+
@@ -812,8 +812,8 @@ function pickWeight(id){
     var jinBtns=jinOpts.map(function(j){return '<button onclick="confirmPickW(\''+id+'\',\'jin\','+j+')" style="flex:1;background:#fff;border:1px solid #ddd;border-radius:8px;padding:12px;font-size:15px;margin:4px">'+j+'斤</button>';}).join('');
     var yuanBtns=yuanOpts.map(function(y){return '<button onclick="confirmPickW(\''+id+'\',\'yuan\','+y+')" style="flex:1;background:#fff;border:1px solid #ddd;border-radius:8px;padding:12px;font-size:15px;margin:4px">'+y+'元</button>';}).join('');
     inner='<div style="background:rgba(255,255,255,.48);border-radius:20px;-webkit-backdrop-filter:blur(32px) saturate(190%);backdrop-filter:blur(32px) saturate(190%);border:1px solid rgba(255,255,255,.65);box-shadow:0 12px 40px rgba(0,0,0,.16),inset 0 1px 0 rgba(255,255,255,.6);padding:20px;width:88%;max-width:340px">'+
-      '<div style="text-align:center;font-weight:700;font-size:17px;margin-bottom:4px">'+d.name+'</div>'+
-      '<div style="text-align:center;color:#999;font-size:13px;margin-bottom:14px">'+(d.per||d.price)+'元/斤</div>'+
+      '<h3 style="text-align:center;margin:0 0 4px">'+esc(d.name)+'</h3>'+
+      '<div style="text-align:center;color:#e65100;font-size:18px;font-weight:900;margin-bottom:14px">¥'+(d.per||d.price)+'/斤</div>'+
       '<div style="font-size:14px;color:#666;margin-bottom:6px">按重量买</div>'+
       '<div style="display:flex;flex-wrap:wrap">'+jinBtns+'</div>'+
       '<div style="font-size:14px;color:#666;margin:12px 0 6px">按金额买</div>'+
