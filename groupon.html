@@ -95,7 +95,8 @@ function showList(){
       else if(s.status==='quoted') ph='<span class="muted">'+(s.unit_price?('单价 ¥'+fmtN(s.unit_price)):'等待老板报价')+'</span>';
       else if(s.status==='arrived') ph='<span class="price">已到货·请来取</span>';
       else if(s.status==='delivering') ph='<span class="muted">老板进货中</span>';
-      return '<div class="card" onclick="openDetail('+s.id+')" style="cursor:pointer;">'+
+      var img=s.cover?'<img src="'+esc(s.cover)+'" style="width:100%;max-height:110px;object-fit:cover;border-radius:10px;margin-bottom:8px;" onerror="this.style.display=\'none\'">':'';
+      return '<div class="card" onclick="openDetail('+s.id+')" style="cursor:pointer;">'+img+
         '<div class="row"><b>'+esc(s.title)+'</b><span class="badge '+stCls(s.status)+'">'+stName(s.status)+'</span></div>'+
         '<div class="row" style="padding-top:2px;"><span>已接龙 <b style="color:#43a047;">'+fmtN(s.joined_qty)+'</b> / 目标 '+fmtN(s.target_qty)+' 份</span><span>'+s.people+' 人参与</span></div>'+
         '<div class="bar"><i style="width:'+Math.min(100,Math.round(s.joined_qty/s.target_qty*100))+'%"></i></div>'+
@@ -121,10 +122,13 @@ function showDetail(){
     var join=document.getElementById('joinBox');
     join.style.display = (s.status==='open')?'block':'none';
     document.getElementById('dCard').innerHTML=
-      '<div class="card"><div class="row"><b>'+esc(s.title)+'</b><span class="badge '+stCls(s.status)+'">'+stName(s.status)+'</span></div>'+
+      '<div class="card">'+('<img src="'+esc(s.cover)+'" style="width:100%;max-height:150px;object-fit:cover;border-radius:10px;margin-bottom:8px;" onerror="this.style.display=\'none\'">'||'')+
+      '<div class="row"><b>'+esc(s.title)+'</b><span class="badge '+stCls(s.status)+'">'+stName(s.status)+'</span></div>'+
       '<div class="row"><span>目标</span><b>'+fmtN(s.target_qty)+' 份</b></div>'+
       '<div class="row"><span>已接龙</span><b style="color:#43a047;">'+fmtN(s.joined_qty)+' 份 / '+s.people+' 人</b></div>'+
+      (s.per_limit>0?'<div class="row"><span>每人限购</span><b>'+fmtN(s.per_limit)+' 份</b></div>':'')+
       '<div class="row"><span>截止时间</span><b>'+fmtT(s.deadline)+'</b></div>'+
+      (s.note?'<div class="row" style="align-items:flex-start;"><span>说明</span><b style="text-align:right;font-weight:600;">'+esc(s.note)+'</b></div>':'')+
       (s.unit_price!=null?'<div class="row"><span>团购单价</span><span class="price">¥'+fmtN(s.unit_price)+'</span></div>':'')+
       (s.status==='quoted'?'<div class="row"><span>确认截止</span><b>'+fmtT(s.confirm_deadline)+'</b></div>':'')+
       '</div>';
