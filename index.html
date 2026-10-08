@@ -2321,12 +2321,16 @@ function editDish(id){
   box.innerHTML='<div class="box"><h3>'+(d?'编辑菜品':'新增菜品（'+catLabel(defCat)+'）')+'</h3><div class="form" style="padding:0">'+
     '<label>菜品名称</label>'+
     '<div style="display:flex;gap:8px;align-items:center"><input id="dName" value="'+(d?esc(d.name):'')+'" style="flex:1">'+
-    '<button type="button" style="flex:0 0 auto;background:rgba(46,125,50,.12);border:1px solid rgba(46,125,50,.5);color:#2e7d32;border-radius:9px;padding:7px 11px;font-size:12px;font-weight:700;cursor:pointer" onclick="searchDishImg()">🔍 按名称搜图</button></div>'+
-    '<div style="font-size:11px;color:#888;margin:-2px 0 4px">填好名称点「按名称搜图」，选图后自动裁剪缩放 + 加水印 + 压缩（顾客端秒开）</div>'+
+    '<button type="button" style="flex:0 0 auto;background:rgba(46,125,50,.12);border:1px solid rgba(46,125,50,.5);color:#2e7d32;border-radius:9px;padding:7px 11px;font-size:12px;font-weight:700;cursor:pointer" onclick="searchDishImg()">🔍 按名称搜图</button>'+
+    '<button type="button" style="flex:0 0 auto;background:rgba(255,152,0,.14);border:1px solid rgba(255,152,0,.55);color:#e65100;border-radius:9px;padding:7px 11px;font-size:12px;font-weight:700;cursor:pointer" onclick="openFruitPicker()">🍉 从水果库选品</button></div>'+
+    '<div style="font-size:11px;color:#888;margin:-2px 0 4px">「从水果库选品」：点选水果自动带入 名称+图片+单位（斤/个/根/份），填价格即可保存；「按名称搜图」：只选图。两者都自动裁剪缩放 + 加水印 + 压缩（顾客端秒开）</div>'+
     '<label>价格（元）</label><input id="dPrice" type="number" step="0.1" value="'+(d?d.price:'')+'">'+
     '<label>原价（元，打折划线显示用；正常商品留空）</label><input id="dOrig" type="number" step="0.1" min="0" value="'+(d&&d.orig!=null?d.orig:'')+'">'+
     '<label>称重单价（元/斤，水果按斤结算时填；果汁/盒装留空）</label><input id="dPer" type="number" step="0.1" min="0" value="'+(d?(d.per||''):'')+'">'+
     '<label>单位 / 重量（如：斤、整颗、杯）</label><input id="dUnit" value="'+(d?esc(d.unit||'份'):'份')+'">'+
+    '<div style="display:flex;flex-wrap:wrap;gap:5px;margin:-2px 0 6px"><span style="font-size:11px;color:#888;line-height:22px">快速选单位：</span>'+
+    ['斤','个','根','份','杯','盒','把','束','串','只','袋'].map(function(u){ return '<button type="button" style="background:rgba(46,125,50,.08);border:1px solid rgba(46,125,50,.4);color:#2e7d32;border-radius:7px;padding:2px 9px;font-size:12px;cursor:pointer" onclick="setDUnit(\''+u+'\')">'+u+'</button>'; }).join('')+
+    '</div>'+
     '<label>菜品图片（点右侧按钮选本地图，自动压缩）</label>'+
     '<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">'+
     '<img id="dImgPreview" src="'+(d&&d.img?esc(d.img):'')+'" style="width:60px;height:60px;object-fit:cover;border-radius:6px;border:1px solid #eee;'+(d&&d.img?'':'display:none')+'">'+
@@ -2353,34 +2357,56 @@ function showMiniTip(txt){
   d.textContent=txt; document.body.appendChild(d);
   setTimeout(function(){ var x=document.getElementById('zzMiniTip'); if(x) x.remove(); },2600);
 }
-function searchDishImg(){
-  var kw=(document.getElementById('dName').value||'').trim();
-  if(!kw){ showMiniTip('请先填写菜品名称'); return; }
-  var clean=kw.replace(/[（(].*?[)）]/g,'').replace(/尾货/g,'').replace(/半价/g,'').trim()||kw;
+function openFruitPicker(){ searchDishImg(true); }
+function setDUnit(u){ var i=document.getElementById('dUnit'); if(i) i.value=u; }
+function unitFromRef(ref){
+  var s=String(ref||'');
+  var m=s.match(/\/\s*([斤个根份杯盒把束串只袋提捆块条])/);
+  if(m) return m[1];
+  if(s.indexOf('元/斤')>=0) return '斤';
+  return '';
+}
+function searchDishImg(allowEmpty){
+  var si=document.getElementById('siKw');
+  var kw=si?(si.value||'').trim():((document.getElementById('dName').value||'').trim());
+  if(!kw && !allowEmpty){ showMiniTip('请先填写菜品名称'); return; }
+  var clean=kw.replace(/[（(].*?[)）]/g,'').replace(/尾货/g,'').replace(/半价/g,'').trim()||'';
   var old=document.getElementById('searchImgModal'); if(old) old.remove();
   var m=document.createElement('div'); m.id='searchImgModal';
   m.style='position:fixed;inset:0;background:rgba(10,18,10,.42);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);z-index:99999;display:flex;align-items:center;justify-content:center';
+  var title=clean?('🔍 在线搜图：「'+esc(clean)+'」'):'🍉 从水果库选品（点选自动带入名称+图+单位，填价格即可）';
   m.innerHTML='<div style="background:rgba(255,255,255,.38);border-radius:20px;-webkit-backdrop-filter:blur(32px) saturate(190%);backdrop-filter:blur(32px) saturate(190%);border:1px solid rgba(255,255,255,.65);box-shadow:0 12px 40px rgba(0,0,0,.16),inset 0 1px 0 rgba(255,255,255,.6);padding:20px;width:94%;max-width:460px;max-height:86vh;overflow:auto;box-sizing:border-box">'+
-    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px"><b style="font-size:16px">🔍 在线搜图：「'+esc(clean)+'」</b><button style="border:none;background:rgba(255,255,255,.55);border-radius:8px;padding:4px 10px;cursor:pointer;font-size:13px" onclick="document.getElementById(\'searchImgModal\').remove()">✕ 关闭</button></div>'+
-    '<div style="display:flex;gap:6px;margin-bottom:10px;align-items:center"><input id="siKw" value="'+esc(clean)+'" style="flex:1;background:rgba(255,255,255,.55);border:1px solid rgba(255,255,255,.65);border-radius:8px;padding:8px 10px;font-size:13px"><button style="background:rgba(46,125,50,.15);border:1px solid rgba(46,125,50,.5);color:#2e7d32;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer" onclick="searchDishImg()">搜索</button></div>'+
-    '<div style="font-size:12px;color:#888;margin-bottom:8px">正在从图库检索「'+esc(clean)+'」…点击任意图片即自动裁剪缩放 + 加水印 + 压缩</div>'+
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px"><b style="font-size:16px">'+title+'</b><button style="border:none;background:rgba(255,255,255,.55);border-radius:8px;padding:4px 10px;cursor:pointer;font-size:13px" onclick="document.getElementById(\'searchImgModal\').remove()">✕ 关闭</button></div>'+
+    '<div style="display:flex;gap:6px;margin-bottom:10px;align-items:center"><input id="siKw" value="'+esc(clean)+'" style="flex:1;background:rgba(255,255,255,.55);border:1px solid rgba(255,255,255,.65);border-radius:8px;padding:8px 10px;font-size:13px" onkeydown="if(event.key===\'Enter\')searchDishImg(true)"><button style="background:rgba(46,125,50,.15);border:1px solid rgba(46,125,50,.5);color:#2e7d32;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer" onclick="searchDishImg(true)">搜索</button></div>'+
+    '<div style="font-size:12px;color:#888;margin-bottom:8px">'+(clean?('正在从图库检索「'+esc(clean)+'」…点选即自动带入'):'输入名称可筛选（如：柠檬、爱媛38），或直接点选下方水果')+'</div>'+
     '<div id="siGrid" style="display:flex;flex-wrap:wrap;gap:8px"></div>'+
-    '<div style="font-size:11px;color:#aaa;margin-top:10px">图片来源：云端水果图库（121 种常见水果，已统一水印+压缩）。若没有合适图，请修改关键词重搜，或用上方「选本地图」。</div></div>';
+    '<div style="font-size:11px;color:#aaa;margin-top:10px">图片来源：云端水果图库（134 种常见水果，已统一水印+压缩）。若没有合适图，请修改关键词重搜，或用上方「选本地图」。</div></div>';
   document.body.appendChild(m);
   var wm=SB_URL+'/rest/v1/rpc/search_fruit_imgs';
   fetch(wm,{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({p_kw:clean})})
     .then(function(r){ return r.json(); }).then(function(arr){
     var grid=document.getElementById('siGrid'); if(!grid) return;
     var list=Array.isArray(arr)?arr:[];
-    if(!list.length){ grid.innerHTML='<div style="padding:18px 6px;color:#888;font-size:13px">云端图库暂无「'+esc(clean)+'」。水果图库共 121 种常见水果；若您的商品不在其中，请用上方「选本地图」，或告诉豆包帮您补图。</div>'; return; }
+    if(!list.length){ grid.innerHTML='<div style="padding:18px 6px;color:#888;font-size:13px">云端图库暂无「'+esc(clean)+'」。水果图库共 134 种常见水果；若您的商品不在其中，请用上方「选本地图」，或告诉豆包帮您补图。</div>'; return; }
     grid.innerHTML=list.map(function(f){
-      return '<div style="width:110px;text-align:center;cursor:pointer" onclick="pickDishImg(this.querySelector(\'img\').src,this)">'+
+      var u=unitFromRef(f.price_ref);
+      return '<div style="width:110px;text-align:center;cursor:pointer" onclick="pickDishFruit(this,\''+esc(f.name).replace(/'/g,"\\'")+'\',\''+u+'\')">'+
         '<img src="'+esc(f.img_url)+'" loading="lazy" style="width:110px;height:110px;object-fit:cover;border-radius:8px;border:1px solid rgba(255,255,255,.65);box-shadow:0 3px 10px rgba(0,0,0,.12)">'+
         '<div style="font-size:11px;color:#2e7d32;font-weight:700;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(f.name)+'</div>'+
         (f.best_months?'<div style="font-size:10px;color:#888;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">当季 '+esc(f.best_months)+'</div>':'')+
+        (f.price_ref?'<div style="font-size:10px;color:#e65100;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(f.price_ref)+'</div>':'')+
         '</div>';
     }).join('');
   }).catch(function(){ var g=document.getElementById('siGrid'); if(g) g.innerHTML='<div style="padding:18px 6px;color:#c62828;font-size:13px">搜图失败（网络异常），请稍后重试或使用本地选图。</div>'; });
+}
+function pickDishFruit(el,name,unit){
+  if(unit){
+    var ui=document.getElementById('dUnit'); if(ui) ui.value=unit;
+  }
+  if(name){
+    var ni=document.getElementById('dName'); if(ni) ni.value=name;
+  }
+  pickDishImg(el.querySelector('img').src,el);
 }
 function pickDishImg(src,el){
   var grid=document.getElementById('siGrid'); if(grid) grid.innerHTML='<div style="padding:18px 6px;color:#888;font-size:13px">正在裁剪缩放 + 加水印 + 压缩…请稍候</div>';
