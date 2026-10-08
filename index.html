@@ -2385,8 +2385,10 @@ function searchDishImg(){
 function pickDishImg(src,el){
   var grid=document.getElementById('siGrid'); if(grid) grid.innerHTML='<div style="padding:18px 6px;color:#888;font-size:13px">正在裁剪缩放 + 加水印 + 压缩…请稍候</div>';
   var img=new Image();
-  img.crossOrigin='anonymous';
+  var done=false;
+  var timer=setTimeout(function(){ if(!done){ done=true; showMiniTip('图片加载超时，请换一张试试'); } },15000);
   img.onload=function(){
+    if(done) return; done=true; clearTimeout(timer);
     try{
       var S=750, c=document.createElement('canvas'); c.width=S; c.height=S;
       var x=c.getContext('2d');
@@ -2409,7 +2411,7 @@ function pickDishImg(src,el){
       showMiniTip('✅ 已选用云端原图（已带水印+压缩，顾客端秒开）');
     }
   };
-  img.onerror=function(){ showMiniTip('图片加载失败，请换一张试试'); };
+  img.onerror=function(){ if(done) return; done=true; clearTimeout(timer); showMiniTip('图片加载失败，请换一张试试'); };
   img.src=src;
 }
 function onDishImgPick(input){
