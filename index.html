@@ -488,6 +488,7 @@ setTimeout(function(){ loadCloud(); }, 500);
 // 菜单以云端为准：60s 档位由统一调度器(startUnifiedTicker)执行，及时更新
 setTimeout(function(){ loadShopCloud(); }, 900);
 setTimeout(function(){ renderFeeTexts(); }, 500);
+pruneLocalStorage();
 setTimeout(function(){ refreshShopStatus(); }, 400); // 打开页面立即拉取真实营业状态，避免默认显示“营业中”
 var orders = load(LS_ORDERS, []);
 var payCfg = load(LS_PAY, {payUrl:'收款码.png', wxUrl:'微信二维码.png'});
@@ -2622,6 +2623,26 @@ function renderFeeTexts(){
   set('pr6', f.maxKm+' 公里');
   var e1=document.getElementById('tk1'); if(e1) e1.textContent=(newCustAmt>0)?('🔥 新客首单，立享 '+newCustAmt+' 元优惠'):'';
   var e1b=document.getElementById('pr1'); if(e1b){ e1b.style.display=(newCustAmt>0)?'':'none'; e1b.innerHTML='① <b style="color:#e65100">新客首单立享 '+newCustAmt+' 元优惠</b>'; }
+}
+function pruneLocalStorage(){
+  // 清理会无限积累的键：半价弹窗每日去重键(>7天)、云端已见订单裁剪(最近200条)
+  try{
+    var now=Date.now(), cut=now-7*864e5, i, k, m, del=[];
+    for(i=0;i<localStorage.length;i++){
+      k=localStorage.key(i);
+      if(k && k.indexOf('zz_half_shown_v2_')===0){
+        m=k.match(/_([A-Za-z]{3} [A-Za-z]{3} \d{2} \d{4})$/);
+        if(m){ var d=new Date(m[1]); if(!isNaN(d) && d.getTime()<cut) del.push(k); }
+      }
+    }
+    for(i=0;i<del.length;i++) localStorage.removeItem(del[i]);
+    var cs=cloudSeen, ks=Object.keys(cs);
+    if(ks.length>200){
+      var sorted=ks.slice().sort(function(a,b){ return Number(a)-Number(b); });
+      for(i=0;i<sorted.length-200;i++){ delete cs[sorted[i]]; }
+      localStorage.setItem('zz_cloud_seen', JSON.stringify(cs));
+    }
+  }catch(e){}
 }
 function loadShopCloud(){
   var now=Date.now();
