@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+﻿﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -124,6 +124,7 @@ button:active{transform:scale(.94);-webkit-transform:scale(.94);opacity:.85}
     <div>
       <p>新鲜水果 · 鲜果现榨 · 不加糖 · 无科技</p>
       <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+        <button class="admin-entry" style="color:#6a1b9a" onclick="location.href='groupon.html'">🛒 团购接龙</button>
         <button class="admin-entry" style="color:#00897b" onclick="openMyOrders()">📋 订单查询</button>
         <button class="admin-entry" style="color:#e65100" onclick="openPromo()">🎁 优惠</button>
         <button class="admin-entry" style="color:#1565c0" onclick="openDeliverLogin()">🛵 配送</button>
@@ -1799,7 +1800,7 @@ function renderAdmin(){
       }
     });
   }
-  var tabs=[['orders','📋 订单'],['dishes','🍉 菜品'],['pay','💳 收款码'],['shop','🏠 店铺'],['print','🖨 打印'],['qr','🔗 点单码'],['ref','🤝 拉新'],['deliver','🛵 配送'],['set','⚙ 设置']];
+  var tabs=[['orders','📋 订单'],['dishes','🍉 菜品'],['pay','💳 收款码'],['shop','🏠 店铺'],['print','🖨 打印'],['qr','🔗 点单码'],['ref','🤝 拉新'],['deliver','🛵 配送'],['groupon','🛒 团购'],['set','⚙ 设置']];
   var html=''; var cur=adminTab||'orders';
   tabs.forEach(function(t){ html+='<button class="'+(cur===t[0]?'on':'')+'" onclick="adminTab=\''+t[0]+'\';renderAdmin()">'+t[1]+'</button>'; });
   document.getElementById('adminTabs').innerHTML=html;
@@ -1813,6 +1814,7 @@ function renderAdmin(){
   else if(cur==='qr') renderQrAdmin();
   else if(cur==='ref') panel.innerHTML=renderReferralAdmin();
   else if(cur==='deliver') panel.innerHTML=renderDeliverAdmin();
+  else if(cur==='groupon'){ location.href='groupon_admin.html?autologin=1'; return; }
   else if(cur==='set') panel.innerHTML=renderSetAdmin();
 }
 var adminTab='orders';
