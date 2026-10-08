@@ -1001,8 +1001,8 @@ function autoCheckShopHours(){
   var m=nowMin();
   if(_lastAutoMin===m) return;
   var manualToday=(localStorage.getItem('zz_manual_shop_date')||'')===_autoDateStr();
-  if(adminShopOpen && m>=1320){ toggleShopStatus(true); }
-  else if(!adminShopOpen && m>=510 && m<1320 && !manualToday){ toggleShopStatus(true); }
+  if(adminShopOpen && m>=shopHours.openEnd){ toggleShopStatus(true); }
+  else if(!adminShopOpen && m>=shopHours.openStart && m<shopHours.openEnd && !manualToday){ toggleShopStatus(true); }
   _lastAutoMin=m;
 }
 window.setInterval(function(){ if(adminOk) autoCheckShopHours(); }, 60000);
@@ -1075,8 +1075,11 @@ function openCheckout(){
 /* 营业时段（成都本地时间，自动规则，老板无需手动改）：
    店铺营业 08:30-22:00；外送单 09:00-21:30；到店自提 08:30-22:00 */
 function nowMin(){ var d=new Date(); return d.getHours()*60+d.getMinutes(); }
-function inShopWindow(){ var m=nowMin(); return m>=510 && m<1320; }
-function inDlvWindow(){ var m=nowMin(); return m>=540 && m<1290; }
+function hmToMin(s){ if(!s) return -1; var p=String(s).split(':'); if(p.length<2) return -1; var h=parseInt(p[0],10), m=parseInt(p[1],10); if(isNaN(h)||isNaN(m)) return -1; return h*60+m; }
+function minToHm(m){ if(m==null||isNaN(m)||m<0) return ''; var h=Math.floor(m/60), mm=m%60; return (h<10?'0':'')+h+':'+(mm<10?'0':'')+mm; }
+var shopHours = load('zz_shop_hours', {openStart:510, openEnd:1320, dlvStart:540, dlvEnd:1290});
+function inShopWindow(){ var m=nowMin(); return m>=shopHours.openStart && m<shopHours.openEnd; }
+function inDlvWindow(){ var m=nowMin(); return m>=shopHours.dlvStart && m<shopHours.dlvEnd; }
 function inModeWindow(mode){ return (mode==='pickup')?inShopWindow():inDlvWindow(); }
 function distKm(a,b){
   var R=6371, dLat=(b.lat-a.lat)*Math.PI/180, dLng=(b.lng-a.lng)*Math.PI/180;
@@ -2536,6 +2539,14 @@ function renderShopAdmin(){
     '<label>高德 JS API Key（地图选点用）</label><input id="jsKey" value="'+esc(shopCfg.jskey||'')+'" placeholder="控制台 → 创建应用 → 添加Key → 服务平台选【Web端(JS API)】">'+
     '<label>安全密钥 securityJsCode（与 JS API Key 配套）</label><input id="jsCode" value="'+esc(shopCfg.jscode||'')+'" placeholder="添加Key时系统生成的安全密钥">'+
     '<label>修改后台密码</label><div style="display:flex;gap:8px"><input id="newPwd" placeholder="新密码（留空则不修改）"><button class="btn" onclick="changePwd()">修改密码</button></div>'+
+    '<div style="margin-top:14px;border-top:1px dashed rgba(46,125,50,.25);padding-top:10px">'+
+    '<div style="font-size:14px;font-weight:700;color:#2e7d32;margin-bottom:6px">营业时间（每天自动开/关店）</div>'+
+    '<div style="font-size:12px;color:#777;margin-bottom:8px">到点自动开店/关店；外送时段之外顾客只能来自提单。保存后云端三端同步。</div>'+
+    '<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px"><span style="width:86px;font-size:13px;color:#555">营业开门</span><input type="time" id="openStart" value="'+minToHm(shopHours.openStart)+'" style="flex:1"></div>'+
+    '<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px"><span style="width:86px;font-size:13px;color:#555">营业打烊</span><input type="time" id="openEnd" value="'+minToHm(shopHours.openEnd)+'" style="flex:1"></div>'+
+    '<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px"><span style="width:86px;font-size:13px;color:#555">外送开始</span><input type="time" id="dlvStart" value="'+minToHm(shopHours.dlvStart)+'" style="flex:1"></div>'+
+    '<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px"><span style="width:86px;font-size:13px;color:#555">外送截止</span><input type="time" id="dlvEnd" value="'+minToHm(shopHours.dlvEnd)+'" style="flex:1"></div>'+
+    '</div>'+
     '<div style="margin-top:12px"><button class="btn" onclick="saveShop()">保存店铺设置</button></div></div></div></div>';
   return html;
 }
@@ -2546,6 +2557,11 @@ function saveShop(){
   shopCfg.amapKey=document.getElementById('amapKey').value.trim();
   shopCfg.jskey=document.getElementById('jsKey').value.trim();
   shopCfg.jscode=document.getElementById('jsCode').value.trim();
+  var oS=hmToMin(document.getElementById('openStart').value), oE=hmToMin(document.getElementById('openEnd').value);
+  var dS=hmToMin(document.getElementById('dlvStart').value), dE=hmToMin(document.getElementById('dlvEnd').value);
+  if(oS<0||oE<0||dS<0||dE<0||oE<=oS||dE<=dS){ alert('营业时间格式不对：请填写完整时间，且结束必须晚于开始'); return; }
+  shopHours={openStart:oS,openEnd:oE,dlvStart:dS,dlvEnd:dE};
+  save('zz_shop_hours',shopHours);
   save(LS_SHOP,shopCfg); _localShopTs=Date.now(); pushShopCloud(); renderAdmin(); alert('店铺设置已保存');
 }
 /* ===== 云端为主·店铺配置同步 ===== */
@@ -2564,6 +2580,7 @@ function loadShopCloud(){
         if(c.shop){ shopCfg=Object.assign({},shopCfg,c.shop); save(LS_SHOP,shopCfg); }
         if(c.pay){ payCfg=Object.assign({},payCfg,c.pay); save(LS_PAY,payCfg); }
         if(c.deliver){ deliverCfg=Object.assign({},deliverCfg,c.deliver); save(LS_DELIVER,deliverCfg); }
+        if(c.hours){ shopHours=Object.assign({},shopHours,c.hours); save('zz_shop_hours',shopHours); }
         if(j.updated_at) _localShopTs=new Date(j.updated_at).getTime();
         _shopDirty=false;
         markOnline();
@@ -2573,7 +2590,7 @@ function loadShopCloud(){
 }
 function pushShopCloud(){
   var pwd=localStorage.getItem(LS_CLOUDPWD)||'1986shenhu';
-  var cfg={shop:{address:shopCfg.address||'',shopLat:shopCfg.shopLat||'',shopLng:shopCfg.shopLng||'',amapKey:shopCfg.amapKey||'',jskey:shopCfg.jskey||'',jscode:shopCfg.jscode||''},pay:{payUrl:payCfg.payUrl||'',wxUrl:payCfg.wxUrl||''},deliver:{pwd:deliverCfg.pwd||''}};
+  var cfg={shop:{address:shopCfg.address||'',shopLat:shopCfg.shopLat||'',shopLng:shopCfg.shopLng||'',amapKey:shopCfg.amapKey||'',jskey:shopCfg.jskey||'',jscode:shopCfg.jscode||''},pay:{payUrl:payCfg.payUrl||'',wxUrl:payCfg.wxUrl||''},deliver:{pwd:deliverCfg.pwd||''},hours:{openStart:shopHours.openStart||510,openEnd:shopHours.openEnd||1320,dlvStart:shopHours.dlvStart||540,dlvEnd:shopHours.dlvEnd||1290}};
   fetch(SB_URL+'/rest/v1/rpc/save_shop_config',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({p_admin:pwd,p_cfg:cfg})})
     .then(function(r){ return r.json(); })
     .then(function(j){
