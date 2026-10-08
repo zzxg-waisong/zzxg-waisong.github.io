@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>团购接龙 · 榨榨鲜果</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,'Microsoft YaHei',sans-serif;background:#f4f6f2;color:#333;max-width:560px;margin:0 auto;min-height:100vh}
+#top{position:sticky;top:0;z-index:9;background:#2e7d32;color:#fff;display:flex;align-items:center;padding:12px 14px;gap:10px}
+#top .back{font-size:20px;cursor:pointer;width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:rgba(255,255,255,.15);flex:none}
+#top .title{font-size:17px;font-weight:700;flex:1;text-align:center}
+#top .right{width:34px;flex:none}
+.pad{padding:12px 14px}
+.card{background:#fff;border-radius:12px;padding:14px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.badge{display:inline-block;font-size:12px;font-weight:700;padding:3px 10px;border-radius:20px;color:#fff}
+.b-open{background:#43a047}.b-quoted{background:#fb8c00}.b-delivering{background:#1e88e5}.b-arrived{background:#e53935}.b-ended{background:#78909c}.b-cancelled{background:#9e9e9e}
+.row{display:flex;justify-content:space-between;align-items:center;font-size:14px;padding:6px 0}
+.row b{font-size:15px}
+.muted{color:#888;font-size:12px}
+.price{color:#e53935;font-weight:800;font-size:16px}
+.btn{display:block;width:100%;border:none;border-radius:10px;padding:12px;font-size:15px;font-weight:700;cursor:pointer;margin-top:10px}
+.btn-p{background:#2e7d32;color:#fff}
+.btn-o{background:#fff;color:#2e7d32;border:1.5px solid #2e7d32}
+.btn-g{background:#eee;color:#666}
+input,select{width:100%;border:1.5px solid #ddd;border-radius:8px;padding:10px;font-size:14px;margin-top:6px;background:#fff}
+label{font-size:13px;color:#666;display:block;margin-top:10px}
+.bar{height:8px;background:#eee;border-radius:6px;overflow:hidden;margin:8px 0}
+.bar i{display:block;height:100%;background:#43a047;border-radius:6px}
+.item{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f0f0f0;font-size:14px}
+.item:last-child{border:none}
+.item .q{font-weight:700;color:#e53935}
+.hidden{display:none}
+#myBox{background:#fff;border-radius:12px;padding:14px;margin-top:12px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.myrec{border:1px solid #e0e0e0;border-radius:10px;padding:10px;margin-top:8px;font-size:14px}
+.notice{background:#fff8e1;border:1px dashed #f9a825;border-radius:10px;padding:10px;font-size:12.5px;color:#8d6e63;margin-top:10px}
+.okbar{background:#e8f5e9;color:#2e7d32;font-size:13px;padding:10px;border-radius:10px;margin-top:10px;display:none}
+.errbar{background:#fce4ec;color:#c62828;font-size:13px;padding:10px;border-radius:10px;margin-top:10px;display:none}
+</style>
+</head>
+<body>
+<div id="top"><span class="back" onclick="goHome()">‹</span><span class="title">团购接龙</span><span class="right"></span></div>
+<div class="pad" id="listView">
+  <div class="notice">💡 想买什么就发起接龙，凑够目标份数老板就去进货；不够自动取消。价格=进货价+运费，不赚差价，确认后才进货。</div>
+  <div id="list"></div>
+</div>
+<div class="pad hidden" id="detailView">
+  <div id="dCard"></div>
+  <div class="notice hidden" id="dJoinNote">📢 接龙中：发起或跟团，截止后自动判定。</div>
+  <div class="notice hidden" id="dQuoteNote">⏳ 已达标！老板正在定价（进货价+运费），定价后请确认。</div>
+  <div class="notice hidden" id="dConfirmNote">💰 单价已出：<b id="dPrice"></b> 请确认是否购买（限时24小时，超时自动退出）。</div>
+  <div class="notice hidden" id="dArriveNote">📦 已到货，请来取！自取免运费，外送 2元/公里。</div>
+  <div id="dItems"></div>
+  <div id="myBox">
+    <label>查看我的团购（填手机号）</label>
+    <input type="tel" id="myPhone" placeholder="请输入手机号" maxlength="11">
+    <button class="btn btn-p" onclick="loadMy()">查询我的记录</button>
+    <div id="myRecs"></div>
+  </div>
+  <div id="joinBox">
+    <label>我要接龙（想买什么）</label>
+    <input type="tel" id="jPhone" placeholder="手机号" maxlength="11">
+    <input type="text" id="jName" placeholder="商品名（如：红心猕猴桃）" maxlength="20">
+    <div style="display:flex;gap:8px;">
+      <input type="number" id="jQty" placeholder="数量" min="0.5" step="0.5" style="flex:1">
+      <select id="jUnit" style="flex:1"><option>斤</option><option>个</option><option>盒</option><option>份</option><option>根</option><option>杯</option></select>
+    </div>
+    <button class="btn btn-p" onclick="doJoin()">提交接龙</button>
+    <div class="okbar" id="okbar"></div>
+    <div class="errbar" id="errbar"></div>
+  </div>
+</div>
+<script>
+var SB_URL='https://aenrwtwhhuqzmbxsjump.supabase.co';
+var SB_KEY='sb_publishable_TYMADeCoaKMsnJ7INuHnfQ_n9yKIHkl';
+var curSession=null; var timer=null;
+function api(fn,body){
+  return fetch(SB_URL+'/rest/v1/rpc/'+fn,{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify(body||{})}).then(function(r){return r.json();});
+}
+function goHome(){ location.href='index.html'; }
+function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function stName(s){ return {open:'接龙中',quoted:'待确认',delivering:'进货中',arrived:'可取货',ended:'已结束',cancelled:'已取消'}[s]||s; }
+function stCls(s){ return {open:'b-open',quoted:'b-quoted',delivering:'b-delivering',arrived:'b-arrived',ended:'b-ended',cancelled:'b-cancelled'}[s]||'b-ended'; }
+function fmtT(t){ if(!t) return ''; var d=new Date(t); function p(x){return (x<10?'0':'')+x;} return p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes()); }
+function fmtN(n){ var v=Number(n); return (v===Math.floor(v))?String(v):v.toFixed(1); }
+function showList(){
+  document.getElementById('listView').classList.remove('hidden');
+  document.getElementById('detailView').classList.add('hidden');
+  api('groupon_list',{}).then(function(arr){
+    var el=document.getElementById('list');
+    if(!Array.isArray(arr)||!arr.length){ el.innerHTML='<div class="card" style="text-align:center;color:#999;padding:30px;">暂无团购活动<br><span style="font-size:12px;">等老板开团后再来参与吧</span></div>'; return; }
+    el.innerHTML=arr.map(function(s){
+      var ph='';
+      if(s.status==='open') ph='<span class="muted">截止 '+fmtT(s.deadline)+'</span>';
+      else if(s.status==='quoted') ph='<span class="muted">'+(s.unit_price?('单价 ¥'+fmtN(s.unit_price)):'等待老板报价')+'</span>';
+      else if(s.status==='arrived') ph='<span class="price">已到货·请来取</span>';
+      else if(s.status==='delivering') ph='<span class="muted">老板进货中</span>';
+      return '<div class="card" onclick="openDetail('+s.id+')" style="cursor:pointer;">'+
+        '<div class="row"><b>'+esc(s.title)+'</b><span class="badge '+stCls(s.status)+'">'+stName(s.status)+'</span></div>'+
+        '<div class="row" style="padding-top:2px;"><span>已接龙 <b style="color:#43a047;">'+fmtN(s.joined_qty)+'</b> / 目标 '+fmtN(s.target_qty)+' 份</span><span>'+s.people+' 人参与</span></div>'+
+        '<div class="bar"><i style="width:'+Math.min(100,Math.round(s.joined_qty/s.target_qty*100))+'%"></i></div>'+
+        '<div class="row" style="padding-top:0;">'+ph+'</div></div>';
+    }).join('');
+  }).catch(function(){ document.getElementById('list').innerHTML='<div class="card" style="text-align:center;color:#c62828;">加载失败，请检查网络</div>'; });
+}
+function openDetail(id){
+  curSession=id; showDetail(); clearInterval(timer);
+  timer=setInterval(showDetail,60000);
+}
+function showDetail(){
+  document.getElementById('listView').classList.add('hidden');
+  document.getElementById('detailView').classList.remove('hidden');
+  api('groupon_list',{}).then(function(arr){
+    var s=null; (arr||[]).forEach(function(x){ if(x.id===curSession) s=x; });
+    if(!s){ document.getElementById('dCard').innerHTML='<div class="card" style="color:#999;">团购不存在</div>'; return; }
+    document.getElementById('dJoinNote').classList.toggle('hidden', s.status!=='open');
+    document.getElementById('dQuoteNote').classList.toggle('hidden', s.status!=='quoted'||s.unit_price!=null);
+    document.getElementById('dConfirmNote').classList.toggle('hidden', s.status!=='quoted'||s.unit_price==null);
+    if(s.unit_price!=null) document.getElementById('dPrice').textContent='¥'+fmtN(s.unit_price);
+    document.getElementById('dArriveNote').classList.toggle('hidden', s.status!=='arrived');
+    var join=document.getElementById('joinBox');
+    join.style.display = (s.status==='open')?'block':'none';
+    document.getElementById('dCard').innerHTML=
+      '<div class="card"><div class="row"><b>'+esc(s.title)+'</b><span class="badge '+stCls(s.status)+'">'+stName(s.status)+'</span></div>'+
+      '<div class="row"><span>目标</span><b>'+fmtN(s.target_qty)+' 份</b></div>'+
+      '<div class="row"><span>已接龙</span><b style="color:#43a047;">'+fmtN(s.joined_qty)+' 份 / '+s.people+' 人</b></div>'+
+      '<div class="row"><span>截止时间</span><b>'+fmtT(s.deadline)+'</b></div>'+
+      (s.unit_price!=null?'<div class="row"><span>团购单价</span><span class="price">¥'+fmtN(s.unit_price)+'</span></div>':'')+
+      (s.status==='quoted'?'<div class="row"><span>确认截止</span><b>'+fmtT(s.confirm_deadline)+'</b></div>':'')+
+      '</div>';
+    // 需求聚合
+    return api('groupon_items',{p_session_id:curSession});
+  }).then(function(items){
+    if(!Array.isArray(items)) return;
+    var el=document.getElementById('dItems');
+    if(!items.length){ el.innerHTML='<div class="card" style="color:#999;font-size:13px;text-align:center;">还没有人发起，快来发起第一单！</div>'; return; }
+    el.innerHTML='<div class="card"><div style="font-weight:700;margin-bottom:6px;">📋 已接龙需求</div>'+
+      items.map(function(it){
+        return '<div class="item"><span>'+esc(it.item_name)+' <span class="muted">'+esc((it.phones||[]).join('、'))+'</span></span><span class="q">'+fmtN(it.qty)+' '+esc(it.unit)+' <span class="muted">('+it.people+'人)</span></span></div>';
+      }).join('')+'</div>';
+  }).catch(function(){});
+}
+function doJoin(){
+  var phone=document.getElementById('jPhone').value.trim();
+  var name=document.getElementById('jName').value.trim();
+  var qty=document.getElementById('jQty').value;
+  var unit=document.getElementById('jUnit').value;
+  okbar(false,''); errbar(false,'');
+  if(!/^1\d{10}$/.test(phone)){ errbar(true,'请填写正确的11位手机号'); return; }
+  if(!name){ errbar(true,'请填写想买的商品名'); return; }
+  if(!qty||Number(qty)<=0){ errbar(true,'请填写数量'); return; }
+  api('groupon_join',{p_session_id:curSession,p_phone:phone,p_item_name:name,p_qty:Number(qty),p_unit:unit}).then(function(r){
+    if(r.ok){ okbar(true,'✅ 接龙成功！已参与本团。'); document.getElementById('jPhone').value=''; document.getElementById('jName').value=''; document.getElementById('jQty').value=''; showDetail(); }
+    else errbar(true,r.msg||'提交失败');
+  }).catch(function(){ errbar(true,'网络异常，请重试'); });
+}
+function loadMy(){
+  var phone=document.getElementById('myPhone').value.trim();
+  errbar(false,''); okbar(false,'');
+  if(!/^1\d{10}$/.test(phone)){ var el=document.getElementById('myRecs'); el.innerHTML='<div class="myrec" style="color:#c62828;">请填写正确的11位手机号</div>'; return; }
+  api('groupon_my',{p_session_id:curSession,p_phone:phone}).then(function(r){
+    var el=document.getElementById('myRecs');
+    if(!Array.isArray(r)||!r.length){ el.innerHTML='<div class="myrec" style="color:#999;">该手机号在本团暂无记录</div>'; return; }
+    var sess=r[r.length-1]._session||{};
+    el.innerHTML=r.map(function(rec){
+      if(rec._session) return '';
+      var st={joined:'已参与·待确认',confirmed:'已确认',picked:'已取货',withdrawn:'已退出',cancelled:'团已取消',missed:'未取货'}[rec.status]||rec.status;
+      var btn='';
+      if(rec.status==='joined'&&sess.status==='quoted'&&sess.unit_price!=null)
+        btn='<button class="btn btn-p" style="margin-top:8px;" onclick="doConfirm(\''+phone+'\')">确认购买 ¥'+fmtN(sess.unit_price)+'</button>';
+      return '<div class="myrec"><b>'+esc(rec.item_name)+'</b> × '+fmtN(rec.qty)+' '+esc(rec.unit)+'<br><span class="muted">状态：'+st+'</span>'+btn+'</div>';
+    }).join('')+'<div class="muted" style="margin-top:8px;">单价 ¥'+(sess.unit_price!=null?fmtN(sess.unit_price):'待报价')+' · 团状态：'+stName(sess.status)+'</div>';
+  }).catch(function(){ document.getElementById('myRecs').innerHTML='<div class="myrec" style="color:#c62828;">查询失败</div>'; });
+}
+function doConfirm(phone){
+  if(!confirm('确认按团购单价购买？确认后老板将按此进货，请按时取货。')) return;
+  api('groupon_confirm',{p_session_id:curSession,p_phone:phone}).then(function(r){
+    if(r.ok){ okbar(true,'✅ 已确认！等老板进货，到货后请来取。'); loadMy(); }
+    else errbar(true,r.msg||'确认失败');
+  }).catch(function(){ errbar(true,'网络异常，请重试'); });
+}
+function okbar(on,t){ var e=document.getElementById('okbar'); e.style.display=on?'block':'none'; e.textContent=t; }
+function errbar(on,t){ var e=document.getElementById('errbar'); e.style.display=on?'block':'none'; e.textContent=t; }
+showList();
+</script>
+</body>
+</html>
