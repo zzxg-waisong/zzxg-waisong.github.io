@@ -1352,7 +1352,7 @@ function submitOrder(){
   }
   // 第二步：首单优惠自动判断
   var total=0; cartList().forEach(function(it){var d=byId(it.id); total+=estPrice(d,it);});
-  var _fee2=(window._ckMode!=='pickup'&&window._delivery&&window._delivery.dist<=10)?deliveryFee(window._delivery.dist,total):0; if(_fee2<0)_fee2=0;
+  var _fee2=(window._ckMode!=='pickup'&&window._delivery&&window._delivery.dist<=dlvFee.maxKm)?deliveryFee(window._delivery.dist,total):0; if(_fee2<0)_fee2=0;
   var totCk=total+_fee2;
   if(totCk>=25){
     if(window._newcustAsked){ var uf=localStorage.getItem('zz_use_newcust_'+phone)==='1'; window._disc=uf?newCustAmt:0; doRealSubmit(); return; }
@@ -1364,7 +1364,7 @@ function submitOrder(){
 }
 
 function checkNewcust(phone){
-  if(window._newcustAsked){ var uf=localStorage.getItem('zz_use_newcust_'+phone)==='1'; window._disc=uf?5:0; doRealSubmit(); return; }
+  if(window._newcustAsked){ var uf=localStorage.getItem('zz_use_newcust_'+phone)==='1'; window._disc=uf?newCustAmt:0; doRealSubmit(); return; }
   // 自动查云端该手机号是否还有首单优惠
   fetch(SB_URL+'/rest/v1/rpc/get_balance_public',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({phone:phone})})
     .then(function(r){ return r.json(); })
@@ -1384,7 +1384,7 @@ function autoNewcustPrompt(){
   var ph=document.getElementById('ckPhone').value.trim();
   if(!/^1\d{10}$/.test(ph)) return;
   var total=0; cartList().forEach(function(it){var d=byId(it.id); total+=estPrice(d,it);});
-  var _fee3=(window._ckMode!=='pickup'&&window._delivery&&window._delivery.dist<=10)?deliveryFee(window._delivery.dist,total):0; if(_fee3<0)_fee3=0;
+  var _fee3=(window._ckMode!=='pickup'&&window._delivery&&window._delivery.dist<=dlvFee.maxKm)?deliveryFee(window._delivery.dist,total):0; if(_fee3<0)_fee3=0;
   if(total+_fee3<25) return;
   fetch(SB_URL+'/rest/v1/rpc/get_balance_public',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({phone:ph})})
     .then(function(r){return r.json();})
@@ -1397,7 +1397,7 @@ function showNewcustModal(phone){
   var html='<div id="newcustModal" class="modal show" style="z-index:9999;display:flex;align-items:center;justify-content:center"><div style="background:rgba(255,255,255,.38);border-radius:20px;-webkit-backdrop-filter:blur(32px) saturate(190%);backdrop-filter:blur(32px) saturate(190%);border:1px solid rgba(255,255,255,.65);box-shadow:0 12px 40px rgba(0,0,0,.16),inset 0 1px 0 rgba(255,255,255,.6);padding:22px;width:90%;max-width:340px;text-align:center">'+
     '<div style="font-size:36px;margin-bottom:6px">🎁</div>'+
     '<div style="font-size:17px;font-weight:700;margin-bottom:6px">您是首单客人</div>'+
-    '<div style="font-size:14px;color:#666;margin-bottom:16px">立享 <b style="color:#e65100;font-size:18px">5 元</b> 优惠，本次下单立减！</div>'+
+    '<div style="font-size:14px;color:#666;margin-bottom:16px">立享 <b style="color:#e65100;font-size:18px">'+newCustAmt+' 元</b> 优惠，本次下单立减！</div>'+
     '<div style="display:flex;gap:10px">'+
       '<button class="btn gray" style="flex:1" onclick="noUseNewcust(\''+phone+'\')">不使用（保留）</button>'+
       '<button class="btn" style="flex:1;background:#fb8c00" onclick="useNewcust(\''+phone+'\')">使用优惠</button>'+
@@ -1449,7 +1449,7 @@ function doRealSubmit(){
   var phone=document.getElementById('ckPhone').value.trim();
   var total=0; cartList().forEach(function(it){ var d=byId(it.id); total+=estPrice(d,it); });
   var fee=0;
-  if(window._ckMode!=='pickup' && window._delivery && window._delivery.dist<=10){ fee=deliveryFee(window._delivery.dist,total); if(fee<0) fee=0; }
+  if(window._ckMode!=='pickup' && window._delivery && window._delivery.dist<=dlvFee.maxKm){ fee=deliveryFee(window._delivery.dist,total); if(fee<0) fee=0; }
   var hasWx=cartList().some(function(c){var d=byId(c.id);return d&&d.per>0;});
   var rawTx=total+fee;
   var finalTx=hasWx?rawTx:roundHalf(rawTx);
@@ -1537,8 +1537,8 @@ function finalSubmit(ded){
   // 配送费（与配送信息页显示一致）
   var fee=0, distV=0;
   if(window._ckMode==='pickup'){ fee=0; distV=0; }
-  else if(window._delivery && window._delivery.dist<=10){ distV=window._delivery.dist; fee=deliveryFee(distV,total); if(fee<0) fee=0; }
-  var disc=(window._disc===5 && (total+fee)>=25)?5:0;
+  else if(window._delivery && window._delivery.dist<=dlvFee.maxKm){ distV=window._delivery.dist; fee=deliveryFee(distV,total); if(fee<0) fee=0; }
+  var disc=(window._disc===newCustAmt && (total+fee)>=25)?newCustAmt:0;
   var hasW=items.some(function(c){var d=byId(c.id);return d&&d.per>0;});
   var rawTotal=total+fee;
   var finalTotal=hasW?rawTotal:roundHalf(rawTotal);
