@@ -280,7 +280,7 @@ function tasteOf(f,m){
 }
 var TASTE_META={best:{t:'当季最佳',c:'t-best'},good:{t:'不错',c:'t-good'},tail:{t:'尾季',c:'t-tail'},normal:{t:'一般',c:'t-normal'}};
 function fruitImg(f,cls){
-  if(f.img_url && f.img_status!=='待换图') return '<img class="'+cls+'" src="'+esc(f.img_url)+'" onerror="this.outerHTML=\'<div class=&quot;ph&quot;>待换图</div>\'">';
+  if(f.img_url && f.img_status!=='待换图') return '<img class="'+cls+'" src="fruits_img/'+f.id+'.jpg" onerror="if(this.__fb){this.outerHTML=\'<div class=&quot;ph&quot;>待换图</div>\'}else{this.__fb=1;this.src=\''+esc(f.img_url)+'\'}">';
   return '<div class="ph">待换图</div>';
 }
 function loadRec(){
@@ -312,7 +312,7 @@ function loadPlanCust(){
     var m=new Date().getMonth()+1;
     box.innerHTML='<div class="card"><div class="hd2"><span class="ico">🍎</span>团购方案 <span class="muted" style="font-weight:400;">（老板精选 '+arr.length+' 种应季水果）</span></div>'+
       arr.map(function(f,i){
-        var thumb=(f.img_url&&f.img_status!=='待换图')?('<img src="'+esc(f.img_url)+'" style="width:52px;height:52px;object-fit:cover;border-radius:10px;background:#f0f2f0;flex:none;" onerror="this.style.display=\'none\'">'):'<div style="width:52px;height:52px;border-radius:10px;background:#eceff0;display:flex;align-items:center;justify-content:center;color:#aaa;font-size:10px;flex:none;">待换图</div>';
+        var thumb=(f.img_url&&f.img_status!=='待换图')?('<img src="fruits_img/'+f.id+'.jpg" style="width:52px;height:52px;object-fit:cover;border-radius:10px;background:#f0f2f0;flex:none;" onerror="if(!this.__fb){this.__fb=1;this.src=\''+esc(f.img_url)+'\'}else{this.style.display=\'none\'}">'):'<div style="width:52px;height:52px;border-radius:10px;background:#eceff0;display:flex;align-items:center;justify-content:center;color:#aaa;font-size:10px;flex:none;">待换图</div>';
         var tk=tasteOf(f,m), tm=TASTE_META[tk];
         return '<div class="item" style="align-items:center;">'+
           '<div style="display:flex;gap:10px;align-items:center;flex:1;min-width:0;">'+thumb+
