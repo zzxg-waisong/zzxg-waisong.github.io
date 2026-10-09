@@ -8,7 +8,7 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html{-webkit-text-size-adjust:100%}
-body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;background:linear-gradient(180deg,#cde8c6 0%,#e9f3e2 18%,#fbeed2 46%,#e4efdf 76%,#f3f7ef 100%);color:#2b2b2b;-webkit-font-smoothing:antialiased;position:relative;min-height:100vh}
+body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;background:linear-gradient(180deg,#cde8c6 0%,#e9f3e2 18%,#fbeed2 46%,#e4efdf 76%,#f3f7ef 100%);color:#2b2b2b;-webkit-font-smoothing:antialiased;position:relative;min-height:100vh;overflow-x:hidden}
 body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;background:
   radial-gradient(700px 520px at 4% -10%,rgba(56,142,60,.42),transparent 66%),
   radial-gradient(620px 470px at 100% 0%,rgba(255,152,0,.38),transparent 66%),
@@ -69,8 +69,8 @@ button{transition:transform .2s cubic-bezier(.34,1.56,.64,1),opacity .12s ease;-
 button:active{transform:scale(.95);-webkit-transform:scale(.95)}
 .btn.orange{background:linear-gradient(135deg,#ef6c00,#fb8c00);box-shadow:0 3px 10px rgba(251,140,0,.32),inset 0 1px 0 rgba(255,255,255,.2)}
 .btn.red{background:linear-gradient(135deg,#c62828,#e53935);box-shadow:0 3px 10px rgba(229,57,53,.28),inset 0 1px 0 rgba(255,255,255,.18)}
-.btn.gray{background:rgba(245,246,243,.85);color:#666;box-shadow:none;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
-.btn.outline{background:rgba(255,255,255,.7);color:#2e7d32;border:1.5px solid #43a047;box-shadow:none;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+.btn.gray{background:#f1f3ef;color:#5a5a5a;box-shadow:none;border:1px solid rgba(255,255,255,.8)}
+.btn.outline{background:rgba(255,255,255,.92);color:#2e7d32;border:1.5px solid #43a047;box-shadow:none}
 .admin-entry{background:rgba(255,255,255,.34);color:#2e7d32;border:1px solid rgba(255,255,255,.85);border-radius:13px;padding:7px 13px;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 2px 12px rgba(0,0,0,.08),inset 0 1px 0 rgba(255,255,255,.7);flex:0 0 auto;transition:transform .15s,background .15s;-webkit-backdrop-filter:blur(22px) saturate(200%);backdrop-filter:blur(22px) saturate(200%)}
 .admin-entry:active{transform:scale(.92);background:rgba(255,255,255,.55)}
 .btn[disabled]{opacity:.45;box-shadow:none}
@@ -114,8 +114,10 @@ button:active{transform:scale(.95);-webkit-transform:scale(.95)}
 /* 订单文字 */
 .ordertext{background:rgba(255,255,255,.34);-webkit-backdrop-filter:blur(42px) saturate(210%);backdrop-filter:blur(42px) saturate(210%);border-radius:22px;padding:15px;margin:12px 0;white-space:pre-wrap;font-size:13.5px;line-height:1.75;box-shadow:0 8px 30px rgba(0,0,0,.09),inset 0 1px 0 rgba(255,255,255,.9),inset 0 0 0 .5px rgba(255,255,255,.3);border:1px solid rgba(255,255,255,.9)}
 /* 商家后台 */
-.admin-top{position:sticky;top:0;z-index:20;background:linear-gradient(135deg,rgba(27,94,32,.88),rgba(46,125,50,.88));-webkit-backdrop-filter:blur(22px) saturate(190%);backdrop-filter:blur(22px) saturate(190%);color:#fff;padding:13px 16px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 4px 16px rgba(27,94,32,.28),inset 0 1px 0 rgba(255,255,255,.12)}
-.admin-top h2{font-size:17.5px;font-weight:800;letter-spacing:.5px}
+.admin-top{position:sticky;top:0;z-index:20;background:linear-gradient(135deg,rgba(27,94,32,.88),rgba(46,125,50,.88));-webkit-backdrop-filter:blur(22px) saturate(190%);backdrop-filter:blur(22px) saturate(190%);color:#fff;padding:13px 16px;display:block;box-shadow:0 4px 16px rgba(27,94,32,.28),inset 0 1px 0 rgba(255,255,255,.12)}
+.admin-top h2{display:inline-block;vertical-align:top;font-size:17.5px;font-weight:800;letter-spacing:.5px;white-space:nowrap;margin:4px 12px 0 0}
+.admin-top .topbtns{display:inline-block;vertical-align:top;max-width:calc(100% - 130px)}
+.admin-top .topbtns .btn{display:inline-block;margin:4px 6px 4px 0;font-size:12px;padding:7px 10px}
 .admin-tabs{display:flex;background:rgba(255,255,255,.3);-webkit-backdrop-filter:blur(32px) saturate(200%);backdrop-filter:blur(32px) saturate(200%);border-bottom:1px solid rgba(255,255,255,.6);overflow-x:auto;position:sticky;top:52px;z-index:15;scrollbar-width:none}
 .admin-tabs::-webkit-scrollbar{display:none}
 .admin-tabs button{flex:0 0 auto;border:none;background:none;padding:13px 17px;font-size:14px;color:#777;border-bottom:2.5px solid transparent;cursor:pointer;white-space:nowrap;font-weight:500;transition:color .15s,background .15s}
@@ -388,12 +390,12 @@ button:active{transform:scale(.95);-webkit-transform:scale(.95)}
 <div id="admin" class="hidden">
   <div class="admin-top">
     <h2>商家后台</h2>
-    <div>
+    <div class="topbtns">
       <button class="btn" id="shopToggleBtn" style="font-size:12px;padding:4px 10px;background:#2e7d32" onclick="toggleShopStatus()">🟢 营业中</button>
       <button class="btn" id="voiceStateBtn" style="font-size:12px;padding:4px 10px;background:#2e7d32" onclick="tapVoiceState()">🔊 语音提醒</button>
       <button class="btn" style="font-size:12px;padding:4px 10px;background:#2e7d32" onclick="adminRefresh()">🔄 刷新同步</button>
-      <button class="btn gray" style="font-size:12px;padding:4px 10px;margin-left:6px" onclick="backToShop()">返回点单页</button>
-      <button class="btn red" style="font-size:12px;padding:4px 10px;margin-left:6px" onclick="adminLogout()">退出</button>
+      <button class="btn gray" style="font-size:12px;padding:4px 10px" onclick="backToShop()">返回点单页</button>
+      <button class="btn red" style="font-size:12px;padding:4px 10px" onclick="adminLogout()">退出</button>
     </div>
   </div>
   <div class="admin-tabs" id="adminTabs"></div>
@@ -2308,8 +2310,8 @@ function renderOrders(){
 
     '<div style="display:flex;gap:6px;margin:10px 0;flex-wrap:wrap;align-items:center;background:#fff8e1;border:1px solid #ffe082;border-radius:8px;padding:8px">'+
       '<b style="font-size:13px">🔍 查客户</b>'+
-      '<input id="custQPhone" type="tel" maxlength="11" placeholder="手机号" value="'+esc(window._custQPhone||'')+'" oninput="window._custQPhone=this.value" style="flex:1;min-width:110px;border:1px solid #ddd;border-radius:6px;padding:6px;font-size:13px">'+
-      '<button class="btn" style="background:#f57c00;color:#fff;font-size:12px;padding:5px 12px" onclick="queryCustomer()">查询近3月</button>'+
+      '<input id="custQPhone" type="tel" maxlength="11" placeholder="手机号" value="'+esc(window._custQPhone||'')+'" oninput="window._custQPhone=this.value" style="flex:1 1 120px;min-width:110px;max-width:200px;border:1px solid #ddd;border-radius:6px;padding:6px;font-size:13px">'+
+      '<button class="btn" style="background:#f57c00;color:#fff;font-size:12px;padding:5px 12px;flex-shrink:0;white-space:nowrap" onclick="queryCustomer()">查询近3月</button>'+
       '<span id="custQResult" style="font-size:13px;color:#333">'+(window._custQResult||'')+'</span>'+
     '</div>'+
     aliveCloud.slice(0, window.cloudVisibleCount||5).map(renderCloudOrder).join('')+
