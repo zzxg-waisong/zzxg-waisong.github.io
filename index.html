@@ -395,8 +395,8 @@ button:active{transform:scale(.95);-webkit-transform:scale(.95)}
       <h2>商家后台</h2>
     </div>
     <div class="ops">
-      <button class="btn" id="shopToggleBtn" style="background:#238600" onclick="toggleShopStatus()">营业/打烊</button>
-      <button class="btn" id="voiceStateBtn" style="background:#238600" onclick="tapVoiceState()">正常/断开</button>
+      <button class="btn" id="shopToggleBtn" style="background:#238600" onclick="toggleShopStatus()">营业</button>
+      <button class="btn" id="voiceStateBtn" style="background:#238600" onclick="tapVoiceState()">正常</button>
       <button class="btn" onclick="adminRefresh()">刷新</button>
       <button class="btn gray" onclick="backToShop()">返回</button>
       <button class="btn red" onclick="adminLogout()">退出</button>
@@ -1021,7 +1021,7 @@ function loadAdminShopStatus(){
 }
 function renderShopToggle(){
   var el=document.getElementById('shopToggleBtn'); if(!el) return;
-  el.textContent='营业/打烊';
+  el.textContent = adminShopOpen ? '营业' : '打烊';
   el.style.background = adminShopOpen ? '#238600' : '#c62828';
 }
 function toggleShopStatus(silent){
@@ -2007,10 +2007,9 @@ var _voiceBlocked=false; // 语音是否被浏览器自动播放策略拦截
 function voiceAlarmOn(){ return (localStorage.getItem('zz_auto_alarm')!=='0'); }
 function renderVoiceState(){
   var el=document.getElementById('voiceStateBtn'); if(!el) return;
-  el.textContent='正常/断开';
-  if(!voiceAlarmOn()){ el.style.background='#757575'; return; }
-  if(_voiceBlocked){ el.style.background='#e65100'; return; }
-  el.style.background='#238600';
+  if(!voiceAlarmOn()){ el.textContent='已关'; el.style.background='#757575'; return; }
+  if(_voiceBlocked){ el.textContent='断开'; el.style.background='#e65100'; return; }
+  el.textContent='正常'; el.style.background='#238600';
 }
 function tapVoiceState(){
   if(!voiceAlarmOn()){ alert('语音提醒已关闭：新订单到店将不播报语音。可在「设置 → 新订单自动刷新+语音提醒」开启。'); return; }
