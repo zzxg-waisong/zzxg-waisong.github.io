@@ -3008,7 +3008,9 @@ function renderDeliverMap(divId, dlat, dlng){
 function changePwd(){
   var v=document.getElementById('newPwd').value.trim();
   if(!v){ alert('请输入新密码'); return; }
-  localStorage.setItem(LS_PWD, v); alert('密码已修改，下次登录请用新密码');
+  if(v.length<6){ alert('密码至少 6 位，建议包含字母和数字'); return; }
+  localStorage.setItem(LS_PWD, v);
+  alert('本地登录密码已修改，下次登录请用新密码。\n\n提醒：云端操作密码是另一套独立密码（目前仍是出厂默认值）。需要把云端密码也改成强密码、彻底关闭出厂默认值，请在铺子电脑上登录 Supabase 控制台（supabase.com/dashboard），登录后告诉我，我帮你一次性改完。');
 }
 
 function renderPrintAdmin(){
