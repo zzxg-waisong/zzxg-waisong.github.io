@@ -326,7 +326,7 @@ function doOpen(){
   api('groupon_open',{p_admin:pwd(),p_title:t,p_target_qty:Number(g),p_deadline:new Date(d).toISOString(),
     p_cover:document.getElementById('oCover').value.trim(),p_note:document.getElementById('oNote').value.trim(),
     p_per_limit:Number(document.getElementById('oLimit').value)||0}).then(function(r){
-    if(r.ok){ okbar(true,'✅ 团购已发布！'); document.getElementById('oTitle').value=''; document.getElementById('oTarget').value=''; document.getElementById('oCover').value=''; document.getElementById('oNote').value=''; document.getElementById('oLimit').value='0'; showList(); }
+    if(r.ok){ okbar(true,'✅ 团购已发布！'); document.getElementById('oTitle').value=''; document.getElementById('oTarget').value=''; document.getElementById('oCover').value=''; document.getElementById('oNote').value=''; document.getElementById('oLimit').value='0'; showList(); loadSessions(); }
     else errbar(true,r.msg||'发布失败');
   }).catch(function(){ errbar(true,'网络异常'); });
 }
@@ -590,6 +590,9 @@ function flCheck(id,on){
   updateFlBar();
 }
 function updateFlBar(){
+  var bar=document.getElementById('flBar');
+  if(!planSessionId){ bar.style.display='none'; return; }
+  bar.style.display='flex';
   document.getElementById('flSelN').textContent='已选 '+selIds.length+' 种';
   document.getElementById('flAddBtn').disabled=(!planSessionId)||(!selIds.length);
 }
@@ -627,6 +630,9 @@ function initFruitLib(){
     flBuildOrigins();
     renderChips(); renderFruits();
   }).catch(function(){ renderFruits(); });
+  loadSessions();
+}
+function loadSessions(){
   api('groupon_list',{}).then(function(arr){
     arr=Array.isArray(arr)?arr:[];
     var sel=document.getElementById('flSession');
