@@ -78,6 +78,17 @@ th{color:#666;font-weight:700;font-size:12px;background:rgba(255,255,255,.4);-we
 .empty .eico{font-size:34px;margin-bottom:8px}
 /* 应季水果库 */
 .flSec{font-size:12px;color:#666;font-weight:700;margin:12px 0 6px}
+.flRow{display:flex;align-items:stretch;gap:8px;margin:8px 0;position:relative;flex-wrap:wrap}
+.flLb{font-size:12.5px;color:#555;font-weight:700;flex-shrink:0;display:flex;align-items:center;width:52px}
+.flBox{flex:1;min-width:120px;display:flex;align-items:center;justify-content:space-between;gap:6px;background:rgba(255,255,255,.92);border:1px solid rgba(0,0,0,.1);border-radius:12px;padding:10px 13px;font-size:13px;color:#333;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.06);transition:all .15s;-webkit-backdrop-filter:blur(14px) saturate(160%);backdrop-filter:blur(14px) saturate(160%)}
+.flBox:active{transform:scale(.98)}
+.flBox .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.flBox .t.mut{color:#aaa;font-weight:500}
+.flBox .arr{font-size:11px;color:#999;flex-shrink:0;transition:transform .2s}
+.flBox.open{border-color:rgba(46,125,50,.55);box-shadow:0 3px 12px rgba(46,125,50,.16)}
+.flBox.open .arr{transform:rotate(180deg)}
+.flDrop{position:absolute;top:100%;left:60px;right:0;z-index:98;background:rgba(255,255,255,.97);-webkit-backdrop-filter:blur(20px) saturate(170%);backdrop-filter:blur(20px) saturate(170%);border:1px solid rgba(0,0,0,.08);border-radius:14px;box-shadow:0 12px 32px rgba(0,0,0,.16);padding:12px;margin-top:6px;max-height:300px;overflow:auto}
+.flDrop .fil{margin-bottom:0}
 .flGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px}
 .flCard{background:rgba(255,255,255,.45);border:1px solid rgba(255,255,255,.9);border-radius:14px;padding:10px;position:relative;box-shadow:0 3px 10px rgba(27,94,32,.06),inset 0 1px 0 rgba(255,255,255,.8);-webkit-backdrop-filter:blur(18px) saturate(190%);backdrop-filter:blur(18px) saturate(190%);transition:transform .15s cubic-bezier(.34,1.3,.64,1)}
 .flCard:active{transform:scale(.97)}
@@ -136,16 +147,31 @@ th{color:#666;font-weight:700;font-size:12px;background:rgba(255,255,255,.4);-we
         <div id="flSuggest" style="position:absolute;top:100%;left:0;right:0;z-index:99;background:rgba(255,255,255,.94);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border:1px solid rgba(0,0,0,.08);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.14);display:none;max-height:300px;overflow:auto;"></div>
       </div>
       <div class="fil" style="margin-top:12px;"><button id="flAllBtn" class="on" onclick="flClearAll()">全部（清除筛选）</button></div>
-      <div class="flSec">按当季（点击月份切换查看该月在市水果；再点一次取消本筛选）</div>
-      <div class="fil" id="flSeason"></div>
-      <div class="flSec">按月份（多选 · 上市区间含任一选中月）</div>
-      <div class="fil" id="flMonths"></div>
-      <div class="flSec">按产地（国内省份 · 多选）</div>
-      <div class="fil" id="flOrigins"></div>
-      <div class="flSec">按进口（蒙阳/雨润市场常见 · 多选）</div>
-      <div class="fil" id="flImports"></div>
-      <div class="flSec">按口感（多选 · 按上面"按当季"选中月计算）</div>
-      <div class="fil" id="flTastes"></div>
+      <div class="flRow">
+        <span class="flLb">当季</span>
+        <div class="flBox" id="flSeasonBox" onclick="flDrop('season')"><span class="t" id="flSeasonT"></span><span class="arr">▾</span></div>
+        <div class="flDrop hidden" id="flSeasonDrop"><div class="fil" id="flSeason"></div></div>
+      </div>
+      <div class="flRow">
+        <span class="flLb">月份</span>
+        <div class="flBox" id="flMonthsBox" onclick="flDrop('months')"><span class="t" id="flMonthsT"></span><span class="arr">▾</span></div>
+        <div class="flDrop hidden" id="flMonthsDrop"><div class="fil" id="flMonths"></div></div>
+      </div>
+      <div class="flRow">
+        <span class="flLb">产地</span>
+        <div class="flBox" id="flOriginsBox" onclick="flDrop('origins')"><span class="t" id="flOriginsT"></span><span class="arr">▾</span></div>
+        <div class="flDrop hidden" id="flOriginsDrop"><div class="fil" id="flOrigins"></div></div>
+      </div>
+      <div class="flRow">
+        <span class="flLb">进口</span>
+        <div class="flBox" id="flImportsBox" onclick="flDrop('imports')"><span class="t" id="flImportsT"></span><span class="arr">▾</span></div>
+        <div class="flDrop hidden" id="flImportsDrop"><div class="fil" id="flImports"></div></div>
+      </div>
+      <div class="flRow">
+        <span class="flLb">口感</span>
+        <div class="flBox" id="flTastesBox" onclick="flDrop('tastes')"><span class="t" id="flTastesT"></span><span class="arr">▾</span></div>
+        <div class="flDrop hidden" id="flTastesDrop"><div class="fil" id="flTastes"></div></div>
+      </div>
       <div class="flGrid" id="flGrid"></div>
     </div>
 
@@ -421,25 +447,54 @@ function flPickSuggest(name){
   var box=document.getElementById('flSuggest'); if(box) box.style.display='none';
 }
 document.addEventListener('click',function(e){
-  var box=document.getElementById('flSuggest'); if(!box) return;
-  if(e.target.closest && !e.target.closest('#flKw') && !e.target.closest('#flSuggest')) box.style.display='none';
+  var box=document.getElementById('flSuggest'); if(box){ if(e.target.closest && !e.target.closest('#flKw') && !e.target.closest('#flSuggest')) box.style.display='none'; }
+  if(flOpen && (!e.target.closest || !e.target.closest('.flRow'))) flClose();
 });
+var flOpen=null;
+function flClose(){
+  if(!flOpen) return;
+  var id=flOpen[0].toUpperCase()+flOpen.slice(1);
+  var d=document.getElementById('fl'+id+'Drop'); if(d) d.classList.add('hidden');
+  var b=document.getElementById('fl'+id+'Box'); if(b) b.classList.remove('open');
+  flOpen=null;
+}
+function flDrop(k){
+  var id=k[0].toUpperCase()+k.slice(1);
+  var drop=document.getElementById('fl'+id+'Drop');
+  var box=document.getElementById('fl'+id+'Box');
+  if(flOpen===k){ flClose(); return; }
+  if(flOpen) flClose();
+  drop.classList.remove('hidden'); box.classList.add('open'); flOpen=k;
+}
+function flSummary(){
+  var S=function(el,t,mut){ var e=document.getElementById(el); if(!e) return; e.textContent=t; e.className='t'+(mut?' mut':''); };
+  var cm=new Date().getMonth()+1;
+  S('flSeasonT', seasonOn?seasonM+'月':'未筛选', !seasonOn||seasonM===cm);
+  S('flMonthsT', monthPicks.length?monthPicks.slice().sort(function(a,b){return a-b;}).join('、')+'月':'未选', !monthPicks.length);
+  var cn=originPicks.filter(function(t){ return CN_TOKENS.indexOf(t)>=0; });
+  var im=originPicks.filter(function(t){ return IM_TOKENS.indexOf(t)>=0; });
+  S('flOriginsT', cn.length?cn.join('、'):'未选', !cn.length);
+  S('flImportsT', im.length?im.join('、'):'未选', !im.length);
+  S('flTastesT', tastePicks.length?tastePicks.map(function(k){ return TASTE_META[k]?TASTE_META[k].t:k; }).join('、'):'未选', !tastePicks.length);
+}
 function flClearAll(){
   kw=''; document.getElementById('flKw').value='';
   seasonM=new Date().getMonth()+1; seasonOn=true;
   monthPicks=[]; originPicks=[]; tastePicks=[];
   renderChips(); renderFruits();
 }
-function flToggleMonth(v){
+function flToggleMonth(v,e){
+  if(e&&e.stopPropagation) e.stopPropagation();
   v=Number(v);
   if(seasonOn && seasonM===v){ seasonOn=false; } else { seasonM=v; seasonOn=true; }
   renderChips(); renderFruits();
+  if(seasonOn && seasonM===v) flClose();
 }
-function flToggleArr(arr,v){ var i=arr.indexOf(v); if(i>=0) arr.splice(i,1); else arr.push(v); renderChips(); renderFruits(); }
-function flToggleMonthPick(v){ flToggleArr(monthPicks,Number(v)); }
-function flToggleOriginIdx(idx){ flToggleArr(originPicks,ORIGIN_TOKENS[idx]); }
-function flToggleOrigin(v){ flToggleArr(originPicks,v); }
-function flToggleTaste(k){ flToggleArr(tastePicks,k); }
+function flToggleArr(arr,v,e){ if(e&&e.stopPropagation) e.stopPropagation(); var i=arr.indexOf(v); if(i>=0) arr.splice(i,1); else arr.push(v); renderChips(); renderFruits(); }
+function flToggleMonthPick(v,e){ flToggleArr(monthPicks,Number(v),e); }
+function flToggleOriginIdx(idx,e){ flToggleArr(originPicks,ORIGIN_TOKENS[idx],e); }
+function flToggleOrigin(v,e){ flToggleArr(originPicks,v,e); }
+function flToggleTaste(k,e){ flToggleArr(tastePicks,k,e); }
 var CN_TOKENS=[], IM_TOKENS=[];
 function flBuildOrigins(){
   var cnt={};
@@ -460,20 +515,21 @@ function renderChips(){
   var isDefault=(!kw)&&seasonOn&&seasonM===(new Date().getMonth()+1)&&!monthPicks.length&&!originPicks.length&&!tastePicks.length;
   document.getElementById('flAllBtn').className=isDefault?'on':'';
   var h='', i;
-  for(i=1;i<=12;i++){ h+='<button class="'+((seasonOn&&seasonM===i)?'on':'')+'" onclick="flToggleMonth('+i+')">'+i+'月</button>'; }
+  for(i=1;i<=12;i++){ h+='<button class="'+((seasonOn&&seasonM===i)?'on':'')+'" onclick="flToggleMonth('+i+',event)">'+i+'月</button>'; }
   document.getElementById('flSeason').innerHTML=h;
   h='';
-  for(i=1;i<=12;i++){ h+='<button class="'+(monthPicks.indexOf(i)>=0?'on':'')+'" onclick="flToggleMonthPick('+i+')">'+i+'月</button>'; }
+  for(i=1;i<=12;i++){ h+='<button class="'+(monthPicks.indexOf(i)>=0?'on':'')+'" onclick="flToggleMonthPick('+i+',event)">'+i+'月</button>'; }
   document.getElementById('flMonths').innerHTML=h;
   h='';
-  CN_TOKENS.forEach(function(t){ h+='<button class="'+(originPicks.indexOf(t)>=0?'on':'')+'" onclick="flToggleOrigin(\''+esc(t).replace(/'/g,"\\'")+'\')">'+esc(t)+'</button>'; });
+  CN_TOKENS.forEach(function(t){ h+='<button class="'+(originPicks.indexOf(t)>=0?'on':'')+'" onclick="flToggleOrigin(\''+esc(t).replace(/'/g,"\\'")+'\',event)">'+esc(t)+'</button>'; });
   document.getElementById('flOrigins').innerHTML=h;
   h='';
-  IM_TOKENS.forEach(function(t){ h+='<button class="'+(originPicks.indexOf(t)>=0?'on':'')+'" onclick="flToggleOrigin(\''+esc(t).replace(/'/g,"\\'")+'\')">'+esc(t)+'</button>'; });
+  IM_TOKENS.forEach(function(t){ h+='<button class="'+(originPicks.indexOf(t)>=0?'on':'')+'" onclick="flToggleOrigin(\''+esc(t).replace(/'/g,"\\'")+'\',event)">'+esc(t)+'</button>'; });
   document.getElementById('flImports').innerHTML=h;
   h='';
-  Object.keys(TASTE_META).forEach(function(k){ h+='<button class="'+(tastePicks.indexOf(k)>=0?'on':'')+'" onclick="flToggleTaste(\''+k+'\')">'+TASTE_META[k].t+'</button>'; });
+  Object.keys(TASTE_META).forEach(function(k){ h+='<button class="'+(tastePicks.indexOf(k)>=0?'on':'')+'" onclick="flToggleTaste(\''+k+'\',event)">'+TASTE_META[k].t+'</button>'; });
   document.getElementById('flTastes').innerHTML=h;
+  flSummary();
 }
 function flPass(f){
   if(kw){
