@@ -8,22 +8,22 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html{-webkit-text-size-adjust:100%}
-body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;background:linear-gradient(180deg,#cde8c6 0%,#e9f3e2 18%,#fbeed2 46%,#e4efdf 76%,#f3f7ef 100%);color:#2b2b2b;-webkit-font-smoothing:antialiased;position:relative;min-height:100vh;overflow-x:hidden}
+body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;background:linear-gradient(180deg,#cde8c6 0%,#e9f3e2 18%,#f2efc8 46%,#e4efdf 76%,#f3f7ef 100%);color:#2b2b2b;-webkit-font-smoothing:antialiased;position:relative;min-height:100vh;overflow-x:hidden}
 body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;background:
-  radial-gradient(700px 520px at 4% -10%,rgba(56,142,60,.42),transparent 66%),
-  radial-gradient(620px 470px at 100% 0%,rgba(255,152,0,.38),transparent 66%),
-  radial-gradient(820px 600px at 82% 50%,rgba(255,213,79,.38),transparent 66%),
-  radial-gradient(680px 540px at 0% 76%,rgba(41,182,246,.26),transparent 64%),
-  radial-gradient(520px 420px at 55% 97%,rgba(240,98,146,.22),transparent 62%),
+  radial-gradient(700px 520px at 4% -10%,rgba(35,134,0,.40),transparent 66%),
+  radial-gradient(620px 470px at 100% 0%,rgba(255,152,0,.24),transparent 66%),
+  radial-gradient(820px 600px at 82% 50%,rgba(223,255,43,.30),transparent 66%),
+  radial-gradient(680px 540px at 0% 76%,rgba(79,165,10,.24),transparent 64%),
+  radial-gradient(520px 420px at 55% 97%,rgba(255,152,0,.14),transparent 62%),
   radial-gradient(460px 380px at 26% 36%,rgba(255,255,255,.65),transparent 62%),
   radial-gradient(340px 300px at 70% 14%,rgba(255,255,255,.5),transparent 60%),
-  radial-gradient(300px 260px at 92% 30%,rgba(102,187,106,.22),transparent 60%)}
+  radial-gradient(300px 260px at 92% 30%,rgba(223,255,43,.20),transparent 60%)}
 .hidden{display:none!important}
 #customer,#admin{position:relative;z-index:1}
 /* 顶部 */
-.shop-head{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.30);-webkit-backdrop-filter:blur(42px) saturate(210%);backdrop-filter:blur(42px) saturate(210%);border-bottom:1px solid rgba(255,255,255,.75);box-shadow:inset 0 -1px 0 rgba(255,255,255,.4),0 2px 24px rgba(27,94,32,.09)}
-.topbar{background:linear-gradient(135deg,#1b5e20 0%,#2e7d32 50%,#43a047 100%);color:#fff;padding:16px 18px 12px;position:relative;overflow:hidden}
-.topbar::before{content:"";position:absolute;inset:0;background:radial-gradient(420px 200px at 18% -40%,rgba(255,255,255,.20),transparent 60%),radial-gradient(360px 180px at 90% -20%,rgba(255,213,79,.16),transparent 60%);pointer-events:none}
+.shop-head{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.30);-webkit-backdrop-filter:blur(42px) saturate(210%);backdrop-filter:blur(42px) saturate(210%);border-bottom:1px solid rgba(255,255,255,.75);box-shadow:inset 0 -1px 0 rgba(255,255,255,.4),0 2px 24px rgba(35,134,0,.09)}
+.topbar{background:linear-gradient(135deg,#238600 0%,#238600 50%,#4fa50a 100%);color:#fff;padding:16px 18px 12px;position:relative;overflow:hidden}
+.topbar::before{content:"";position:absolute;inset:0;background:radial-gradient(420px 200px at 18% -40%,rgba(255,255,255,.20),transparent 60%),radial-gradient(360px 180px at 90% -20%,rgba(223,255,43,.26),transparent 60%);pointer-events:none}
 .topbar::after{content:"";position:absolute;left:0;right:0;bottom:-6px;height:12px;background:radial-gradient(ellipse at 12px 0,rgba(0,0,0,.14) 10px,transparent 11px) repeat-x;background-size:24px 12px}
 .topbar h1{font-size:21px;font-weight:800;letter-spacing:.5px;text-shadow:0 1px 3px rgba(0,0,0,.15);position:relative;z-index:1}
 .topbar p{font-size:12px;opacity:.94;margin-top:3px;letter-spacing:.3px;position:relative;z-index:1}
@@ -36,10 +36,10 @@ body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;bac
 .cats::-webkit-scrollbar{display:none}
 .cat{flex:0 0 auto;padding:8px 19px;border-radius:22px;background:rgba(255,255,255,.38);-webkit-backdrop-filter:blur(22px) saturate(190%);backdrop-filter:blur(22px) saturate(190%);font-size:14px;color:#5a5a5a;cursor:pointer;transition:all .18s cubic-bezier(.34,1.3,.64,1);font-weight:500;border:1px solid rgba(255,255,255,.85);box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 2px 8px rgba(0,0,0,.03)}
 .cat:active{transform:scale(.94)}
-.cat.on{background:linear-gradient(135deg,#2e7d32,#43a047);color:#fff;font-weight:700;box-shadow:0 4px 14px rgba(46,125,50,.4),inset 0 1px 0 rgba(255,255,255,.25);border-color:transparent}
+.cat.on{background:linear-gradient(135deg,#238600,#4fa50a);color:#fff;font-weight:700;box-shadow:0 4px 14px rgba(35,134,0,.4),inset 0 1px 0 rgba(255,255,255,.25);border-color:transparent}
 /* 商品 */
 .list{padding:16px 14px 100px;max-width:640px;margin:0 auto;position:relative;z-index:1}
-.dish{display:flex;background:rgba(255,255,255,.38);-webkit-backdrop-filter:blur(36px) saturate(200%);backdrop-filter:blur(36px) saturate(200%);border-radius:22px;padding:13px;margin-bottom:13px;box-shadow:0 10px 34px rgba(27,94,32,.1),inset 0 1px 0 rgba(255,255,255,.85),inset 0 0 0 .5px rgba(255,255,255,.25);border:1px solid rgba(255,255,255,.9);transition:transform .18s cubic-bezier(.34,1.3,.64,1),box-shadow .18s;animation:dishIn .42s cubic-bezier(.22,.9,.32,1) backwards}
+.dish{display:flex;background:rgba(255,255,255,.38);-webkit-backdrop-filter:blur(36px) saturate(200%);backdrop-filter:blur(36px) saturate(200%);border-radius:22px;padding:13px;margin-bottom:13px;box-shadow:0 10px 34px rgba(35,134,0,.1),inset 0 1px 0 rgba(255,255,255,.85),inset 0 0 0 .5px rgba(255,255,255,.25);border:1px solid rgba(255,255,255,.9);transition:transform .18s cubic-bezier(.34,1.3,.64,1),box-shadow .18s;animation:dishIn .42s cubic-bezier(.22,.9,.32,1) backwards}
 .dish:nth-child(2){animation-delay:.04s}
 .dish:nth-child(3){animation-delay:.08s}
 .dish:nth-child(4){animation-delay:.12s}
@@ -50,7 +50,7 @@ body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;bac
 .dish:nth-child(9){animation-delay:.32s}
 .dish:nth-child(n+10){animation-delay:.36s}
 @keyframes dishIn{from{opacity:0;transform:translateY(14px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
-.dish:hover{box-shadow:0 16px 44px rgba(27,94,32,.15),inset 0 1px 0 rgba(255,255,255,.9),inset 0 0 0 .5px rgba(255,255,255,.3);transform:translateY(-1px)}
+.dish:hover{box-shadow:0 16px 44px rgba(35,134,0,.15),inset 0 1px 0 rgba(255,255,255,.9),inset 0 0 0 .5px rgba(255,255,255,.3);transform:translateY(-1px)}
 .dish:active{transform:scale(.98)}
 .dish .info{flex:1;min-width:0}
 .dish .name{font-size:16.5px;font-weight:700;color:#2b2b2b;line-height:1.4}
@@ -62,16 +62,16 @@ body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;bac
 .dish .dimg:active img{transform:scale(1.08)}
 .dish .ctrl{display:flex;flex-direction:column;align-items:flex-end;justify-content:center;gap:7px}
 .dish input.note{width:130px;border:1px solid rgba(255,255,255,.9);border-radius:10px;padding:6px 9px;font-size:12px;color:#555;background:rgba(255,255,255,.55);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);transition:border .2s,box-shadow .2s}
-.dish input.note:focus{outline:none;border-color:#43a047;background:rgba(255,255,255,.8);box-shadow:0 0 0 3px rgba(67,160,71,.15)}
-.btn{background:linear-gradient(135deg,#2e7d32,#43a047);color:#fff;border:none;border-radius:24px;padding:7px 18px;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 3px 10px rgba(46,125,50,.28),inset 0 1px 0 rgba(255,255,255,.22);transition:transform .2s cubic-bezier(.34,1.56,.64,1),box-shadow .15s,opacity .12s;-webkit-transition:transform .2s cubic-bezier(.34,1.56,.64,1),box-shadow .15s,opacity .12s}
+.dish input.note:focus{outline:none;border-color:#4fa50a;background:rgba(255,255,255,.8);box-shadow:0 0 0 3px rgba(79,165,10,.15)}
+.btn{background:linear-gradient(135deg,#238600,#4fa50a);color:#fff;border:none;border-radius:24px;padding:7px 18px;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 3px 10px rgba(35,134,0,.28),inset 0 1px 0 rgba(255,255,255,.22);transition:transform .2s cubic-bezier(.34,1.56,.64,1),box-shadow .15s,opacity .12s;-webkit-transition:transform .2s cubic-bezier(.34,1.56,.64,1),box-shadow .15s,opacity .12s}
 button{transition:transform .2s cubic-bezier(.34,1.56,.64,1),opacity .12s ease;-webkit-transition:transform .2s cubic-bezier(.34,1.56,.64,1),opacity .12s ease;cursor:pointer}
-.btn:active{transform:scale(.9);-webkit-transform:scale(.9);box-shadow:0 0 0 10px rgba(67,160,71,.14);opacity:.95}
+.btn:active{transform:scale(.9);-webkit-transform:scale(.9);box-shadow:0 0 0 10px rgba(79,165,10,.14);opacity:.95}
 button:active{transform:scale(.95);-webkit-transform:scale(.95)}
 .btn.orange{background:linear-gradient(135deg,#ef6c00,#fb8c00);box-shadow:0 3px 10px rgba(251,140,0,.32),inset 0 1px 0 rgba(255,255,255,.2)}
 .btn.red{background:linear-gradient(135deg,#c62828,#e53935);box-shadow:0 3px 10px rgba(229,57,53,.28),inset 0 1px 0 rgba(255,255,255,.18)}
 .btn.gray{background:#f1f3ef;color:#5a5a5a;box-shadow:none;border:1px solid rgba(255,255,255,.8)}
-.btn.outline{background:rgba(255,255,255,.92);color:#2e7d32;border:1.5px solid #43a047;box-shadow:none}
-.admin-entry{background:rgba(255,255,255,.34);color:#2e7d32;border:1px solid rgba(255,255,255,.85);border-radius:13px;padding:7px 13px;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 2px 12px rgba(0,0,0,.08),inset 0 1px 0 rgba(255,255,255,.7);flex:0 0 auto;transition:transform .15s,background .15s;-webkit-backdrop-filter:blur(22px) saturate(200%);backdrop-filter:blur(22px) saturate(200%)}
+.btn.outline{background:rgba(255,255,255,.92);color:#238600;border:1.5px solid #4fa50a;box-shadow:none}
+.admin-entry{background:rgba(255,255,255,.34);color:#238600;border:1px solid rgba(255,255,255,.85);border-radius:13px;padding:7px 13px;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 2px 12px rgba(0,0,0,.08),inset 0 1px 0 rgba(255,255,255,.7);flex:0 0 auto;transition:transform .15s,background .15s;-webkit-backdrop-filter:blur(22px) saturate(200%);backdrop-filter:blur(22px) saturate(200%)}
 .admin-entry:active{transform:scale(.92);background:rgba(255,255,255,.55)}
 .btn[disabled]{opacity:.45;box-shadow:none}
 /* 购物车 */
@@ -90,19 +90,19 @@ button:active{transform:scale(.95);-webkit-transform:scale(.95)}
 .cart-item .n{flex:1;font-size:14.5px;font-weight:600}
 .cart-item .n small{display:block;color:#999;font-size:12px;margin-top:2px;font-weight:400}
 .qty{display:flex;align-items:center;gap:9px}
-.qty button{width:30px;height:30px;border-radius:50%;border:1px solid rgba(255,255,255,.9);background:rgba(255,255,255,.85);font-size:17px;cursor:pointer;line-height:1;color:#2e7d32;font-weight:700;transition:all .15s;box-shadow:0 1px 4px rgba(0,0,0,.05)}
-.qty button:active{background:#e8f5e9;transform:scale(.88)}
+.qty button{width:30px;height:30px;border-radius:50%;border:1px solid rgba(255,255,255,.9);background:rgba(255,255,255,.85);font-size:17px;cursor:pointer;line-height:1;color:#238600;font-weight:700;transition:all .15s;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.qty button:active{background:#eaf6dd;transform:scale(.88)}
 .qty span{min-width:22px;text-align:center;font-size:15.5px;font-weight:700}
 /* 表单 */
 .form{padding:14px}
 .form label{font-size:13px;color:#666;display:block;margin:12px 0 5px;font-weight:600}
 .form input,.form select,.form textarea{width:100%;border:1.5px solid rgba(255,255,255,.95);border-radius:12px;padding:11px;font-size:15px;background:rgba(255,255,255,.6);transition:border .2s,box-shadow .2s,background .2s;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
-.form input:focus,.form select:focus,.form textarea:focus{outline:none;border-color:#43a047;background:rgba(255,255,255,.85);box-shadow:0 0 0 3px rgba(67,160,71,.14)}
+.form input:focus,.form select:focus,.form textarea:focus{outline:none;border-color:#4fa50a;background:rgba(255,255,255,.85);box-shadow:0 0 0 3px rgba(79,165,10,.14)}
 .field-row{display:flex;gap:8px}
 .field-row>*{flex:1}
 /* 付款页 */
 .pay{max-width:520px;margin:0 auto;padding:14px}
-.pay .amt{text-align:center;background:linear-gradient(135deg,#1b5e20,#2e7d32,#43a047);color:#fff;border-radius:20px;padding:24px;margin-bottom:14px;box-shadow:0 8px 22px rgba(27,94,32,.3),inset 0 1px 0 rgba(255,255,255,.18);position:relative;overflow:hidden}
+.pay .amt{text-align:center;background:linear-gradient(135deg,#238600,#238600,#4fa50a);color:#fff;border-radius:20px;padding:24px;margin-bottom:14px;box-shadow:0 8px 22px rgba(35,134,0,.3),inset 0 1px 0 rgba(255,255,255,.18);position:relative;overflow:hidden}
 .pay .amt::before{content:"";position:absolute;inset:0;background:radial-gradient(300px 160px at 20% -30%,rgba(255,255,255,.22),transparent 60%);pointer-events:none}
 .pay .amt .t{font-size:13px;opacity:.92;letter-spacing:1px;position:relative}
 .pay .amt .n{font-size:38px;font-weight:900;margin-top:6px;letter-spacing:1px;position:relative}
@@ -114,27 +114,29 @@ button:active{transform:scale(.95);-webkit-transform:scale(.95)}
 /* 订单文字 */
 .ordertext{background:rgba(255,255,255,.34);-webkit-backdrop-filter:blur(42px) saturate(210%);backdrop-filter:blur(42px) saturate(210%);border-radius:22px;padding:15px;margin:12px 0;white-space:pre-wrap;font-size:13.5px;line-height:1.75;box-shadow:0 8px 30px rgba(0,0,0,.09),inset 0 1px 0 rgba(255,255,255,.9),inset 0 0 0 .5px rgba(255,255,255,.3);border:1px solid rgba(255,255,255,.9)}
 /* 商家后台 */
-.admin-top{position:sticky;top:0;z-index:20;background:linear-gradient(135deg,rgba(27,94,32,.88),rgba(46,125,50,.88));-webkit-backdrop-filter:blur(22px) saturate(190%);backdrop-filter:blur(22px) saturate(190%);color:#fff;padding:13px 16px;display:block;box-shadow:0 4px 16px rgba(27,94,32,.28),inset 0 1px 0 rgba(255,255,255,.12)}
-.admin-top h2{display:inline-block;vertical-align:top;font-size:17.5px;font-weight:800;letter-spacing:.5px;white-space:nowrap;margin:4px 12px 0 0}
-.admin-top .topbtns{display:inline-block;vertical-align:top;max-width:calc(100% - 130px)}
-.admin-top .topbtns .btn{display:inline-block;margin:4px 6px 4px 0;font-size:12px;padding:7px 10px}
-.admin-tabs{display:flex;background:rgba(255,255,255,.3);-webkit-backdrop-filter:blur(32px) saturate(200%);backdrop-filter:blur(32px) saturate(200%);border-bottom:1px solid rgba(255,255,255,.6);overflow-x:auto;position:sticky;top:52px;z-index:15;scrollbar-width:none}
+.admin-top{position:sticky;top:0;z-index:20;background:linear-gradient(135deg,rgba(35,134,0,.92),rgba(79,165,10,.86));-webkit-backdrop-filter:blur(22px) saturate(190%);backdrop-filter:blur(22px) saturate(190%);color:#fff;padding:11px 14px;display:block;box-shadow:0 4px 16px rgba(35,134,0,.3),inset 0 1px 0 rgba(255,255,255,.14)}
+.admin-top .topline{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-bottom:8px}
+.admin-top .topline h2{font-size:17.5px;font-weight:800;letter-spacing:.5px;white-space:nowrap;margin:0}
+.admin-top .topline .btn{margin:0}
+.admin-top .ops{display:flex;gap:8px;width:100%;max-width:100%}
+.admin-top .ops .btn{flex:1 1 0;min-width:0;max-width:100%;text-align:center;margin:0;padding:8px 4px;font-size:12.5px;white-space:nowrap;border-radius:14px}
+.admin-tabs{display:flex;background:rgba(255,255,255,.3);-webkit-backdrop-filter:blur(32px) saturate(200%);backdrop-filter:blur(32px) saturate(200%);border-bottom:1px solid rgba(255,255,255,.6);overflow-x:auto;position:sticky;top:114px;z-index:15;scrollbar-width:none}
 .admin-tabs::-webkit-scrollbar{display:none}
 .admin-tabs button{flex:0 0 auto;border:none;background:none;padding:13px 17px;font-size:14px;color:#777;border-bottom:2.5px solid transparent;cursor:pointer;white-space:nowrap;font-weight:500;transition:color .15s,background .15s}
-.admin-tabs button.on{color:#2e7d32;border-bottom-color:#2e7d32;font-weight:800;background:rgba(46,125,50,.07)}
+.admin-tabs button.on{color:#238600;border-bottom-color:#dfff2b;font-weight:800;background:rgba(35,134,0,.07)}
 .panel{padding:14px;max-width:760px;margin:0 auto;position:relative;z-index:1}
-.card{background:rgba(255,255,255,.38);-webkit-backdrop-filter:blur(34px) saturate(200%);backdrop-filter:blur(34px) saturate(200%);border-radius:20px;padding:14px;margin-bottom:12px;box-shadow:0 6px 22px rgba(27,94,32,.09),inset 0 1px 0 rgba(255,255,255,.85),inset 0 0 0 .5px rgba(255,255,255,.25);border:1px solid rgba(255,255,255,.9);transition:transform .15s}
+.card{background:rgba(255,255,255,.38);-webkit-backdrop-filter:blur(34px) saturate(200%);backdrop-filter:blur(34px) saturate(200%);border-radius:20px;padding:14px;margin-bottom:12px;box-shadow:0 6px 22px rgba(35,134,0,.09),inset 0 1px 0 rgba(255,255,255,.85),inset 0 0 0 .5px rgba(255,255,255,.25);border:1px solid rgba(255,255,255,.9);transition:transform .15s}
 .card:active{transform:scale(.995)}
 .card h3{font-size:15.5px;margin-bottom:10px;font-weight:800}
 .rowline{display:flex;justify-content:space-between;font-size:13px;color:#555;margin:5px 0;line-height:1.6}
-.badge{display:inline-block;font-size:11px;padding:3px 10px;border-radius:14px;background:linear-gradient(135deg,#e8f5e9,#f1f8e9);color:#2e7d32;font-weight:700;vertical-align:middle}
+.badge{display:inline-block;font-size:11px;padding:3px 10px;border-radius:14px;background:linear-gradient(135deg,#eaf6dd,#f4f9dd);color:#238600;font-weight:700;vertical-align:middle}
 .badge.off{background:linear-gradient(135deg,#eeeeee,#f5f5f5);color:#999}
 .badge.weigh{background:linear-gradient(135deg,#fff3e0,#fff8e1);color:#e65100}
 .badge.paid{background:linear-gradient(135deg,#e3f2fd,#e8f4fd);color:#1565c0}
 .login-box{max-width:340px;margin:60px auto;text-align:center}
 .login-box h2{font-size:22px;margin-bottom:22px}
 .login-box input{width:100%;border:1.5px solid rgba(255,255,255,.95);border-radius:14px;padding:13px;font-size:16px;margin-bottom:14px;text-align:center;background:rgba(255,255,255,.6);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);transition:box-shadow .2s}
-.login-box input:focus{outline:none;border-color:#43a047;background:rgba(255,255,255,.85);box-shadow:0 0 0 3px rgba(67,160,71,.14)}
+.login-box input:focus{outline:none;border-color:#4fa50a;background:rgba(255,255,255,.85);box-shadow:0 0 0 3px rgba(79,165,10,.14)}
 /* 模态 */
 .modal{position:fixed;inset:0;background:rgba(12,22,12,.34);z-index:60;display:none;align-items:center;justify-content:center;padding:20px;-webkit-backdrop-filter:blur(12px) saturate(160%);backdrop-filter:blur(12px) saturate(160%);animation:fadeMask .22s ease}
 .modal.show{display:flex;animation:fadeMask .22s ease}
@@ -159,7 +161,7 @@ button:active{transform:scale(.95);-webkit-transform:scale(.95)}
 .wrap{position:relative}
 /* 滚动条美化 */
 ::-webkit-scrollbar{width:5px;height:5px}
-::-webkit-scrollbar-thumb{background:rgba(46,125,50,.25);border-radius:4px}
+::-webkit-scrollbar-thumb{background:rgba(35,134,0,.25);border-radius:4px}
 ::-webkit-scrollbar-track{background:transparent}
 
 
@@ -185,7 +187,7 @@ button:active{transform:scale(.95);-webkit-transform:scale(.95)}
   <div class="topbar">
     <div style="display:flex;align-items:center;justify-content:space-between;gap:6px">
       <h1><span style="cursor:pointer" onclick="document.getElementById('loginModal').classList.add('show')">🍉</span> 榨榨鲜果</h1>
-      <div id="shopBanner" style="display:block;background:#ffffff;color:#1b5e20;padding:3px 9px;border-radius:8px;font-size:12px;font-weight:700;text-align:center;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,.08)">🟢 营业中 · 欢迎下单</div>
+      <div id="shopBanner" style="display:block;background:#ffffff;color:#238600;padding:3px 9px;border-radius:8px;font-size:12px;font-weight:700;text-align:center;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,.08)">🟢 营业中 · 欢迎下单</div>
     </div>
     <div>
       <p>新鲜水果 · 鲜果现榨 · 不加糖 · 无科技</p>
@@ -234,7 +236,7 @@ button:active{transform:scale(.95);-webkit-transform:scale(.95)}
   <div class="box">
     <h3 style="margin-bottom:8px">填写配送信息</h3>
     <div style="display:flex;gap:8px;margin:10px 0 4px">
-      <button type="button" id="ckModeDlv" onclick="setCkMode('delivery')" style="flex:1;padding:10px;border:2px solid #2e7d32;background:#e8f5e9;border-radius:8px;font-size:14px;cursor:pointer">🚚 外卖配送</button>
+      <button type="button" id="ckModeDlv" onclick="setCkMode('delivery')" style="flex:1;padding:10px;border:2px solid #238600;background:#eaf6dd;border-radius:8px;font-size:14px;cursor:pointer">🚚 外卖配送</button>
       <button type="button" id="ckModePick" onclick="setCkMode('pickup')" style="flex:1;padding:10px;border:2px solid #ccc;background:#fff;border-radius:8px;font-size:14px;cursor:pointer">🏪 到店自提</button>
     </div>
     <div class="form" style="padding:0">
@@ -251,7 +253,7 @@ button:active{transform:scale(.95);-webkit-transform:scale(.95)}
           <input id="ckAddr" placeholder="输入小区/道路名，自动出候选">
           <div id="addrTips" style="display:none;position:absolute;background:rgba(255,255,255,.82);-webkit-backdrop-filter:blur(20px) saturate(170%);backdrop-filter:blur(20px) saturate(170%);border:1px solid rgba(255,255,255,.7);border-radius:10px;max-height:200px;overflow:auto;z-index:100;width:100%"></div>
         </div>
-        <button class="btn" style="font-size:13px;padding:8px 10px;background:#2e7d32;color:#fff;white-space:nowrap" onclick="autoLocate()">📍 定位</button>
+        <button class="btn" style="font-size:13px;padding:8px 10px;background:#238600;color:#fff;white-space:nowrap" onclick="autoLocate()">📍 定位</button>
         <button class="btn" style="font-size:13px;padding:8px 10px;background:#666;color:#fff;white-space:nowrap" onclick="openMapPick()">🗺️ 地图</button>
       </div>
       <label>详细地址（楼栋/单元/房号）</label><input id="ckAddrDetail" placeholder="3栋2单元501" style="margin-bottom:6px">
@@ -389,13 +391,15 @@ button:active{transform:scale(.95);-webkit-transform:scale(.95)}
 <!-- ================= 商家后台 ================= -->
 <div id="admin" class="hidden">
   <div class="admin-top">
-    <h2>商家后台</h2>
-    <div class="topbtns">
-      <button class="btn" id="shopToggleBtn" style="font-size:12px;padding:4px 10px;background:#2e7d32" onclick="toggleShopStatus()">🟢 营业中</button>
-      <button class="btn" id="voiceStateBtn" style="font-size:12px;padding:4px 10px;background:#2e7d32" onclick="tapVoiceState()">🔊 语音提醒</button>
-      <button class="btn" style="font-size:12px;padding:4px 10px;background:#2e7d32" onclick="adminRefresh()">🔄 刷新同步</button>
-      <button class="btn gray" style="font-size:12px;padding:4px 10px" onclick="backToShop()">返回点单页</button>
-      <button class="btn red" style="font-size:12px;padding:4px 10px" onclick="adminLogout()">退出</button>
+    <div class="topline">
+      <h2>商家后台</h2>
+      <button class="btn" id="shopToggleBtn" style="font-size:12px;padding:4px 10px;background:#238600" onclick="toggleShopStatus()">🟢 营业中</button>
+      <button class="btn" id="voiceStateBtn" style="font-size:12px;padding:4px 10px;background:#238600" onclick="tapVoiceState()">🔊 语音提醒</button>
+    </div>
+    <div class="ops">
+      <button class="btn" style="font-size:12.5px;padding:8px 4px;background:#238600" onclick="adminRefresh()">🔄 刷新同步</button>
+      <button class="btn gray" style="font-size:12.5px;padding:8px 4px" onclick="backToShop()">返回点单页</button>
+      <button class="btn red" style="font-size:12.5px;padding:8px 4px" onclick="adminLogout()">退出</button>
     </div>
   </div>
   <div class="admin-tabs" id="adminTabs"></div>
@@ -451,8 +455,8 @@ function fillTimeOptions(){
   s3.innerHTML=h3;
 }
 function pickTime(id){
-  document.getElementById('ckTime1').style.borderColor='#2e7d32';
-  document.getElementById('ckTime1').style.background='#e8f5e9';
+  document.getElementById('ckTime1').style.borderColor='#238600';
+  document.getElementById('ckTime1').style.background='#eaf6dd';
   document.getElementById('ckTime3').value='';
   document.getElementById('ckTime3').style.borderColor='#ccc';
   document.getElementById('ckTime3').style.background='#fff';
@@ -726,8 +730,8 @@ function showCountDlg(d, peel){
   var old=document.getElementById('peelModal'); if(old) old.remove();
   var isHalf=d&&d.cat==='半价';
   var qtyBtns=isHalf
-    ? '<button onclick="countQty(1)" style="flex:1;padding:12px;border:2px solid #2e7d32;background:#e8f5e9;border-radius:10px;font-size:16px;font-weight:900">1'+(d.unit||'个')+'</button>'
-    : '<button onclick="countQty(1)" style="flex:1;padding:12px;border:2px solid #2e7d32;background:#e8f5e9;border-radius:10px;font-size:16px;font-weight:900">1'+(d.unit||'个')+'</button>'+
+    ? '<button onclick="countQty(1)" style="flex:1;padding:12px;border:2px solid #238600;background:#eaf6dd;border-radius:10px;font-size:16px;font-weight:900">1'+(d.unit||'个')+'</button>'
+    : '<button onclick="countQty(1)" style="flex:1;padding:12px;border:2px solid #238600;background:#eaf6dd;border-radius:10px;font-size:16px;font-weight:900">1'+(d.unit||'个')+'</button>'+
       '<button onclick="countQty(2)" style="flex:1;padding:12px;border:2px solid rgba(255,255,255,.65);background:rgba(255,255,255,.55);border-radius:10px;font-size:16px;font-weight:900">2'+(d.unit||'个')+'</button>'+
       '<button onclick="countQty(3)" style="flex:1;padding:12px;border:2px solid rgba(255,255,255,.65);background:rgba(255,255,255,.55);border-radius:10px;font-size:16px;font-weight:900">3'+(d.unit||'个')+'</button>'+
       '<button onclick="countQty(5)" style="flex:1;padding:12px;border:2px solid rgba(255,255,255,.65);background:rgba(255,255,255,.55);border-radius:10px;font-size:16px;font-weight:900">5'+(d.unit||'个')+'</button>';
@@ -755,7 +759,7 @@ function countQty(n){
   var btns=document.querySelectorAll('#peelModal button');
   btns.forEach(function(b,i){
     if(i<4){
-      if((i+1)===n || (i===3 && n===5)){ b.style.borderColor='#2e7d32'; b.style.background='#e8f5e9'; }
+      if((i+1)===n || (i===3 && n===5)){ b.style.borderColor='#238600'; b.style.background='#eaf6dd'; }
       else { b.style.borderColor='rgba(255,255,255,.65)'; b.style.background='rgba(255,255,255,.55)'; }
     }
   });
@@ -969,7 +973,7 @@ function renderCartbar(){
   var tEl=document.getElementById('cartTotal');
   el.style.background='';
   if(sub<20){ tEl.style.color='#e53935'; tEl.textContent=money(sub)+' (满20起送)'; }
-  else { tEl.style.color='#2e7d32'; tEl.textContent=money(sub); }
+  else { tEl.style.color='#238600'; tEl.textContent=money(sub); }
 }
 function openDrawer(){ renderCartItems(); document.getElementById('drawer').classList.add('show'); }
 function closeDrawer(){ document.getElementById('drawer').classList.remove('show'); }
@@ -1003,8 +1007,8 @@ function refreshShopStatus(){
 }
 function renderShopBanner(){
   var el=document.getElementById('shopBanner'); if(!el) return;
-  if(!_shopLoaded){ var _op0=inShopWindow(); el.style.display='block'; el.style.background='#ffffff'; el.style.color=(_op0?'#1b5e20':'#c62828'); el.innerHTML=_op0?'🟢 营业中 · 欢迎下单':'🔴 已打烊（可选「次日」下单）'; return; }
-  if(shopOpen){ el.style.display='block'; el.style.background='#ffffff'; el.style.color='#1b5e20'; el.innerHTML='🟢 营业中 · 欢迎下单'; }
+  if(!_shopLoaded){ var _op0=inShopWindow(); el.style.display='block'; el.style.background='#ffffff'; el.style.color=(_op0?'#238600':'#c62828'); el.innerHTML=_op0?'🟢 营业中 · 欢迎下单':'🔴 已打烊（可选「次日」下单）'; return; }
+  if(shopOpen){ el.style.display='block'; el.style.background='#ffffff'; el.style.color='#238600'; el.innerHTML='🟢 营业中 · 欢迎下单'; }
   else { el.style.display='block'; el.style.background='#ffffff'; el.style.color='#c62828'; el.innerHTML='🔴 已打烊（可选「次日」下单）'; }
 }
 function loadAdminShopStatus(){
@@ -1017,7 +1021,7 @@ function loadAdminShopStatus(){
 }
 function renderShopToggle(){
   var el=document.getElementById('shopToggleBtn'); if(!el) return;
-  if(adminShopOpen){ el.style.background='#2e7d32'; el.textContent='🟢 营业中'; }
+  if(adminShopOpen){ el.style.background='#238600'; el.textContent='🟢 营业中'; }
   else { el.style.background='#c62828'; el.textContent='🔴 已打烊'; }
 }
 function toggleShopStatus(silent){
@@ -1098,8 +1102,8 @@ function setCkMode(m){
   var a=document.getElementById('ckAddrArea'); if(a) a.style.display=(m==='pickup')?'none':'block';
   var e=document.getElementById('ckExtraArea'); if(e) e.style.display=(m==='pickup')?'none':'block';
   var b1=document.getElementById('ckModeDlv'), b2=document.getElementById('ckModePick');
-  if(b1){ b1.style.borderColor=(m==='delivery')?'#2e7d32':'#ccc'; b1.style.background=(m==='delivery')?'#e8f5e9':'#fff'; }
-  if(b2){ b2.style.borderColor=(m==='pickup')?'#2e7d32':'#ccc'; b2.style.background=(m==='pickup')?'#e8f5e9':'#fff'; }
+  if(b1){ b1.style.borderColor=(m==='delivery')?'#238600':'#ccc'; b1.style.background=(m==='delivery')?'#eaf6dd':'#fff'; }
+  if(b2){ b2.style.borderColor=(m==='pickup')?'#238600':'#ccc'; b2.style.background=(m==='pickup')?'#eaf6dd':'#fff'; }
   if(m==='pickup'){ window._delivery={dist:0,fee:0,mode:'pickup'}; if(typeof updateCkAmt==='function') updateCkAmt(); }
   else { if(typeof calcDelivery==='function') calcDelivery(); }
   // 外送/营业时段提示（自动规则：外送 09:00-21:30、自提 08:30-22:00，老板不动手）
@@ -1167,8 +1171,8 @@ function calcDelivery(){
     var h='🚴 骑行距离：约 '+d.toFixed(1)+' 公里<br>';
     var f=dlvFee, km2=f.freeKm+2;
     if(fee<0) h+='<span style="color:#e53935">超出 '+f.maxKm+' 公里配送范围，暂无法配送（建议到店自取）</span>';
-    else if(d<=f.freeKm) h+='<span style="color:#2e7d32">✔ '+f.freeKm+' 公里内，免配送费</span>';
-    else if(fee===0) h+='<span style="color:#2e7d32">✔ 满 '+f.freeOver+' 元，免配送费</span>';
+    else if(d<=f.freeKm) h+='<span style="color:#238600">✔ '+f.freeKm+' 公里内，免配送费</span>';
+    else if(fee===0) h+='<span style="color:#238600">✔ 满 '+f.freeOver+' 元，免配送费</span>';
     else if(d<=km2) h+='<span style="color:#fb8c00">配送费：'+money(fee)+'（'+f.freeKm+'-'+km2+' 公里，满'+f.freeOver+'元免）</span>'; else h+='<span style="color:#fb8c00">配送费：'+money(fee)+'（'+f.baseFee+'元+超'+km2+'公里每1公里加'+f.perKm+'元）</span>';
     box.innerHTML=h;
     if(typeof updateCkAmt==='function') updateCkAmt();
@@ -1208,7 +1212,7 @@ function calcDelivery(){
         window._delivery={dist:straight,fee:fee};
         var h='🚴 骑行距离：约 '+straight.toFixed(1)+' 公里（直线估算，以实际为准）<br>';
         if(fee<0) h+='<span style="color:#e53935">超出 10 公里配送范围</span>';
-        else if(fee===0) h+='<span style="color:#2e7d32">✔ 免配送费</span>';
+        else if(fee===0) h+='<span style="color:#238600">✔ 免配送费</span>';
         else h+='<span style="color:#fb8c00">配送费：'+money(fee)+'</span>';
         document.getElementById('deliveryBox').innerHTML=h;
         if(typeof updateCkAmt==='function') updateCkAmt();
@@ -1643,17 +1647,17 @@ function checkPromo(){
         var b=(j&&j.balance!=null)?Number(j.balance):0; var used=newCustAmt-b;
         if(j && j.new===true){
         var useDisc=localStorage.getItem('zz_use_newcust_'+ph)==='1';
-        var h='<div style="background:#e8f5e9;border:1px solid #c8e6c9;border-radius:8px;padding:12px">您是<b>新客</b>，首单立享 <b style="color:#e65100">'+newCustAmt+' 元</b>优惠！<br>满 20 元起送，3 公里内免配送费～<br><div style="display:flex;gap:8px;margin-top:10px">';
+        var h='<div style="background:#eaf6dd;border:1px solid #c8e6c9;border-radius:8px;padding:12px">您是<b>新客</b>，首单立享 <b style="color:#e65100">'+newCustAmt+' 元</b>优惠！<br>满 20 元起送，3 公里内免配送费～<br><div style="display:flex;gap:8px;margin-top:10px">';
         if(useDisc){
-          h+='<button onclick="setUseNewcust(\''+ph+'\',0)" style="flex:1;background:#fff;color:#666;border:1px solid #ccc;border-radius:6px;padding:8px">不使用（保留）</button><b style="flex:1;text-align:center;color:#2e7d32;line-height:34px">已选使用</b>';
+          h+='<button onclick="setUseNewcust(\''+ph+'\',0)" style="flex:1;background:#fff;color:#666;border:1px solid #ccc;border-radius:6px;padding:8px">不使用（保留）</button><b style="flex:1;text-align:center;color:#238600;line-height:34px">已选使用</b>';
         } else {
           h+='<button onclick="setUseNewcust(\''+ph+'\',1)" style="flex:1;background:#fb8c00;color:#fff;border:none;border-radius:6px;padding:8px">使用优惠</button><button onclick="setUseNewcust(\''+ph+'\',0)" style="flex:1;background:#fff;color:#666;border:1px solid #ccc;border-radius:6px;padding:8px">不使用（保留）</button>';
         }
         h+='</div></div>';
         res.innerHTML=h;
       }
-        else if(b>0){ res.innerHTML='<div style="background:#fff8e1;border:1px solid #f0e0b0;border-radius:8px;padding:12px">您已累计优惠 <b style="color:#e65100">'+money(used)+'</b> 元，还剩余 <b style="color:#2e7d32">'+money(b)+'</b> 元优惠额度，<b>下次下单继续抵用</b>！<br>下单后记得提醒店主点「新客优惠」哦～</div>'; }
-        else { res.innerHTML='<div style="background:#f5f5f5;border:1px solid #ddd;border-radius:8px;padding:12px">您的新客 '+newCustAmt+' 元优惠已<b>全部用完</b>，承蒙惠顾！<br><b style="color:#2e7d32">加好友进群，可增加优惠额度～</b></div>'; }
+        else if(b>0){ res.innerHTML='<div style="background:#fff8e1;border:1px solid #f0e0b0;border-radius:8px;padding:12px">您已累计优惠 <b style="color:#e65100">'+money(used)+'</b> 元，还剩余 <b style="color:#238600">'+money(b)+'</b> 元优惠额度，<b>下次下单继续抵用</b>！<br>下单后记得提醒店主点「新客优惠」哦～</div>'; }
+        else { res.innerHTML='<div style="background:#f5f5f5;border:1px solid #ddd;border-radius:8px;padding:12px">您的新客 '+newCustAmt+' 元优惠已<b>全部用完</b>，承蒙惠顾！<br><b style="color:#238600">加好友进群，可增加优惠额度～</b></div>'; }
       })
       .catch(function(){ res.innerHTML='<span style="color:#e65100">查询失败，请检查网络</span>'; });
   }catch(e){ res.innerHTML='<span style="color:#e65100">查询失败</span>'; }
@@ -1772,7 +1776,7 @@ function openResult(text, order, paidDone){
   box.className='modal show'; box.id='resultModal';
   var inner='';
   if(paidDone){
-    inner='<p style="text-align:center;font-size:15px;color:#2e7d32;margin:10px 0;line-height:1.7">✅ 付款成功，订单已收到<br>我们会尽快为您配送，请保持电话畅通～</p>';
+    inner='<p style="text-align:center;font-size:15px;color:#238600;margin:10px 0;line-height:1.7">✅ 付款成功，订单已收到<br>我们会尽快为您配送，请保持电话畅通～</p>';
   } else {
     inner='<p style="font-size:12px;color:#888;margin-top:10px;line-height:1.6">提示：纯网页无法直接唤起微信，请先"复制订单"，再打开微信粘贴发送给店主。</p>'+
       '<div style="display:flex;gap:8px"><button class="btn" style="flex:1" onclick="copyText()">复制订单</button>'+
@@ -1781,7 +1785,7 @@ function openResult(text, order, paidDone){
   box.innerHTML='<div class="box"><h3 style="text-align:center;margin-bottom:10px">'+(paidDone?'✅ 订单已收到':'✅ 订单已生成，请发给店主')+'</h3>'+
     '<div class="ordertext">'+esc(text)+'</div>'+
     inner+
-    '<button class="btn" style="width:100%;margin-top:10px;background:#2e7d32" onclick="finishOrder()">完成 · 返回首页</button>'+
+    '<button class="btn" style="width:100%;margin-top:10px;background:#238600" onclick="finishOrder()">完成 · 返回首页</button>'+
     '<button class="btn red" style="width:100%;margin-top:6px" onclick="closeApp()">关闭软件</button></div>';
   document.body.appendChild(box);
   window._lastText=text;
@@ -2003,7 +2007,7 @@ function renderVoiceState(){
   var el=document.getElementById('voiceStateBtn'); if(!el) return;
   if(!voiceAlarmOn()){ el.style.background='#757575'; el.textContent='🔕 语音提醒已关'; return; }
   if(_voiceBlocked){ el.style.background='#e65100'; el.textContent='⚠️ 语音被拦截·点击解锁'; return; }
-  el.style.background='#2e7d32'; el.textContent='🔊 语音提醒正常';
+  el.style.background='#238600'; el.textContent='🔊 语音提醒正常';
 }
 function tapVoiceState(){
   if(!voiceAlarmOn()){ alert('语音提醒已关闭：新订单到店将不播报语音。可在「设置 → 新订单自动刷新+语音提醒」开启。'); return; }
@@ -2123,17 +2127,17 @@ function renderCloudOrder(c){
   return '<div class="card" style=""><h3>云端#'+c.id+' <span class="badge '+stCls+'">'+esc(stTxt)+'</span></h3>'+
     '<div class="rowline"><span>下单时间</span><span>'+esc(created)+'</span></div>'+
     '<div class="rowline"><span>顾客</span><span>'+esc(p.name||'')+' <b style="color:#c62828">'+esc(p.phone||'')+'</b> <span style="color:#ad1457;font-size:12px">'+custTag+'</span></span></div>'+
-    (p.mode==='pickup'?'<div class="rowline"><span>取餐</span><span style="color:#2e7d32">🏪 到店自提</span></div>':(p.addr?'<div class="rowline"><span>地址</span><span>'+esc(p.addr)+'</span></div>':''))+
+    (p.mode==='pickup'?'<div class="rowline"><span>取餐</span><span style="color:#238600">🏪 到店自提</span></div>':(p.addr?'<div class="rowline"><span>地址</span><span>'+esc(p.addr)+'</span></div>':''))+
     (p.time?'<div class="rowline"><span>预送</span><span>'+esc(p.time)+'</span></div>':'')+
     '<div class="rowline"><span>商品</span><span>'+lines+'</span></div>'+
     (amt!==''?'<div class="rowline"><span>金额</span><span style="color:#e53935;font-weight:700">'+money(amt)+(p.newcust?'（已含新客-'+Number(p.discount||0).toFixed(2)+'元）':(p.hasWeight&&!p.weightTotal?'（预估）':''))+(p.referralDeduct?'（已含推广抵扣-'+Number(p.referralDeduct).toFixed(2)+'元）':'')+'</span></div>':'')+
     (p.carrier?'<div class="rowline"><span>配送员</span><span style="color:#1565c0">🛵 '+esc(p.carrier)+'</span></div>':'')+
     '<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">'+
-    (c.status==='new'?'<button class="btn" style="background:#2e7d32;color:#fff" onclick="updateCloudStatus('+c.id+',\'已付款\')">✅ 标记已付款</button>':'')+
+    (c.status==='new'?'<button class="btn" style="background:#238600;color:#fff" onclick="updateCloudStatus('+c.id+',\'已付款\')">✅ 标记已付款</button>':'')+
     (c.status==='new'||c.status==='已付款'?'<button class="btn" style="background:#1565c0;color:#fff" onclick="acceptCloudOrder('+c.id+')">✅ 接单</button>':'')+
     (c.status==='已接单'?'<button class="btn" style="background:#6a1b9a;color:#fff" onclick="updateCloudStatus('+c.id+',\'制作中\')">👨‍🍳 制作中</button>':'')+
     (c.status==='制作中'?(p.mode==='pickup'?'<button class="btn" style="background:#00897b;color:#fff" onclick="updateCloudStatus('+c.id+',\'待自提\')">🏪 待自提</button>':'<button class="btn" style="background:#00897b;color:#fff" onclick="updateCloudStatus('+c.id+',\'配送中\')">🛵 开始配送</button>'):'')+
-    (c.status==='配送中'||c.status==='待自提'?'<button class="btn" style="background:#2e7d32;color:#fff" onclick="markDelivered('+c.id+')">✅ 已送达</button>':'')+
+    (c.status==='配送中'||c.status==='待自提'?'<button class="btn" style="background:#238600;color:#fff" onclick="markDelivered('+c.id+')">✅ 已送达</button>':'')+
     (isNewCust?'<button class="btn" style="background:#ad1457;color:#fff" onclick="newCustCloudOrder('+c.id+')">🎁 优惠</button>':'')+
     '<button class="btn" style="background:#555;color:#fff" onclick="printCloudOrder('+c.id+')">🖨 打印</button>'+
     (p.addr && p.mode!=='pickup'?'<button class="btn" onclick="navCloud('+c.id+')">高德导航</button>':'')+
@@ -2306,7 +2310,7 @@ function renderOrders(){
     '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><b>📱 顾客手机下的单（云端）</b>'+
     '<button class="btn" style="background:#1a73e8;color:#fff" onclick="fetchCloudOrders()">🔄 刷新云端订单</button></div>'+
     (aliveCloud.length?'<div style="font-size:12px;color:#555;margin:8px 0">共 '+aliveCloud.length+' 单（顾客微信扫码下单后，点「刷新云端订单」即可看到）</div>':'<div style="font-size:12px;color:#888;margin:8px 0">云端未拉取（点击刷新查看顾客手机下的单）</div>')+
-    '<div style="margin:10px 0;padding:10px;background:#e8f5e9;border-radius:8px;font-size:14px"><b>💰 今日营业额</b>：<span style="color:#2e7d32;font-weight:700">¥'+todayTotal+'</span>（已完成 '+todayCount+' 单）</div>'+
+    '<div style="margin:10px 0;padding:10px;background:#eaf6dd;border-radius:8px;font-size:14px"><b>💰 今日营业额</b>：<span style="color:#238600;font-weight:700">¥'+todayTotal+'</span>（已完成 '+todayCount+' 单）</div>'+
 
     '<div style="display:flex;gap:6px;margin:10px 0;flex-wrap:wrap;align-items:center;background:#fff8e1;border:1px solid #ffe082;border-radius:8px;padding:8px">'+
       '<b style="font-size:13px">🔍 查客户</b>'+
@@ -2341,7 +2345,7 @@ function renderDishesAdmin(){
     '<div class="card" style="background:#eef8ee;border:1px solid #c8e6c9;margin-bottom:12px">'+
     '<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">'+
     '<button class="btn orange" onclick="cloudPull()">☁️ 抓取云端菜单</button>'+
-    '<button class="btn" style="background:#2e7d32;border-color:#2e7d32" onclick="syncMenuToCloud()">⬆️ 上传全部到云端</button></div>'+
+    '<button class="btn" style="background:#238600;border-color:#238600" onclick="syncMenuToCloud()">⬆️ 上传全部到云端</button></div>'+
     '<div id="cloudStatus" style="font-size:12px;color:#666;margin-top:8px"></div></div>'+
     (isHalf?'<p style="font-size:12px;color:#fb8c00;margin-bottom:10px">本分类由「现榨果汁」自动同步生成，价格自动为半价，无需手动编辑。</p>':(isOff?'<p style="font-size:12px;color:#e65100;margin-bottom:10px">已下架商品仅在后台可见，顾客端不会显示。点「重新上架」后自动同步云端，顾客端约1分钟内恢复显示。</p>':'<p style="font-size:12px;color:#888;margin-bottom:10px">新增/编辑/删除/改价/改单位都会自动保存本地并同步云端，顾客端约1分钟内自动更新。断网时改的先存本地，恢复网络后点上方「⬆️ 上传全部到云端」一次，全部改动一起传上去。</p>'));
   var sortedDishes = isOff ? dishes.filter(function(d){ return d.on===false && d.cat!=='半价'; }).slice().sort(function(a,b){ return a.price-b.price; }) : dishes.filter(function(d){ return d.cat===adminDishCat && d.on!==false; }).slice().sort(function(a,b){ return a.price-b.price; });
@@ -2350,7 +2354,7 @@ function renderDishesAdmin(){
       '<div>'+(d.img?'<img src="'+esc(thumbUrl(d.img))+'?v='+IMG_VER+'" style="width:44px;height:44px;object-fit:cover;border-radius:6px;vertical-align:middle;margin-right:8px">':'')+'<b>'+esc(d.name)+'</b> <span class="badge '+(d.on?'':'off')+'">'+(d.on?'上架':'下架')+'</span>'+
       '<div style="font-size:12px;color:#888;margin-top:3px">'+esc(catLabel(d.cat))+' · '+money(d.price)+' / '+esc(d.unit||'份')+(d.orig?' · 原价'+money(d.orig):'')+(d.per?' · 称重'+d.per+'元/斤':'')+(d.stock!=null?' · 库存'+d.stock:'')+'</div></div>'+
       (isHalf?'<span style="font-size:11px;color:#fb8c00;font-weight:600">自动同步</span>':
-      (isOff?'<div><button class="btn" style="font-size:12px;padding:4px 10px;background:#2e7d32;color:#fff;border:none;border-radius:6px;cursor:pointer" onclick="relistDish(\''+d.id+'\')">↩ 重新上架</button> '+
+      (isOff?'<div><button class="btn" style="font-size:12px;padding:4px 10px;background:#238600;color:#fff;border:none;border-radius:6px;cursor:pointer" onclick="relistDish(\''+d.id+'\')">↩ 重新上架</button> '+
       '<button class="btn red" style="font-size:12px;padding:4px 10px" onclick="delDish(\''+d.id+'\')">删除</button></div>':
       '<div><button class="btn gray" style="font-size:12px;padding:4px 10px" onclick="editDish(\''+d.id+'\')">编辑</button> '+
       '<button class="btn red" style="font-size:12px;padding:4px 10px" onclick="delDish(\''+d.id+'\')">删除</button></div>'))+
@@ -2365,7 +2369,7 @@ function editDish(id){
   box.innerHTML='<div class="box"><h3>'+(d?'编辑菜品':'新增菜品（'+catLabel(defCat)+'）')+'</h3><div class="form" style="padding:0">'+
     '<label>菜品名称</label>'+
     '<div style="display:flex;gap:8px;align-items:center"><input id="dName" value="'+(d?esc(d.name):'')+'" style="flex:1">'+
-    '<button type="button" style="flex:0 0 auto;background:rgba(46,125,50,.12);border:1px solid rgba(46,125,50,.5);color:#2e7d32;border-radius:9px;padding:7px 11px;font-size:12px;font-weight:700;cursor:pointer" onclick="searchDishImg()">🔍 按名称搜图</button>'+
+    '<button type="button" style="flex:0 0 auto;background:rgba(35,134,0,.12);border:1px solid rgba(35,134,0,.5);color:#238600;border-radius:9px;padding:7px 11px;font-size:12px;font-weight:700;cursor:pointer" onclick="searchDishImg()">🔍 按名称搜图</button>'+
     '<button type="button" style="flex:0 0 auto;background:rgba(255,152,0,.14);border:1px solid rgba(255,152,0,.55);color:#e65100;border-radius:9px;padding:7px 11px;font-size:12px;font-weight:700;cursor:pointer" onclick="openFruitPicker()">🍉 从水果库选品</button></div>'+
     '<div style="font-size:11px;color:#888;margin:-2px 0 4px">「从水果库选品」：点选水果自动带入 名称+图片+单位（斤/个/根/份），填价格即可保存；「按名称搜图」：只选图。两者都自动裁剪缩放 + 加水印 + 压缩（顾客端秒开）</div>'+
     '<label>价格（元）</label><input id="dPrice" type="number" step="0.1" value="'+(d?d.price:'')+'">'+
@@ -2373,7 +2377,7 @@ function editDish(id){
     '<label>称重单价（元/斤，水果按斤结算时填；果汁/盒装留空）</label><input id="dPer" type="number" step="0.1" min="0" value="'+(d?(d.per||''):'')+'">'+
     '<label>单位 / 重量（如：斤、整颗、杯）</label><input id="dUnit" value="'+(d?esc(d.unit||'份'):'份')+'">'+
     '<div style="display:flex;flex-wrap:wrap;gap:5px;margin:-2px 0 6px"><span style="font-size:11px;color:#888;line-height:22px">快速选单位：</span>'+
-    ['斤','个','根','份','杯','盒','把','束','串','只','袋'].map(function(u){ return '<button type="button" style="background:rgba(46,125,50,.08);border:1px solid rgba(46,125,50,.4);color:#2e7d32;border-radius:7px;padding:2px 9px;font-size:12px;cursor:pointer" onclick="setDUnit(\''+u+'\')">'+u+'</button>'; }).join('')+
+    ['斤','个','根','份','杯','盒','把','束','串','只','袋'].map(function(u){ return '<button type="button" style="background:rgba(35,134,0,.08);border:1px solid rgba(35,134,0,.4);color:#238600;border-radius:7px;padding:2px 9px;font-size:12px;cursor:pointer" onclick="setDUnit(\''+u+'\')">'+u+'</button>'; }).join('')+
     '</div>'+
     '<label>菜品图片（点右侧按钮选本地图，自动压缩）</label>'+
     '<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">'+
@@ -2421,7 +2425,7 @@ function searchDishImg(allowEmpty){
   var title=clean?('🔍 在线搜图：「'+esc(clean)+'」'):'🍉 从水果库选品（点选自动带入名称+图+单位，填价格即可）';
   m.innerHTML='<div style="background:rgba(255,255,255,.30);border-radius:22px;-webkit-backdrop-filter:blur(46px) saturate(210%);backdrop-filter:blur(46px) saturate(210%);border:1px solid rgba(255,255,255,.9);box-shadow:0 14px 44px rgba(0,0,0,.13),inset 0 1px 0 rgba(255,255,255,.85),inset 0 0 0 .5px rgba(255,255,255,.3);padding:20px;width:94%;max-width:460px;max-height:86vh;overflow:auto;box-sizing:border-box">'+
     '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px"><b style="font-size:16px">'+title+'</b><button style="border:none;background:rgba(255,255,255,.55);border-radius:8px;padding:4px 10px;cursor:pointer;font-size:13px" onclick="document.getElementById(\'searchImgModal\').remove()">✕ 关闭</button></div>'+
-    '<div style="display:flex;gap:6px;margin-bottom:10px;align-items:center"><input id="siKw" value="'+esc(clean)+'" style="flex:1;background:rgba(255,255,255,.55);border:1px solid rgba(255,255,255,.65);border-radius:8px;padding:8px 10px;font-size:13px" onkeydown="if(event.key===\'Enter\')searchDishImg(true)"><button style="background:rgba(46,125,50,.15);border:1px solid rgba(46,125,50,.5);color:#2e7d32;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer" onclick="searchDishImg(true)">搜索</button></div>'+
+    '<div style="display:flex;gap:6px;margin-bottom:10px;align-items:center"><input id="siKw" value="'+esc(clean)+'" style="flex:1;background:rgba(255,255,255,.55);border:1px solid rgba(255,255,255,.65);border-radius:8px;padding:8px 10px;font-size:13px" onkeydown="if(event.key===\'Enter\')searchDishImg(true)"><button style="background:rgba(35,134,0,.15);border:1px solid rgba(35,134,0,.5);color:#238600;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer" onclick="searchDishImg(true)">搜索</button></div>'+
     '<div style="font-size:12px;color:#888;margin-bottom:8px">'+(clean?('正在从图库检索「'+esc(clean)+'」…点选即自动带入'):'输入名称可筛选（如：柠檬、爱媛38），或直接点选下方水果')+'</div>'+
     '<div id="siGrid" style="display:flex;flex-wrap:wrap;gap:8px"></div>'+
     '<div style="font-size:11px;color:#aaa;margin-top:10px">图片来源：云端水果图库（134 种常见水果，已统一水印+压缩）。若没有合适图，请修改关键词重搜，或用上方「选本地图」。</div></div>';
@@ -2436,7 +2440,7 @@ function searchDishImg(allowEmpty){
       var u=unitFromRef(f.price_ref);
       return '<div style="width:110px;text-align:center;cursor:pointer" onclick="pickDishFruit(this,\''+esc(f.name).replace(/'/g,"\\'")+'\',\''+u+'\')">'+
         '<img src="'+esc(f.img_url)+'" loading="lazy" style="width:110px;height:110px;object-fit:cover;border-radius:8px;border:1px solid rgba(255,255,255,.65);box-shadow:0 3px 10px rgba(0,0,0,.12)">'+
-        '<div style="font-size:11px;color:#2e7d32;font-weight:700;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(f.name)+'</div>'+
+        '<div style="font-size:11px;color:#238600;font-weight:700;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(f.name)+'</div>'+
         (f.best_months?'<div style="font-size:10px;color:#888;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">当季 '+esc(f.best_months)+'</div>':'')+
         (f.price_ref?'<div style="font-size:10px;color:#e65100;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(f.price_ref)+'</div>':'')+
         '</div>';
@@ -2603,16 +2607,16 @@ function renderShopAdmin(){
     '<label>高德 JS API Key（地图选点用）</label><input id="jsKey" value="'+esc(shopCfg.jskey||'')+'" placeholder="控制台 → 创建应用 → 添加Key → 服务平台选【Web端(JS API)】">'+
     '<label>安全密钥 securityJsCode（与 JS API Key 配套）</label><input id="jsCode" value="'+esc(shopCfg.jscode||'')+'" placeholder="添加Key时系统生成的安全密钥">'+
     '<label>修改后台密码</label><div style="display:flex;gap:8px"><input id="newPwd" placeholder="新密码（留空则不修改）"><button class="btn" onclick="changePwd()">修改密码</button></div>'+
-    '<div style="margin-top:14px;border-top:1px dashed rgba(46,125,50,.25);padding-top:10px">'+
-    '<div style="font-size:14px;font-weight:700;color:#2e7d32;margin-bottom:6px">营业时间（每天自动开/关店）</div>'+
+    '<div style="margin-top:14px;border-top:1px dashed rgba(35,134,0,.25);padding-top:10px">'+
+    '<div style="font-size:14px;font-weight:700;color:#238600;margin-bottom:6px">营业时间（每天自动开/关店）</div>'+
     '<div style="font-size:12px;color:#777;margin-bottom:8px">到点自动开店/关店；外送时段之外顾客只能来自提单。保存后云端三端同步。</div>'+
     '<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px"><span style="width:86px;font-size:13px;color:#555">营业开门</span><input type="time" id="openStart" value="'+minToHm(shopHours.openStart)+'" style="flex:1"></div>'+
     '<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px"><span style="width:86px;font-size:13px;color:#555">营业打烊</span><input type="time" id="openEnd" value="'+minToHm(shopHours.openEnd)+'" style="flex:1"></div>'+
     '<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px"><span style="width:86px;font-size:13px;color:#555">外送开始</span><input type="time" id="dlvStart" value="'+minToHm(shopHours.dlvStart)+'" style="flex:1"></div>'+
     '<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px"><span style="width:86px;font-size:13px;color:#555">外送截止</span><input type="time" id="dlvEnd" value="'+minToHm(shopHours.dlvEnd)+'" style="flex:1"></div>'+
     '</div>'+
-    '<div style="margin-top:14px;border-top:1px dashed rgba(46,125,50,.25);padding-top:10px">'+
-    '<div style="font-size:14px;font-weight:700;color:#2e7d32;margin-bottom:6px">配送费规则</div>'+
+    '<div style="margin-top:14px;border-top:1px dashed rgba(35,134,0,.25);padding-top:10px">'+
+    '<div style="font-size:14px;font-weight:700;color:#238600;margin-bottom:6px">配送费规则</div>'+
     '<div style="font-size:12px;color:#777;margin-bottom:8px">规则：免配送距离内免费；免配送距离~+2公里 满额免配送费否则收起步费；再往上每公里加价；超出上限不配送。保存后云端三端同步。</div>'+
     '<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px"><span style="width:86px;font-size:13px;color:#555">免配送距离(km)</span><input type="number" min="0" step="0.1" id="feeFreeKm" value="'+dlvFee.freeKm+'" style="flex:1"></div>'+
     '<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px"><span style="width:86px;font-size:13px;color:#555">起步配送费(元)</span><input type="number" min="0" step="0.5" id="feeBase" value="'+dlvFee.baseFee+'" style="flex:1"></div>'+
@@ -2834,7 +2838,7 @@ function deliverOrderCard(o){
   var items=(p.items||[]).map(function(it){ var s=(it.name||''); if(it.qty!=null) s+=' x'+it.qty+(it.unit?it.unit:''); return s; }).join('、')||'（无商品）';
   var st=(p.status==='配送中')?'<span class="badge paid">配送中</span>':'<span class="badge new">'+esc(p.status||'待配送')+'</span>';
   var btn=(p.status==='配送中')
-    ? '<button class="btn" style="background:#2e7d32;color:#fff" onclick="deliverDone('+p.id+')">✅ 已送达</button><button class="btn" onclick="startPosLoop('+p.id+')">📍 上报位置</button>'
+    ? '<button class="btn" style="background:#238600;color:#fff" onclick="deliverDone('+p.id+')">✅ 已送达</button><button class="btn" onclick="startPosLoop('+p.id+')">📍 上报位置</button>'
     : '<button class="btn" style="background:#00897b;color:#fff" onclick="deliverStart('+p.id+')">🛵 开始配送</button>';
   return '<div class="card" style=";margin-bottom:10px"><h3>订单 #'+(p.no||p.id)+' '+st+'</h3>'+
     '<div class="rowline"><span>下单时间</span><span>'+esc(fmtLocal(p.created||''))+'</span></div>'+
@@ -2963,8 +2967,8 @@ function orderStatusBar(o){
   var idx=seq.indexOf(cur); if(idx<0) idx=0;
   var steps=seq.map(function(x,i){
     var st=i<idx?'done':(i===idx?'cur':'todo');
-    var bg=st==='done'?'#2e7d32':(st==='cur'?'#fb8c00':'#e0e0e0');
-    var col=st==='todo'?'#bbb':(st==='cur'?'#e65100':'#2e7d32');
+    var bg=st==='done'?'#238600':(st==='cur'?'#fb8c00':'#e0e0e0');
+    var col=st==='todo'?'#bbb':(st==='cur'?'#e65100':'#238600');
     return '<div style="flex:1;text-align:center;font-size:11px;color:'+col+'"><div style="width:18px;height:18px;border-radius:50%;margin:0 auto 4px;line-height:18px;background:'+bg+';color:#fff;font-size:10px">'+(st==='done'?'✓':(i+1))+'</div>'+x+'</div>';
   }).join('');
   return '<div style="display:flex;gap:2px;margin:10px 0 4px">'+steps+'</div>';
@@ -3081,7 +3085,7 @@ function makeQr(text){
     var ctx=canvas.getContext('2d');
     ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,W,H);
     var grad=ctx.createLinearGradient(0,0,W,W);
-    grad.addColorStop(0,'#4caf50'); grad.addColorStop(1,'#1b5e20');
+    grad.addColorStop(0,'#4fa50a'); grad.addColorStop(1,'#238600');
     ctx.fillStyle=grad;
     for(var r=0;r<count;r++){
       for(var c=0;c<count;c++){
@@ -3101,12 +3105,12 @@ function makeQr(text){
     ctx.arcTo(cx,cy+cw,cx,cy,12);
     ctx.arcTo(cx,cy,cx+cw,cy,12);
     ctx.closePath(); ctx.fill();
-    ctx.strokeStyle='#66bb6a'; ctx.lineWidth=2; ctx.stroke();
+    ctx.strokeStyle='#7ccf2e'; ctx.lineWidth=2; ctx.stroke();
     ctx.textAlign='center'; ctx.textBaseline='middle';
-    ctx.fillStyle='#1b5e20';
+    ctx.fillStyle='#238600';
     ctx.font='bold 48px "Microsoft YaHei","PingFang SC",sans-serif';
     ctx.fillText('榨榨鲜果', W/2, cy+cw*0.30);
-    ctx.fillStyle='#43a047';
+    ctx.fillStyle='#4fa50a';
     ctx.font='36px "Microsoft YaHei","PingFang SC",sans-serif';
     ctx.fillText('· 外送点单 ·', W/2, cy+cw*0.68);
     // 底部版本号（年月日，便于核对）
@@ -3213,7 +3217,7 @@ function showRefPromo(){
     '<div style="font-size:17px;font-weight:700;margin-bottom:6px">把美味分享给朋友</div>'+
     '<div style="font-size:13px;color:#666;line-height:1.9;text-align:left;margin-bottom:14px">'+
     '① 朋友下单时填您的手机号，您得 <b style="color:#e65100">5%</b> 返利（次日到账）<br>'+
-    '② 您自己下单可 <b style="color:#2e7d32">抵扣 20%</b>，单笔最高 <b>10 元</b><br>'+
+    '② 您自己下单可 <b style="color:#238600">抵扣 20%</b>，单笔最高 <b>10 元</b><br>'+
     '③ 返利在「优惠说明 → 推广钱包」随时可查'+
     '</div>'+
     '<div style="display:flex;gap:8px">'+
@@ -3236,7 +3240,7 @@ function renderReferralAdmin(){
     '<div class="rowline"><span>新客立减金额（元）</span><span><input id="ncAmt" type="number" step="0.5" min="0" style="width:70px;border:1px solid #ddd;border-radius:6px;padding:6px" value="'+newCustAmt+'"><button class="btn" style="margin-left:8px" onclick="saveNewCustAmt()">保存</button></span></div>'+
     '<div style="font-size:12px;color:#888;margin:2px 0 6px;line-height:1.8">新客首单立减金额（默认 5 元）；填 0 即关闭新客立减活动。保存后云端三端同步。</div>'+
     '<div style="font-size:12px;color:#888;margin:6px 0;line-height:1.8">说明：朋友下单填您手机号 → 您得「返点比例」返利（次日到账）；您下单自动按「抵扣比例」抵扣，最高「单笔上限」元，不超钱包余额。</div>'+
-    '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn" onclick="saveReferralCfg()">保存设置</button><button class="btn" onclick="openRefCfgWindow()">查询</button><span id="refSaveRes" style="font-size:13px;color:#2e7d32;line-height:34px"></span></div>'+
+    '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn" onclick="saveReferralCfg()">保存设置</button><button class="btn" onclick="openRefCfgWindow()">查询</button><span id="refSaveRes" style="font-size:13px;color:#238600;line-height:34px"></span></div>'+
     '<div style="display:flex;gap:6px;margin:12px 0 4px;flex-wrap:wrap;align-items:center;background:#eef4fb;border:1px solid #d0e0f5;border-radius:8px;padding:8px">'+
       '<b style="font-size:13px">🎁 加优惠额度</b>'+
       '<input id="addBalPhone" type="tel" maxlength="11" placeholder="手机号" value="'+esc(window._addBalPhone||'')+'" oninput="window._addBalPhone=this.value" style="flex:1;min-width:110px;border:1px solid #ddd;border-radius:6px;padding:6px;font-size:13px">'+
@@ -3303,7 +3307,7 @@ function openRefCfgWindow(){
       '<button class="btn" style="flex:1" onclick="saveRefCfgWindow()">保存修改</button>'+
       '<button class="btn gray" style="flex:1" onclick="document.getElementById(\'refCfgModal\').remove()">关闭</button>'+
     '</div>'+
-    '<div id="refCfgRes" style="font-size:13px;color:#2e7d32;line-height:22px;margin-top:6px;text-align:center"></div>';
+    '<div id="refCfgRes" style="font-size:13px;color:#238600;line-height:22px;margin-top:6px;text-align:center"></div>';
   m.appendChild(mm);
   document.body.appendChild(m);
   loadRefCfgWindow();
