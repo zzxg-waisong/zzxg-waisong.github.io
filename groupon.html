@@ -88,6 +88,7 @@ label{font-size:12.5px;color:#777;display:block;margin-top:12px;font-weight:600}
   <div id="list"></div>
 </div>
 <div class="pad hidden" id="detailView">
+  <div id="bigView" onclick="this.style.display='none'" style="position:fixed;top:0;left:0;right:0;bottom:0;z-index:99999;background:rgba(0,0,0,.88);display:none;align-items:center;justify-content:center;cursor:zoom-out;"><img id="bigImg" src="" style="max-width:94%;max-height:92%;border-radius:10px;box-shadow:0 8px 40px rgba(0,0,0,.5);"></div>
   <div id="dCard"></div>
   <div id="dPlan"></div>
   <div class="notice hidden" id="dJoinNote">📢 接龙中：发起或跟团，截止后自动判定。</div>
@@ -141,7 +142,7 @@ function showList(){
       else if(s.status==='quoted') ph='<span class="muted">'+(s.unit_price?('单价 ¥'+fmtN(s.unit_price)):'等待老板报价')+'</span>';
       else if(s.status==='arrived') ph='<span class="price">已到货·请来取</span>';
       else if(s.status==='delivering') ph='<span class="muted">老板进货中</span>';
-      var img=s.cover?'<img src="'+esc(s.cover)+'" style="width:100%;max-height:120px;object-fit:cover;border-radius:12px;margin-bottom:10px;" onerror="this.style.display=\'none\'">':'';
+      var img=s.cover?'<img loading="lazy" src="'+esc(s.cover)+'" style="width:100%;max-height:120px;object-fit:cover;border-radius:12px;margin-bottom:10px;" onerror="this.style.display=\'none\'">':'';
       var pct=Math.min(100,Math.round(s.joined_qty/s.target_qty*100));
       return '<div class="card" onclick="openDetail('+s.id+')" style="cursor:pointer;">'+img+
         '<div class="row"><b>'+esc(s.title)+'</b><span class="badge '+stCls(s.status)+'">'+stName(s.status)+'</span></div>'+
@@ -171,7 +172,7 @@ function showDetail(){
     loadPlanCust();
     var join=document.getElementById('joinBox');
     join.style.display = (s.status==='open')?'block':'none';
-    var img=s.cover?'<img src="'+esc(s.cover)+'" style="width:100%;max-height:160px;object-fit:cover;border-radius:12px;margin-bottom:10px;" onerror="this.style.display=\'none\'">':'';
+    var img=s.cover?'<img src="'+esc(s.cover)+'" style="width:100%;max-height:160px;object-fit:cover;border-radius:12px;margin-bottom:10px;cursor:zoom-in;" onclick="event.stopPropagation();document.getElementById(\'bigImg\').src=this.src;document.getElementById(\'bigView\').style.display=\'flex\';" onerror="this.style.display=\'none\'">':'';
     document.getElementById('dCard').innerHTML=
       '<div class="card">'+img+
       '<div class="row"><b>'+esc(s.title)+'</b><span class="badge '+stCls(s.status)+'">'+stName(s.status)+'</span></div>'+
