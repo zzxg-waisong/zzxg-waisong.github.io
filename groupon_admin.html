@@ -237,7 +237,7 @@ function showList(){
     var el=document.getElementById('list');
     if(!list.length){ el.innerHTML='<div class="card empty"><div class="eico">🍃</div>当前筛选下没有团购</div>'; return; }
     el.innerHTML=list.map(function(s){
-      var img=s.cover?'<img class="cover" src="'+esc(s.cover)+'" style="display:block;" onerror="this.style.display=\'none\'">':'';
+      var img=s.cover?'<img class="cover" loading="lazy" src="'+esc(s.cover)+'" style="display:block;" onerror="this.style.display=\'none\'">':'';
       var pct=Math.min(100,Math.round(s.joined_qty/s.target_qty*100));
       return '<div class="card">'+img+
       '<div class="row"><b>'+esc(s.title)+'</b><span class="badge '+stCls(s.status)+'">'+stName(s.status)+'</span></div>'+
@@ -260,7 +260,7 @@ function showDetail(){
   api('groupon_list',{}).then(function(arr){
     var s=null; (arr||[]).forEach(function(x){ if(x.id===cur) s=x; });
     if(!s){ document.getElementById('dCard').innerHTML='<div class="card empty"><div class="eico">🤔</div>团购不存在</div>'; return; }
-    var img=s.cover?'<img class="cover" src="'+esc(s.cover)+'" style="display:block;" onerror="this.style.display=\'none\'">':'';
+    var img=s.cover?'<img class="cover" loading="lazy" src="'+esc(s.cover)+'" style="display:block;" onerror="this.style.display=\'none\'">':'';
     document.getElementById('dCard').innerHTML='<div class="card">'+img+
       '<div class="row"><b>'+esc(s.title)+'</b><span class="badge '+stCls(s.status)+'">'+stName(s.status)+'</span></div>'+
       '<div class="stats" style="margin-bottom:4px;">'+
