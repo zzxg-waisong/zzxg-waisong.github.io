@@ -2370,9 +2370,9 @@ function editDish(id){
   var box=document.createElement('div'); box.className='modal show'; box.id='dishModal';
   box.innerHTML='<div class="box"><h3>'+(d?'编辑菜品':'新增菜品（'+catLabel(defCat)+'）')+'</h3><div class="form" style="padding:0">'+
     '<label>菜品名称</label>'+
-    '<div style="display:flex;gap:8px;align-items:center"><input id="dName" value="'+(d?esc(d.name):'')+'" style="flex:1">'+
-    '<button type="button" style="flex:0 0 auto;background:rgba(35,134,0,.12);border:1px solid rgba(35,134,0,.5);color:#238600;border-radius:9px;padding:7px 11px;font-size:12px;font-weight:700;cursor:pointer" onclick="searchDishImg()">🔍 按名称搜图</button>'+
-    '<button type="button" style="flex:0 0 auto;background:rgba(255,152,0,.14);border:1px solid rgba(255,152,0,.55);color:#e65100;border-radius:9px;padding:7px 11px;font-size:12px;font-weight:700;cursor:pointer" onclick="openFruitPicker()">🍉 从水果库选品</button></div>'+
+    '<input id="dName" value="'+(d?esc(d.name):'')+'">'+
+    '<div style="display:flex;gap:8px;margin:6px 0 2px"><button type="button" style="flex:1;background:rgba(35,134,0,.12);border:1px solid rgba(35,134,0,.5);color:#238600;border-radius:9px;padding:8px 11px;font-size:13px;font-weight:700;cursor:pointer" onclick="searchDishImg()">🔍 按名称搜图</button>'+
+    '<button type="button" style="flex:1;background:rgba(255,152,0,.14);border:1px solid rgba(255,152,0,.55);color:#e65100;border-radius:9px;padding:8px 11px;font-size:13px;font-weight:700;cursor:pointer" onclick="openFruitPicker()">🍉 从水果库选品</button></div>'+
     '<div style="font-size:11px;color:#888;margin:-2px 0 4px">「从水果库选品」：点选水果自动带入 名称+图片+单位（斤/个/根/份），填价格即可保存；「按名称搜图」：只选图。两者都自动裁剪缩放 + 加水印 + 压缩（顾客端秒开）</div>'+
     '<label>价格（元）</label><input id="dPrice" type="number" step="0.1" value="'+(d?d.price:'')+'">'+
     '<label>原价（元，打折划线显示用；正常商品留空）</label><input id="dOrig" type="number" step="0.1" min="0" value="'+(d&&d.orig!=null?d.orig:'')+'">'+
