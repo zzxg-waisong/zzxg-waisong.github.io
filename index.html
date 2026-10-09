@@ -501,7 +501,7 @@ function loadCloud(force){
       // 再读Supabase备份（云端为权威，成功则无条件覆盖）
       fetch(SB_URL+'/rest/v1/rpc/get_menu',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:'{}'})
         .then(function(r){ return r.json(); })
-        .then(function(arr){ if(Array.isArray(arr)&&arr.length) applyCloudMenu(arr); if(window.adminOk && load(LS_MENU_PENDING,null)){ syncMenuToCloud(); renderMenuPendingBar(); } })
+        .then(function(arr){ if(Array.isArray(arr)) applyCloudMenu(arr); if(window.adminOk && load(LS_MENU_PENDING,null)){ syncMenuToCloud(); renderMenuPendingBar(); } })
         .catch(function(){ cacheFallback(); });
     });
 }
@@ -516,7 +516,7 @@ function cloudPull(){
   fetch(SB_URL+'/rest/v1/rpc/get_menu',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:'{}'})
     .then(function(r){ return r.json(); })
     .then(function(arr){
-      if(!arr || !arr.length) throw new Error('云端菜单为空');
+      if(!Array.isArray(arr)) throw new Error('云端菜单为空');
       dishes=arr.filter(function(d){return d.cat!=='半价';}); save(LS_DISHES, dishes); syncHalfPrice(); renderDishesAdmin(); renderCats(); renderDishes(); renderCartbar();
       setCloudStatus('✅ 已拉取云端菜单（'+dishes.length+' 项）载入后台');
     })
