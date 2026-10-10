@@ -133,6 +133,8 @@ th{color:#666;font-weight:700;font-size:12px;background:rgba(255,255,255,.4);-we
       </div>
       <label>团购说明（可选，显示给顾客）</label>
       <textarea id="oNote" rows="2" placeholder="如：到货后当天可取，地址 XX路XX号，来取前可电话确认"></textarea>
+      <label>每份预定金（元，0=不收）</label>
+      <input id="oDeposit" type="number" min="0" step="0.5" placeholder="如：5" value="0">
       <label>接龙截止时间</label>
       <input id="oDeadline" type="datetime-local">
       <button class="btn btn-p" style="width:100%;margin-top:14px;padding:13px;" onclick="doOpen()">🚀 发布团购</button>
@@ -246,6 +248,7 @@ function showList(){
         '<span style="font-size:12.5px;font-weight:800;color:#4fa50a;">'+fmtN(s.joined_qty)+'/'+fmtN(s.target_qty)+'</span>'+
       '</div>'+
       '<div class="row" style="padding-top:2px;"><span class="muted">'+s.people+' 人参与'+(s.per_limit>0?' · 每人限购 '+fmtN(s.per_limit)+' 份':'')+'</span><span class="muted">截止 '+fmtT(s.deadline)+'</span></div>'+
+      (Number(s.deposit)>0?'<div class="row" style="padding-top:0;"><span class="muted">预定金</span><span class="price" style="color:#c62828;">¥'+fmtN(s.deposit)+'/份</span></div>':'')+
       (s.unit_price!=null?'<div class="row" style="padding-top:0;"><span class="muted">单价</span><span class="price">¥'+fmtN(s.unit_price)+'</span></div>':'')+
       '<button class="btn btn-p" style="width:100%;margin-top:8px;" onclick="openDetail('+s.id+')">查看 / 操作</button></div>';
     }).join('');
@@ -271,6 +274,7 @@ function showDetail(){
       '</div>'+
       '<div class="row"><span>截止时间</span><b>'+fmtT(s.deadline)+'</b></div>'+
       (s.per_limit>0?'<div class="row"><span>每人限购</span><b>'+fmtN(s.per_limit)+' 份</b></div>':'')+
+      (Number(s.deposit)>0?'<div class="row"><span>每份预定金</span><span class="price" style="color:#c62828;">¥'+fmtN(s.deposit)+'</span></div>':'')+
       (s.note?'<div class="row" style="align-items:flex-start;"><span>说明</span><b style="text-align:right;font-weight:600;">'+esc(s.note)+'</b></div>':'')+
       (s.unit_price!=null?'<div class="row"><span>单价</span><span class="price">¥'+fmtN(s.unit_price)+'</span></div>':'')+
       (s.status==='quoted'?'<div class="row"><span>确认截止</span><b>'+fmtT(s.confirm_deadline)+'</b></div>':'')+
@@ -300,13 +304,45 @@ function showDetail(){
     var el=document.getElementById('dReq');
     if(!r.length){ el.innerHTML='<div class="card empty"><div class="eico">📋</div>暂无参与记录</div>'; return; }
     var pickedN=r.filter(function(x){return x.status==='picked';}).length;
-    el.innerHTML='<div class="card"><div class="hd2"><span class="ico">📋</span>参与明细 <span class="muted" style="font-weight:400;">('+r.length+' 条 · 已核销 '+pickedN+')</span></div><table><tr><th>手机号</th><th>商品</th><th>数量</th><th>状态</th></tr>'+
+    var dep0=Number((r[0]||{}).deposit)||0;
+    var depQty=r.filter(function(x){return x.status==='joined'||x.status==='confirmed'||x.status==='picked';});
+    var depTotal=depQty.reduce(function(a,x){return a+Number(x.qty||0);},0)*dep0;
+    var depPaid=depQty.filter(function(x){return x.deposit_paid;}).reduce(function(a,x){return a+Number(x.qty||0);},0)*dep0;
+    var cfQty=r.filter(function(x){return x.status==='confirmed';});
+    el.innerHTML='<div class="card"><div class="hd2"><span class="ico">📋</span>参与明细 <span class="muted" style="font-weight:400;">('+r.length+' 条 · 已核销 '+pickedN+')</span></div>'+
+      (dep0>0?'<div style="display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 2px;font-size:12.5px;">'+
+        '<span class="st s-confirmed">应收定金 ¥'+fmtN(depTotal)+'</span>'+
+        '<span class="st s-picked">已收 ¥'+fmtN(depPaid)+'</span>'+
+        '<span class="st s-joined">未收 ¥'+fmtN(depTotal-depPaid)+'</span>'+
+      '</div>':'')+
+      '<table><tr><th>手机号</th><th>商品</th><th>数量</th><th>状态</th><th>定金</th><th>操作</th></tr>'+
       r.map(function(x){
         var st={joined:'已参与',confirmed:'已确认',picked:'已取',missed:'未取',withdrawn:'退出',cancelled:'取消'}[x.status]||x.status;
         var sc={joined:'s-joined',confirmed:'s-confirmed',picked:'s-picked',missed:'s-missed',withdrawn:'s-withdrawn',cancelled:'s-cancelled'}[x.status]||'s-cancelled';
-        return '<tr><td>'+esc(x.phone)+'</td><td>'+esc(x.item_name)+'</td><td>'+fmtN(x.qty)+' '+esc(x.unit)+'</td><td><span class="st '+sc+'">'+st+'</span></td></tr>';
+        var dp='';
+        if(dep0>0 && x.status!=='withdrawn' && x.status!=='cancelled'){
+          dp='<button class="btn '+(x.deposit_paid?'btn-g':'btn-p')+'" style="margin:0;padding:4px 8px;font-size:12px;" onclick="markDeposit('+x.id+','+(x.deposit_paid?'false':'true')+')">'+(x.deposit_paid?'定金已收':'收定金')+'</button>';
+        }else if(dep0>0){ dp='<span class="muted">—</span>'; }
+        var wd='';
+        if(x.status==='joined'||x.status==='confirmed'){
+          wd='<button class="btn btn-r" style="margin:0;padding:4px 8px;font-size:12px;" onclick="adminWithdraw(\''+esc(x.phone)+'\')">退团</button>';
+        }
+        return '<tr><td>'+esc(x.phone)+'</td><td>'+esc(x.item_name)+'</td><td>'+fmtN(x.qty)+' '+esc(x.unit)+'</td><td><span class="st '+sc+'">'+st+'</span></td><td style="white-space:nowrap;">'+dp+'</td><td style="white-space:nowrap;">'+wd+'</td></tr>';
       }).join('')+'</table></div>';
   }).catch(function(){});
+}
+function markDeposit(id, paid){
+  api('groupon_mark_deposit',{p_admin:pwd(),p_request_id:id,p_paid:paid}).then(function(r){
+    if(r.ok){ okbar(true, paid?'✅ 定金已标记为已收':'✅ 定金已标记为未收'); showDetail(); }
+    else errbar(true,r.msg||'操作失败');
+  }).catch(function(){ errbar(true,'网络异常'); });
+}
+function adminWithdraw(phone){
+  if(!confirm('确定将该顾客（'+phone+'）退团？退团后该顾客不可再参与本团。')) return;
+  api('groupon_admin_withdraw',{p_admin:pwd(),p_session_id:cur,p_phone:phone}).then(function(r){
+    if(r.ok){ okbar(true,'✅ 已退团'); showDetail(); }
+    else errbar(true,r.msg||'退团失败');
+  }).catch(function(){ errbar(true,'网络异常'); });
 }
 function copyDetail(){
   api('groupon_requests_list',{p_admin:pwd(),p_session_id:cur}).then(function(r){
@@ -323,10 +359,12 @@ function doOpen(){
   if(!t){ errbar(true,'请填写活动标题'); return; }
   if(!g||Number(g)<=0){ errbar(true,'请填写目标份数'); return; }
   if(!d){ errbar(true,'请选择截止时间'); return; }
+  var dep=document.getElementById('oDeposit').value;
+  if(dep===''||Number(dep)<0){ errbar(true,'预定金不能为负'); return; }
   api('groupon_open',{p_admin:pwd(),p_title:t,p_target_qty:Number(g),p_deadline:new Date(d).toISOString(),
     p_cover:document.getElementById('oCover').value.trim(),p_note:document.getElementById('oNote').value.trim(),
-    p_per_limit:Number(document.getElementById('oLimit').value)||0}).then(function(r){
-    if(r.ok){ okbar(true,'✅ 团购已发布！'); document.getElementById('oTitle').value=''; document.getElementById('oTarget').value=''; document.getElementById('oCover').value=''; document.getElementById('oNote').value=''; document.getElementById('oLimit').value='0'; showList(); loadSessions(); }
+    p_per_limit:Number(document.getElementById('oLimit').value)||0,p_deposit:Number(dep)||0}).then(function(r){
+    if(r.ok){ okbar(true,'✅ 团购已发布！'); document.getElementById('oTitle').value=''; document.getElementById('oTarget').value=''; document.getElementById('oCover').value=''; document.getElementById('oNote').value=''; document.getElementById('oLimit').value='0'; document.getElementById('oDeposit').value='0'; showList(); loadSessions(); }
     else errbar(true,r.msg||'发布失败');
   }).catch(function(){ errbar(true,'网络异常'); });
 }
