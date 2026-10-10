@@ -153,7 +153,7 @@ button:active{transform:scale(.95);-webkit-transform:scale(.95)}
   body{background:#fff !important}
   body::before{display:none !important}
   body > *:not(#printArea){display:none !important}
-  #printArea{display:block !important;width:48mm;margin:0 auto;font-size:16px;line-height:1.7;font-family:SimHei,"Microsoft YaHei",sans-serif;word-break:break-all;font-weight:900}
+  #printArea{display:block !important;width:48mm;margin:0 auto;font-size:12px;line-height:1.5;font-family:SimSun,"SimSun-ExtB",monospace;word-break:break-all}
 }
 #printArea{display:none}
 #addrTips{position:absolute;left:10px;right:10px;top:100%;z-index:99;background:rgba(255,255,255,.82);-webkit-backdrop-filter:blur(20px) saturate(190%);backdrop-filter:blur(20px) saturate(190%);border:1px solid rgba(255,255,255,.9);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.13);max-height:220px;overflow:auto;margin-top:3px}
@@ -2166,18 +2166,20 @@ function renderCloudOrder(c){
 /* 小票打印（通用）：p=订单payload/本地订单对象, status=当前状态
    称重商品按实际斤数显示数量（weights 优先，note 按斤兜底），金额与购物车/云端一致 */
 function printTicket(p, status){
-  var lines=(p.items||[]).map(function(it){
-    var sub=0, qtyTxt='';
+  var lines=[], detailArr=[];
+  (p.items||[]).forEach(function(it){
+    var sub=0, qtyTxt='', qtyUnit='份', unitPrice=(it.per>0)?Number(it.per):Number(it.price);
     var wt=(p.weights&&p.weights[it.id]!=null)?Number(p.weights[it.id]):null;
     var jm=String(it.note||'').match(/(?:按斤|称重)([\d.]+)斤/);
     var gm=String(it.note||'').match(/按根([\d.]+)元/);
     var ga=String(it.note||'').match(/按金额([\d.]+)元/);
-    if(it.per>0 && wt!=null){ sub=it.per*wt; qtyTxt='x'+wt+'斤（'+it.per+'元/斤）'; }
-    else if(it.per>0 && jm){ sub=it.per*parseFloat(jm[1]); qtyTxt='x'+jm[1]+'斤（'+it.per+'元/斤）'; }
-    else if(gm){ sub=parseFloat(gm[1]); qtyTxt=it.note; }
-    else if(ga){ sub=parseFloat(ga[1]); qtyTxt=it.note; }
-    else { sub=it.price*it.qty; qtyTxt='x'+(it.qty!=null?it.qty:'')+(it.unit?it.unit:''); }
-    return (it.name||'')+' '+qtyTxt+' ¥'+sub.toFixed(2);
+    if(it.per>0 && wt!=null){ sub=it.per*wt; qtyTxt='x'+wt+'斤（'+it.per+'元/斤）'; qtyUnit='斤'; }
+    else if(it.per>0 && jm){ sub=it.per*parseFloat(jm[1]); qtyTxt='x'+jm[1]+'斤（'+it.per+'元/斤）'; qtyUnit='斤'; }
+    else if(gm){ sub=parseFloat(gm[1]); qtyTxt=it.note; qtyUnit='根'; }
+    else if(ga){ sub=parseFloat(ga[1]); qtyTxt=it.note; qtyUnit='份'; }
+    else { sub=it.price*it.qty; qtyTxt='x'+(it.qty!=null?it.qty:'')+(it.unit?it.unit:''); qtyUnit=it.unit||'份'; }
+    lines.push((it.name||'')+' '+qtyTxt+' ¥'+sub.toFixed(2));
+    detailArr.push({name:it.name||'', unitPrice:unitPrice, qtyTxt:qtyTxt, qtyUnit:qtyUnit, subtotal:sub});
   });
   var note='';
   if(p.remark){ var rm=String(p.remark).trim(); if(rm && !/^https?:\/\/|\.github\.io|\.edgeone\.dev|uri\.amap\.com/i.test(rm)) note=rm; }
@@ -2204,7 +2206,7 @@ function printTicket(p, status){
   }catch(e){}
   var seqNo=('0'+(_n2.getMonth()+1)).slice(-2)+('0'+_n2.getDate()).slice(-2)+' '+('0'+_n2.getHours()).slice(-2)+':'+('0'+_n2.getMinutes()).slice(-2)+' #'+_cnt2;
   var body={ seqNo:seqNo, title:'榨榨鲜果', lines:lines, note:note, round:(roundAmt>0?('-'+money(roundAmt)):''), amount:'¥'+Number(amt).toFixed(2), newCust:(p.newcust?true:false), newCustDiscount:(p.newcust?(Number(p.discount)||0):0), referralDeduct:(p.referralDeduct?Number(p.referralDeduct):0), time:nowStr(), paid:paid, hasJuice:(p.items||[]).some(function(it){return it.cat==='果汁'||it.cat==='半价';}),
-    orderNo:(p.id||''), created:fmtLocal(p.created||''), subtotal:'', total:'', customer:(p.name||'')+' '+(p.phone||''), addr:(p.mode==='pickup'?'到店自提':(p.addr||'')), deliveryTime:(p.time||''), status:(status==='new'?'待处理':status) };
+    orderNo:(p.id||''), created:fmtLocal(p.created||''), subtotal:'', total:'', customer:(p.name||'')+' '+(p.phone||''), addr:(p.mode==='pickup'?'到店自提':(p.addr||'')), deliveryTime:(p.time||''), status:(status==='new'?'待处理':status), detail:detailArr };
   fetch('http://localhost:8899/print',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
     .then(function(r){ return r.json(); }).then(function(j){ if(!j||!j.ok){ throw 0; } }).catch(function(){ if(location.href.indexOf('autologin=1')>=0) alert('打印失败：请确认本机打印代理已启动（桌面「榨榨鲜果外送」）'); });
 }
@@ -3071,64 +3073,82 @@ function renderPrintAdmin(){
     '<button class="btn orange" onclick="testPrint()">USB 直连打印（备用）</button></div></div></div>';
   return html;
 }
+/* 小票渲染（参考主流外卖样式）：p=订单, st=状态, isDemo=true 用示例明细
+   布局：店名/序号居中 → 信息区(订单号/下单/送达/备注) → 商品四列(商品/单价/数量/价格) → 费用区(合计/配送/优惠/实付) → 收件区 */
+function ticketHTML(p, st, isDemo){
+  var demoItems=[{name:'雪梨（中）',price:3.5,qty:2,unit:'斤',per:3.5,note:'按斤2斤',id:'x'},{name:'红心猕猴桃',price:15,qty:1,unit:'斤',per:15,note:'按斤1斤',id:'y'},{name:'鲜榨西瓜汁',price:6.75,qty:2,unit:'杯',note:'第二杯半价',id:'z'}];
+  var items=isDemo?demoItems:(p.items||[]);
+  var wtMap={};
+  if(p.weights){ for(var k in p.weights) wtMap[k]=p.weights[k]; }
+  var rows=items.map(function(it){
+    var unitPrice=(it.per>0)?Number(it.per):Number(it.price);
+    var sub=0, qtyTxt='';
+    var wt=(wtMap[it.id]!=null)?Number(wtMap[it.id]):null;
+    var jm=String(it.note||'').match(/(?:按斤|称重)([\d.]+)斤/);
+    var gm=String(it.note||'').match(/按根([\d.]+)元/);
+    var ga=String(it.note||'').match(/按金额([\d.]+)元/);
+    if(it.per>0 && wt!=null){ sub=it.per*wt; qtyTxt=wt+'/斤'; }
+    else if(it.per>0 && jm){ sub=it.per*parseFloat(jm[1]); qtyTxt=jm[1]+'/斤'; }
+    else if(gm){ sub=parseFloat(gm[1]); qtyTxt='1/根'; }
+    else if(ga){ sub=parseFloat(ga[1]); qtyTxt='1/份'; }
+    else { sub=it.price*it.qty; qtyTxt=(it.qty!=null?it.qty:'1')+'/'+(it.unit||'份'); }
+    return {name:it.name||'', unitPrice:unitPrice, qtyTxt:qtyTxt, sub:sub};
+  });
+  var subtotal=rows.reduce(function(s,r){return s+r.sub;},0);
+  var raw=(p.payTotal!=null)?Number(p.payTotal):((p.weightTotal!=null&&p.weightTotal?Number(p.weightTotal):(p.total!=null?Number(p.total):subtotal))-(p.newcust&&p.discount!=null?Number(p.discount):0)-(p.referralDeduct?Number(p.referralDeduct):0));
+  var amt=(p.hasWeight?raw:roundHalf(raw));
+  var roundAmt=Math.round((raw-amt)*100)/100;
+  var fee=(p.deliveryFee!=null)?Number(p.deliveryFee):0;
+  var disc=(p.newcust&&p.discount!=null)?Number(p.discount):0;
+  var refd=p.referralDeduct?Number(p.referralDeduct):0;
+  var paid=(st==='已付款');
+  var seq=''; try{ seq=String(p.id||''); }catch(e){}
+  var E=function(s){ return String(s==null?'':s); };
+  var H='';
+  H+='<div style="text-align:center;font-size:15px;font-weight:800">榨榨鲜果</div>';
+  H+='<div style="text-align:center;font-size:10px;color:#333">新鲜水果 · 鲜果现榨</div>';
+  H+='<div style="text-align:center;font-size:11px;color:#333">'+(isDemo?'1010 10:07 #1':('#'+E(seq)))+'</div>';
+  H+='<div style="text-align:center;font-size:11px">'+(paid?'--已付款--':'--待处理--')+'</div>';
+  H+='<div style="margin:4px 0;border-top:1px solid #000"></div>';
+  if(!isDemo){
+    H+='<div style="font-size:11px">订单编号：'+E(seq)+'</div>';
+    H+='<div style="font-size:11px">下单时间：'+E(fmtLocal(p.created||''))+'</div>';
+    if(p.time) H+='<div style="font-size:11px">送达时间：'+E(p.time)+'</div>';
+    var rm=String(p.remark||'').trim();
+    if(rm && !/^https?:\/\/|\.github\.io|\.edgeone\.dev|uri\.amap\.com/i.test(rm)) H+='<div style="font-size:11px">备注：'+E(rm)+'</div>';
+  }
+  H+='<table style="width:100%;border-collapse:collapse;font-size:11px;margin:4px 0">';
+  H+='<tr><td style="text-align:left;font-weight:700">商品</td><td style="text-align:right;font-weight:700">单价</td><td style="text-align:right;font-weight:700">数量</td><td style="text-align:right;font-weight:700">价格</td></tr>';
+  rows.forEach(function(r){
+    H+='<tr><td style="text-align:left">'+E(r.name)+'</td><td style="text-align:right">'+Number(r.unitPrice).toFixed(2)+'</td><td style="text-align:right">'+E(r.qtyTxt)+'</td><td style="text-align:right">'+Number(r.sub).toFixed(2)+'</td></tr>';
+  });
+  H+='</table>';
+  H+='<div style="margin:3px 0;border-top:1px solid #000"></div>';
+  H+='<div style="font-size:11px;display:flex;justify-content:space-between"><span>合计</span><span>'+Number(subtotal).toFixed(2)+'</span></div>';
+  if(fee>0) H+='<div style="font-size:11px;display:flex;justify-content:space-between"><span>配送费</span><span>'+fee.toFixed(2)+'</span></div>';
+  if(disc>0) H+='<div style="font-size:11px;display:flex;justify-content:space-between"><span>新客优惠</span><span>-'+disc.toFixed(2)+'</span></div>';
+  if(refd>0) H+='<div style="font-size:11px;display:flex;justify-content:space-between"><span>推广抵扣</span><span>-'+refd.toFixed(2)+'</span></div>';
+  if(roundAmt>0) H+='<div style="font-size:11px;display:flex;justify-content:space-between"><span>抹零</span><span>-'+Number(roundAmt).toFixed(2)+'</span></div>';
+  H+='<div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:2px"><span style="font-size:12px;font-weight:700">实付金额</span><span style="font-size:15px;font-weight:800">¥'+Number(amt).toFixed(2)+'</span></div>';
+  H+='<div style="margin:3px 0;border-top:1px solid #000"></div>';
+  H+='<div style="font-size:11px">'+(p.mode==='pickup'?'取餐方式：到店自提':'地址：'+E(p.addr||''))+'</div>';
+  H+='<div style="font-size:11px">姓名：'+E(p.name||'')+'</div>';
+  H+='<div style="font-size:11px">电话：'+E(p.phone||'')+'</div>';
+  H+='<div style="text-align:center;font-size:10px;color:#333;margin-top:4px">谢谢惠顾，欢迎再次光临</div>';
+  return H;
+}
 function previewTicket(){
-  // 优先用最近一单预览，无订单时用示例（样式与打印代理一致：58mm 热敏）
   var p=null, st='new';
   if(typeof cloudOrders!=='undefined' && Array.isArray(cloudOrders)){
     for(var i=cloudOrders.length-1;i>=0;i--){ var c=cloudOrders[i]; if(c.status!=='deleted'){ p=c.payload||{}; st=c.status; break; } }
   }
-  var _now=new Date();
-  var seq=('0'+(_now.getMonth()+1)).slice(-2)+('0'+_now.getDate()).slice(-2)+' '+('0'+_now.getHours()).slice(-2)+':'+('0'+_now.getMinutes()).slice(-2)+' #'+(p?'?':'1');
-  var demoLines=[
-    '雪梨（中） x2斤（3.5元/斤） ¥7.00',
-    '红心猕猴桃 x1斤（15元/斤） ¥15.00',
-    '鲜榨西瓜汁 第二杯半价 x2杯 ¥13.50'
-  ];
-  var lines=[], amt='¥35.50', note='', cust='示例顾客 13800000000', addr='到店自提', dtime='尽快送达', paid=false;
-  if(p){
-    lines=(p.items||[]).map(function(it){
-      var sub=0, qt='';
-      var wt=(p.weights&&p.weights[it.id]!=null)?Number(p.weights[it.id]):null;
-      var jm=String(it.note||'').match(/(?:按斤|称重)([\d.]+)斤/);
-      var gm=String(it.note||'').match(/按根([\d.]+)元/);
-      var ga=String(it.note||'').match(/按金额([\d.]+)元/);
-      if(it.per>0 && wt!=null){ sub=it.per*wt; qt='x'+wt+'斤（'+it.per+'元/斤）'; }
-      else if(it.per>0 && jm){ sub=it.per*parseFloat(jm[1]); qt='x'+jm[1]+'斤（'+it.per+'元/斤）'; }
-      else if(gm){ sub=parseFloat(gm[1]); qt=it.note; }
-      else if(ga){ sub=parseFloat(ga[1]); qt=it.note; }
-      else { sub=it.price*it.qty; qt='x'+(it.qty!=null?it.qty:'')+(it.unit?it.unit:''); }
-      return (it.name||'')+' '+qt+' ¥'+sub.toFixed(2);
-    });
-    var raw=(p.payTotal!=null)?Number(p.payTotal):((p.weightTotal!=null&&p.weightTotal?Number(p.weightTotal):(p.total!=null?Number(p.total):0))-(p.newcust&&p.discount!=null?Number(p.discount):0)-(p.referralDeduct?Number(p.referralDeduct):0));
-    amt='¥'+Number((p.hasWeight?raw:roundHalf(raw))).toFixed(2);
-    note=(p.remark&&!/^https?:\/\/|\.github\.io|\.edgeone\.dev|uri\.amap\.com/i.test(String(p.remark)))?String(p.remark):'';
-    cust=(p.name||'')+' '+(p.phone||'');
-    addr=(p.mode==='pickup'?'到店自提':(p.addr||''));
-    dtime=(p.time||'');
-    paid=(st==='已付款');
-  } else { lines=demoLines; }
-  var rows=lines.map(function(l){ return '<div>'+l+'</div>'; }).join('');
+  var inner=ticketHTML(p, st, !p);
   var div='<div style="position:fixed;inset:0;background:rgba(12,22,12,.34);-webkit-backdrop-filter:blur(12px) saturate(160%);backdrop-filter:blur(12px) saturate(160%);z-index:9999;display:flex;align-items:center;justify-content:center;padding:14px" onclick="if(event.target===this)this.remove()">'
     +'<div style="background:rgba(255,255,255,.35);border-radius:22px;-webkit-backdrop-filter:blur(46px) saturate(210%);backdrop-filter:blur(46px) saturate(210%);border:1px solid rgba(255,255,255,.9);box-shadow:0 14px 44px rgba(0,0,0,.13);padding:18px;width:92%;max-width:430px;max-height:88vh;overflow:auto">'
     +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><b>58 热敏小票 · 打印预览</b><button class="btn" onclick="this.closest(\'div\').parentElement.parentElement.remove()">关闭</button></div>'
-    +'<div style="font-size:12px;color:#888;margin-bottom:12px">'+ (p?('以下为最近一单（#'+(p.id||'')+'）的小票打印样式，实际宽度以打印机为准，可用「打印测试小票」验证纸张。'):'当前没有订单，以下为示例小票样式。实际内容以订单为准。') +'</div>'
-    +'<div style="background:#fff;width:244px;margin:0 auto;padding:10px 7px;border:1px dashed #bbb;border-radius:2px;font-family:SimSun,\'SimSun-ExtB\',monospace;font-size:12px;line-height:1.5;color:#000;letter-spacing:0">'
-    +'<div style="text-align:center;font-size:16px;font-weight:700">榨榨鲜果</div>'
-    +'<div style="text-align:center;font-size:10px;color:#333">新鲜水果 · 鲜果现榨</div>'
-    +'<div style="text-align:center">'+seq+'</div>'
-    +'<div style="white-space:nowrap;overflow:hidden">——————————————</div>'
-    +rows
-    +(note?('<div style="color:#333">备注：'+note+'</div>'):'')
-    +'<div style="white-space:nowrap;overflow:hidden">——————————————</div>'
-    +(paid?'<div style="text-align:center;font-weight:700;color:#333">已付款</div>':'')
-    +'<div style="text-align:right;font-size:14px;font-weight:700">应付合计 '+amt+'</div>'
-    +'<div style="white-space:nowrap;overflow:hidden">——————————————</div>'
-    +'<div>顾客：'+cust+'</div>'
-    +'<div>'+(addr==='到店自提'?'取餐方式：到店自提':'地址：'+addr)+'</div>'
-    +(dtime?'<div>预送时间：'+dtime+'</div>':'')
-    +'<div>下单时间：'+nowStr()+'</div>'
-    +'<div style="text-align:center;color:#333">谢谢惠顾，欢迎再次光临</div>'
-    +'</div></div></div>';
+    +'<div style="font-size:12px;color:#888;margin-bottom:12px">'+ (p?('以下为最近一单（#'+(p.id||'')+'）的小票打印样式。'):'当前没有订单，以下为示例小票样式。实际内容以订单为准。') +'</div>'
+    +'<div style="background:#fff;width:258px;margin:0 auto;padding:9px 7px;border:1px dashed #bbb;border-radius:2px;font-family:SimSun,\'SimSun-ExtB\',monospace;color:#000">'+inner+'</div>'
+    +'</div></div>';
   var m=document.createElement('div'); m.innerHTML=div; document.body.appendChild(m);
 }
 async function testPrint(){
@@ -3157,37 +3177,16 @@ async function writeReceipt(port, text){
 }
 
 function browserPrint(text, seqNo){
-  text=text||'';
-  var d=new Date(); function pp(x){return (x<10?'0':'')+x;}
-  var ts=d.getFullYear()+'-'+pp(d.getMonth()+1)+'-'+pp(d.getDate())+' '+pp(d.getHours())+':'+pp(d.getMinutes());
-  var pay='', lines=(text?text.split('\n'):[]), rest=[];
-  lines.forEach(function(ln){ if(ln.indexOf('【应付合计】')===0) pay=ln.replace('【应付合计】',''); else rest.push(esc(ln)); });
-  var body='';
-  body+='<div style="text-align:left;font-size:30px;font-weight:800;letter-spacing:3px">'+(seqNo||1)+'#</div>';
-  body+='<div style="text-align:center;font-size:20px;font-weight:900;margin:2px 0">🍉 榨榨鲜果</div>';
-  body+='<div style="text-align:center;font-size:15px">========================</div>';
-  body+=rest.join('<br>');
-  body+='<br><div style="text-align:center;font-size:15px">----------------------</div>';
-  if(pay){
-    body+='<div style="text-align:center;margin:3px 0"><div style="font-size:18px;font-weight:700">应付合计</div><div style="font-size:30px;font-weight:800">'+esc(pay)+'</div></div>';
-  }
-  body+='<div style="text-align:center;margin:4px 0;font-size:15px;font-weight:900">扫码付款</div>';
-  body+='<div style="text-align:center">';
-  body+='<div style="text-align:center;margin:2px 0"><img src="'+esc(payCfg.payUrl||'收款码.png')+'" style="width:42mm;height:42mm;display:block;margin:0 auto"><div style="font-size:12px;font-weight:700;margin-top:2px">扫码付款</div></div>';
-  body+='</div>';
-  body+='<div style="text-align:center;font-size:15px">----------------------</div>';
-  body+='时间：'+ts+'<br>谢谢惠顾，欢迎再次光临！';
-  body+='<div style="height:5mm"></div>';
-  document.getElementById('printArea').innerHTML='<div style="white-space:pre-wrap">'+body+'</div>';
+  // 测试打印小票：直接渲染新版小票样式（与预览一致），走浏览器打印
+  var inner=ticketHTML({}, 'new', true);
+  document.getElementById('printArea').innerHTML='<div style="white-space:pre-wrap">'+inner+'</div>';
   document.getElementById('printArea').style.display='block';
   window.print();
   var _hp=document.getElementById('printArea');
   var _hideP=function(){ _hp.style.display='none'; window.removeEventListener('afterprint',_hideP); };
   window.addEventListener('afterprint',_hideP);
   setTimeout(_hideP, 5000);
-}
-
-function renderQrAdmin(){
+}function renderQrAdmin(){
   var url=location.origin+location.pathname;
   var html='<div class="panel"><h3>点单二维码</h3><div class="card" style="text-align:center">'+
     '<p style="font-size:13px;color:#555;margin-bottom:10px">顾客扫码直接进入点单页（免登录）。把此二维码打印贴在店内即可。</p>'+
