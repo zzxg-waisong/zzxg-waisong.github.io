@@ -120,10 +120,13 @@ button:active{transform:scale(.95);-webkit-transform:scale(.95)}
 .admin-top .topline .btn{margin:0}
 .admin-top .ops{display:flex;flex-direction:row;gap:6px;width:100%;max-width:100%}
 .admin-top .ops .btn{flex:1 1 0;min-width:0;max-width:100%;text-align:center;margin:0;padding:6px 2px;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-radius:14px}
-.admin-tabs{display:flex;background:rgba(255,255,255,.3);-webkit-backdrop-filter:blur(32px) saturate(200%);backdrop-filter:blur(32px) saturate(200%);border-bottom:1px solid rgba(255,255,255,.6);overflow-x:auto;position:sticky;top:114px;z-index:15;scrollbar-width:none}
+.admin-tabs{display:flex;flex-wrap:wrap;background:rgba(255,255,255,.3);-webkit-backdrop-filter:blur(32px) saturate(200%);backdrop-filter:blur(32px) saturate(200%);border-bottom:1px solid rgba(255,255,255,.6);overflow-x:auto;position:sticky;top:114px;z-index:15;scrollbar-width:none}
 .admin-tabs::-webkit-scrollbar{display:none}
 .admin-tabs button{flex:0 0 auto;border:none;background:none;padding:13px 17px;font-size:14px;color:#777;border-bottom:2.5px solid transparent;cursor:pointer;white-space:nowrap;font-weight:500;transition:color .15s,background .15s}
 .admin-tabs button.on{color:#238600;border-bottom-color:#dfff2b;font-weight:800;background:rgba(35,134,0,.07)}
+@media (max-width:767px){
+  .admin-tabs button{flex:1 0 20%;min-width:0;text-align:center;padding:12px 2px;font-size:13px;overflow:hidden;text-overflow:ellipsis}
+}
 .panel{padding:14px;max-width:760px;margin:0 auto;position:relative;z-index:1}
 .card{background:rgba(255,255,255,.38);-webkit-backdrop-filter:blur(34px) saturate(200%);backdrop-filter:blur(34px) saturate(200%);border-radius:20px;padding:14px;margin-bottom:12px;box-shadow:0 6px 22px rgba(35,134,0,.09),inset 0 1px 0 rgba(255,255,255,.85),inset 0 0 0 .5px rgba(255,255,255,.25);border:1px solid rgba(255,255,255,.9);transition:transform .15s}
 .card:active{transform:scale(.995)}
