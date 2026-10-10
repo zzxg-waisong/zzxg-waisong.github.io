@@ -426,6 +426,15 @@ button:active{transform:scale(.95);-webkit-transform:scale(.95)}
 var LS_DISHES='fruit_dishes', LS_ORDERS='fruit_orders', LS_PWD='fruit_admin_pwd',
     LS_PAY='fruit_pay', LS_SHOP='fruit_shop', LS_SESSION='fruit_admin_ok', LS_CLOUD='fruit_cloud', LS_DELIVER='fruit_deliver';
 var SB_URL='https://aenrwtwhhuqzmbxsjump.supabase.co', SB_KEY='sb_publishable_TYMADeCoaKMsnJ7INuHnfQ_n9yKIHkl', LS_CLOUDPWD='fruit_cloud_pwd', LS_MENU_PENDING='fruit_menu_pending';
+function clpwd(){ // 云端操作密码：从本机取，未设置时引导一次（绝不使用出厂默认值）
+  var v=localStorage.getItem(LS_CLOUDPWD);
+  if(!v){
+    if(!window._clpwdWarned){ window._clpwdWarned=true;
+      alert('云端密码未设置：请在后台「店铺设置」→「云端密码」填写（向豆包获取），否则云端订单/菜单同步不可用。'); }
+    return '';
+  }
+  return v;
+}
 var cloudOrders=[]; // 顾客手机下单的云端订单
 var cloudPhoneCount={}; // 手机号出现次数
 var cloudBalances={}; // 新客优惠余额（云端账户）
@@ -1026,7 +1035,7 @@ function renderShopToggle(){
   el.style.background = adminShopOpen ? '#238600' : '#c62828';
 }
 function toggleShopStatus(silent){
-  var pwd=localStorage.getItem(LS_CLOUDPWD)||'1986shenhu';
+  var pwd=clpwd();
   var target=!adminShopOpen;
   try{
     fetch(SB_URL+'/rest/v1/rpc/set_shop_status',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({admin_pwd:pwd, p_open:target})})
@@ -1673,6 +1682,7 @@ function setUseNewcust(ph,use){
 var zoomList=[], zoomIdx=0;
 function thumbUrl(u){
   if(!u) return u;
+  if(u.indexOf('http')===0 || u.indexOf('data:')===0) return u; // 云端/外链/本地图直接用原图
   return u.replace(/\.(jpg|jpeg|png)$/i, '_thumb.jpg');
 }
 function zoomImg(src){
@@ -1712,7 +1722,7 @@ function payDone(){
   var order=curOrder; order.status='已付款'; save(LS_ORDERS, orders);
   // 同步云端订单状态为已付款（店主后台可见）
   try{
-    var pwd=localStorage.getItem(LS_CLOUDPWD)||'1986shenhu';
+    var pwd=clpwd();
     fetch(SB_URL+'/rest/v1/rpc/update_order_status',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({admin_pwd:pwd,order_id:(order.cid||order.id),status:'已付款'})}).catch(function(){});
   }catch(e){}
   var text=formatOrderText(order);
@@ -1916,7 +1926,7 @@ function placeCloudOrder(o, refInfo){
         var cid=(j.id!=null)?j.id:0;
         o.cid=cid; if(curOrder===o) curOrder.cid=cid;
         if(o.newcust && o.discount>0 && cid){
-          fetch(SB_URL+'/rest/v1/rpc/apply_newcust',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({admin_pwd:'1986shenhu',order_id:cid,min_free:0})})
+          fetch(SB_URL+'/rest/v1/rpc/apply_newcust',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({admin_pwd:'',order_id:cid,min_free:0})})
             .then(function(r){ return r.json(); })
             .then(function(jj){ /* apply_newcust 已写入 newcust=true + discount=实际抵扣额，无需再标记 */ })
             .catch(function(){});
@@ -1925,11 +1935,11 @@ function placeCloudOrder(o, refInfo){
         var gItems=upItems.filter(function(it){ return it.cat==='礼盒' && it.stock!=null; });
         if(gItems.length){
           gItems.forEach(function(it){
-            fetch(SB_URL+'/rest/v1/rpc/dec_stock',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({p_admin:'1986shenhu',p_id:it.id,p_qty:it.qty})})
+            fetch(SB_URL+'/rest/v1/rpc/dec_stock',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({p_admin:'',p_id:it.id,p_qty:it.qty,p_order_id:cid})})
               .then(function(r){ return r.json(); })
               .then(function(jj){
                 if(!jj || !jj.ok){
-                  fetch(SB_URL+'/rest/v1/rpc/delete_order',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({admin_pwd:'1986shenhu',order_id:cid})}).catch(function(){});
+                  fetch(SB_URL+'/rest/v1/rpc/delete_order',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({admin_pwd:'',order_id:cid,p_phone:o.phone})}).catch(function(){});
                   alert('抱歉，您选择的礼盒已售罄，该订单已自动取消');
                 }
               }).catch(function(){});
@@ -1949,7 +1959,7 @@ function fetchCloudOrders(silent){
     setTimeout(function(){ fetchCloudOrders(silent); }, 1000);
     return;
   }
-  var pwd=localStorage.getItem(LS_CLOUDPWD)||'1986shenhu';
+  var pwd=clpwd();
   try{
     fetch(SB_URL+'/rest/v1/rpc/get_orders',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({admin_pwd:pwd})})
       .then(function(r){ return r.json(); })
@@ -1978,7 +1988,7 @@ function fetchCloudOrders(silent){
   }catch(e){}
 }
 function renderCloudB(){
-  var pwd=localStorage.getItem(LS_CLOUDPWD)||'1986shenhu';
+  var pwd=clpwd();
   try{
     fetch(SB_URL+'/rest/v1/rpc/get_balances',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({admin_pwd:pwd})})
       .then(function(r){ return r.json(); })
@@ -2076,7 +2086,7 @@ function toggleAlarm(){
   renderAdmin();
 }
 function updateCloudStatus(id,status){
-  var pwd=localStorage.getItem(LS_CLOUDPWD)||'1986shenhu';
+  var pwd=clpwd();
   try{
     fetch(SB_URL+'/rest/v1/rpc/update_order_status',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({admin_pwd:pwd,order_id:id,status:status})})
       .then(function(r){ return r.json(); })
@@ -2096,7 +2106,7 @@ function newCustCloudOrder(id){
   var p=c.payload||{};
   var minFree=0;
   if(!p.deliveryFee){ var d=Number(p.dist||0); minFree=(!d||d<=3)?20:30; }
-  var pwd=localStorage.getItem(LS_CLOUDPWD)||'1986shenhu';
+  var pwd=clpwd();
   try{
     fetch(SB_URL+'/rest/v1/rpc/apply_newcust',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({admin_pwd:pwd,order_id:id,min_free:minFree})})
       .then(function(r){ return r.json(); })
@@ -2239,7 +2249,7 @@ function addBalance(){
   if(!/^1\d{10}$/.test(ph)){ alert('请输入正确的手机号'); return; }
   if(!(amt>0)){ alert('请输入大于 0 的金额'); return; }
   if(!confirm('确认为 '+ph+' 增加 '+amt+' 元新客优惠额度？\n（将立即写入云端账户）')) return;
-  var pwd=localStorage.getItem(LS_CLOUDPWD)||'1986shenhu';
+  var pwd=clpwd();
   try{
     fetch(SB_URL+'/rest/v1/rpc/add_balance',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({admin_pwd:pwd,p_phone:ph,p_amount:amt})})
       .then(function(r){ return r.json(); })
@@ -2249,7 +2259,7 @@ function addBalance(){
 }
 function deleteCloudOrder(id){
   if(!confirm('确认删除订单 #'+id+'？\n删除后不再语音提醒，可在「已删订单」查看，可永久删除。')) return;
-  var pwd=localStorage.getItem(LS_CLOUDPWD)||'1986shenhu';
+  var pwd=clpwd();
   // 软删除：状态置 deleted，语音不再提醒，可查看已删订单
   fetch(SB_URL+'/rest/v1/rpc/update_order_status',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({admin_pwd:pwd,order_id:id,status:'deleted'})})
     .then(function(r){ return r.json(); }).then(function(j){ if(j&&j.ok){ fetchCloudOrders(); } else { alert('删除失败'); } }).catch(function(){ alert('删除失败'); });
@@ -2285,18 +2295,18 @@ function showDeletedOrders(){
 }
 function purgeOrder(id){
   if(!confirm('确认彻底删除订单 #'+id+'？不可恢复。')) return;
-  var pwd=localStorage.getItem(LS_CLOUDPWD)||'1986shenhu';
-  fetch(SB_URL+'/rest/v1/rpc/delete_order',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({admin_pwd:pwd,order_id:id})})
+  var pwd=clpwd();
+  fetch(SB_URL+'/rest/v1/rpc/delete_order',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({admin_pwd:pwd,order_id:id,p_phone:''})})
     .then(function(r){ return r.json(); }).then(function(j){ if(j&&j.ok){ document.getElementById('deletedModal').remove(); fetchCloudOrders(); showDeletedOrders(); } else { alert('删除失败'); } }).catch(function(){ alert('删除失败'); });
 }
 function clearAllDeleted(){
   var del=(typeof cloudOrders!=='undefined'?cloudOrders:[]).filter(function(c){return c.status==='deleted';});
   if(!del.length) return;
   if(!confirm('确认彻底清理全部 '+del.length+' 单已删订单？不可恢复。')) return;
-  var pwd=localStorage.getItem(LS_CLOUDPWD)||'1986shenhu';
+  var pwd=clpwd();
   var done=0;
   del.forEach(function(c){
-    fetch(SB_URL+'/rest/v1/rpc/delete_order',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({admin_pwd:pwd,order_id:c.id})})
+    fetch(SB_URL+'/rest/v1/rpc/delete_order',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({admin_pwd:pwd,order_id:c.id,p_phone:''})})
       .then(function(){ done++; if(done===del.length){ document.getElementById('deletedModal').remove(); fetchCloudOrders(); alert('已清理'); } }).catch(function(){ done++; });
   });
 }
@@ -2461,7 +2471,7 @@ function pickDishFruit(el,name,unit){
   pickDishImg(el.querySelector('img').src,el);
 }
 function pickDishImg(src,el){
-  var grid=document.getElementById('siGrid'); if(grid) grid.innerHTML='<div style="padding:18px 6px;color:#888;font-size:13px">正在裁剪缩放 + 加水印 + 压缩…请稍候</div>';
+  var grid=document.getElementById('siGrid'); if(grid) grid.innerHTML='<div style="padding:18px 6px;color:#888;font-size:13px">正在裁剪缩放 + 加水印 + 压缩 + 上传云端…请稍候</div>';
   var img=new Image();
   var done=false;
   var timer=setTimeout(function(){ if(!done){ done=true; showMiniTip('图片加载超时，请换一张试试'); } },15000);
@@ -2478,10 +2488,17 @@ function pickDishImg(src,el){
       x.fillText('榨榨鲜果',-150,-150); x.fillText('榨榨鲜果',0,0); x.fillText('榨榨鲜果',150,150);
       x.restore();
       var dataUrl=c.toDataURL('image/jpeg',0.8);
-      document.getElementById('dImg').value=dataUrl;
-      var prev=document.getElementById('dImgPreview'); if(prev){ prev.src=dataUrl; prev.style.display='block'; }
-      var m=document.getElementById('searchImgModal'); if(m) m.remove();
-      showMiniTip('✅ 已选图：自动裁剪缩放 + 加水印 + 压缩完成，点「保存」即可');
+      upDishImg(dataUrl,function(url){
+        if(url){
+          document.getElementById('dImg').value=url;
+          var prev=document.getElementById('dImgPreview'); if(prev){ prev.src=url; prev.style.display='block'; }
+        }else{
+          document.getElementById('dImg').value=src; // 上传失败：退回用图库原图
+          var prev=document.getElementById('dImgPreview'); if(prev){ prev.src=src; prev.style.display='block'; }
+        }
+        var m=document.getElementById('searchImgModal'); if(m) m.remove();
+        showMiniTip(url?('✅ 已选图：裁剪缩放+水印+上传云端完成，点「保存」即可'):'✅ 已选用云端原图（已带水印+压缩）');
+      });
     }catch(e){
       document.getElementById('dImg').value=src;
       var prev=document.getElementById('dImgPreview'); if(prev){ prev.src=src; prev.style.display='block'; }
@@ -2512,16 +2529,38 @@ function onDishImgPick(input){
       ctx.fillText('榨榨鲜果',-80,-80); ctx.fillText('榨榨鲜果',0,0); ctx.fillText('榨榨鲜果',80,80);
       ctx.restore();
       var dataUrl = canvas.toDataURL('image/jpeg', 0.75);
-      document.getElementById('dImg').value = dataUrl;
-      var prev = document.getElementById('dImgPreview');
-      if(prev){ prev.src = dataUrl; prev.style.display='block'; }
+      upDishImg(dataUrl, function(url){
+        if(!url){ alert('图片上传云端失败（网络异常），请重试或稍后再试'); return; }
+        document.getElementById('dImg').value = url;
+        var prev = document.getElementById('dImgPreview');
+        if(prev){ prev.src = url; prev.style.display='block'; }
+      });
     };
     img.src = e.target.result;
   };
   reader.readAsDataURL(file);
 }
+function upDishImg(dataUrl, cb){
+  // 压缩后的 dataUrl 上传到 Supabase Storage（公开桶 dish_imgs），返回可长期使用的图片 URL
+  try{
+    var m=(dataUrl.match(/^data:(.*?);/)||[])[1]||'image/jpeg';
+    var bin=atob(dataUrl.split(',')[1]);
+    var arr=new Uint8Array(bin.length);
+    for(var i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i);
+    var blob=new Blob([arr],{type:m});
+    var name='dish_'+Date.now()+'_'+Math.floor(Math.random()*99999)+'.jpg';
+    var xhr=new XMLHttpRequest();
+    xhr.open('POST', SB_URL+'/storage/v1/object/dish_imgs/'+name+'?upsert=true', true);
+    xhr.setRequestHeader('apikey', SB_KEY);
+    xhr.setRequestHeader('Authorization', 'Bearer '+SB_KEY);
+    xhr.setRequestHeader('Content-Type', m);
+    xhr.onload=function(){ if(xhr.status>=200 && xhr.status<300){ cb(SB_URL+'/storage/v1/object/public/dish_imgs/'+name); } else { cb(''); } };
+    xhr.onerror=function(){ cb(''); };
+    xhr.send(blob);
+  }catch(e){ cb(''); }
+}
 function syncMenuToCloud(){
-  var pwd=localStorage.getItem(LS_CLOUDPWD)||'1986shenhu';
+  var pwd=clpwd();
   var menu=dishes.filter(function(d){return d.cat!=='半价';});
   setCloudStatus('☁️ 正在同步云端菜单…');
   fetch(SB_URL+'/rest/v1/rpc/save_menu',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({admin_pwd:pwd,p_dishes:menu})})
@@ -2616,6 +2655,7 @@ function renderShopAdmin(){
     '<label>高德 JS API Key（地图选点用）</label><input id="jsKey" value="'+esc(shopCfg.jskey||'')+'" placeholder="控制台 → 创建应用 → 添加Key → 服务平台选【Web端(JS API)】">'+
     '<label>安全密钥 securityJsCode（与 JS API Key 配套）</label><input id="jsCode" value="'+esc(shopCfg.jscode||'')+'" placeholder="添加Key时系统生成的安全密钥">'+
     '<label>修改后台密码</label><div style="display:flex;gap:8px"><input id="newPwd" placeholder="新密码（留空则不修改）"><button class="btn" onclick="changePwd()">修改密码</button></div>'+
+    '<label>云端密码（云端订单/菜单同步用，向豆包获取后填写，本机保存一次即可）</label><div style="display:flex;gap:8px"><input id="cloudPwd" value="'+esc(localStorage.getItem(LS_CLOUDPWD)||'')+'" placeholder="云端操作密码"><button class="btn" onclick="saveCloudPwd()">保存云端密码</button></div>'+
     '<div style="margin-top:14px;border-top:1px dashed rgba(35,134,0,.25);padding-top:10px">'+
     '<div style="font-size:14px;font-weight:700;color:#238600;margin-bottom:6px">营业时间（每天自动开/关店）</div>'+
     '<div style="font-size:12px;color:#777;margin-bottom:8px">到点自动开店/关店；外送时段之外顾客只能来自提单。保存后云端三端同步。</div>'+
@@ -2719,7 +2759,7 @@ function loadShopCloud(){
     .catch(function(){});
 }
 function pushShopCloud(){
-  var pwd=localStorage.getItem(LS_CLOUDPWD)||'1986shenhu';
+  var pwd=clpwd();
   var cfg={shop:{address:shopCfg.address||'',shopLat:shopCfg.shopLat||'',shopLng:shopCfg.shopLng||'',amapKey:shopCfg.amapKey||'',jskey:shopCfg.jskey||'',jscode:shopCfg.jscode||''},pay:{payUrl:payCfg.payUrl||'',wxUrl:payCfg.wxUrl||''},deliver:{pwd:deliverCfg.pwd||''},hours:{openStart:shopHours.openStart||510,openEnd:shopHours.openEnd||1320,dlvStart:shopHours.dlvStart||540,dlvEnd:shopHours.dlvEnd||1290},fee:{freeKm:dlvFee.freeKm||3,baseFee:dlvFee.baseFee||3,freeOver:dlvFee.freeOver||30,perKm:dlvFee.perKm||2,maxKm:dlvFee.maxKm||10},promo:{newAmt:newCustAmt||5}};
   fetch(SB_URL+'/rest/v1/rpc/save_shop_config',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({p_admin:pwd,p_cfg:cfg})})
     .then(function(r){ return r.json(); })
@@ -3010,7 +3050,13 @@ function changePwd(){
   if(!v){ alert('请输入新密码'); return; }
   if(v.length<6){ alert('密码至少 6 位，建议包含字母和数字'); return; }
   localStorage.setItem(LS_PWD, v);
-  alert('本地登录密码已修改，下次登录请用新密码。\n\n提醒：云端操作密码是另一套独立密码（目前仍是出厂默认值）。需要把云端密码也改成强密码、彻底关闭出厂默认值，请在铺子电脑上登录 Supabase 控制台（supabase.com/dashboard），登录后告诉我，我帮你一次性改完。');
+  alert('本地登录密码已修改，下次登录请用新密码。\n\n注意：云端操作密码是另一套独立密码，请在下方「云端密码」里单独填写保存（向豆包获取）。');
+}
+function saveCloudPwd(){
+  var v=document.getElementById('cloudPwd').value.trim();
+  if(!v){ alert('请输入云端密码'); return; }
+  localStorage.setItem(LS_CLOUDPWD, v);
+  alert('云端密码已保存到本机。云端订单/菜单同步将使用该密码。\n\n提示：若密码填错，云端操作会被拒绝；正确密码请向豆包确认。');
 }
 
 function renderPrintAdmin(){
@@ -3285,7 +3331,7 @@ function saveNewCustAmt(){
   alert('新客立减金额已保存：'+(v>0?(v+' 元'):'已关闭'));
 }
 function saveReferralCfg(){
-  var pwd=localStorage.getItem(LS_CLOUDPWD)||'1986shenhu';
+  var pwd=clpwd();
   var rate=parseFloat(document.getElementById('refRate').value);
   var dr=parseFloat(document.getElementById('refDeductRate').value);
   var mx=parseFloat(document.getElementById('refMax').value);
@@ -3345,7 +3391,7 @@ function loadRefCfgWindow(){
     }).catch(function(){ if(q) q.innerHTML='⚠ 查询失败：网络异常'; });
 }
 function saveRefCfgWindow(){
-  var pwd=localStorage.getItem(LS_CLOUDPWD)||'1986shenhu';
+  var pwd=clpwd();
   var rate=parseFloat(document.getElementById('refCfgRate').value);
   var dr=parseFloat(document.getElementById('refCfgDr').value);
   var mx=parseFloat(document.getElementById('refCfgMax').value);
@@ -3370,7 +3416,7 @@ function loadRefMembers(){
   var w=document.getElementById('refMemberWrap');
   if(!w) return;
   w.innerHTML='正在查询云端…';
-  fetch(SB_URL+'/rest/v1/rpc/list_referral_members',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({p_admin:localStorage.getItem(LS_CLOUDPWD)||'1986shenhu'})})
+  fetch(SB_URL+'/rest/v1/rpc/list_referral_members',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({p_admin:clpwd()})})
     .then(function(r){ return r.json(); })
     .then(function(j){
       var arr=Array.isArray(j)?j:(j&&j.data?j.data:null);
@@ -3397,7 +3443,7 @@ function saveRefMember(phone){
   if(!inp) return;
   var bal=parseFloat(inp.value);
   if(!(bal>=0)){ alert('请输入有效余额'); return; }
-  fetch(SB_URL+'/rest/v1/rpc/update_referral_balance',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({p_admin:localStorage.getItem(LS_CLOUDPWD)||'1986shenhu',p_phone:phone,p_balance:bal})})
+  fetch(SB_URL+'/rest/v1/rpc/update_referral_balance',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({p_admin:clpwd(),p_phone:phone,p_balance:bal})})
     .then(function(r){ return r.json(); })
     .then(function(j){
       if(j && j.ok){ alert('✓ 已保存，已同步云端'); loadRefMembers(); }
