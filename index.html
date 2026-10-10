@@ -1772,7 +1772,7 @@ function formatOrderText(o){
   lines.push('【合计】'+money(rawTotal));
   if(discount>0) lines.push('【抹零】-'+money(discount));
   if(nc>0) lines.push('【新客优惠】-'+money(nc));
-  if(rd>0) lines.push('【拉新抵现】-'+money(rd));
+  if(rd>0) lines.push('【推广抵扣】-'+money(rd));
   lines.push('【应付合计】'+money(payTotal));
   lines.push('【商品原价】'+money(rawTotal));
   lines.push('【顾客】'+o.name+'  '+o.phone);
@@ -2146,7 +2146,7 @@ function renderCloudOrder(c){
     (p.mode==='pickup'?'<div class="rowline"><span>取餐</span><span style="color:#238600">🏪 到店自提</span></div>':(p.addr?'<div class="rowline"><span>地址</span><span>'+esc(p.addr)+'</span></div>':''))+
     (p.time?'<div class="rowline"><span>预送</span><span>'+esc(p.time)+'</span></div>':'')+
     '<div class="rowline"><span>商品</span><span>'+lines+'</span></div>'+
-    (amt!==''?'<div class="rowline"><span>金额</span><span style="color:#e53935;font-weight:700">'+money(amt)+(p.newcust?'（已含新客-'+Number(p.discount||0).toFixed(2)+'元）':(p.hasWeight&&!p.weightTotal?'（预估）':''))+(p.referralDeduct?'（已含拉新抵现-'+Number(p.referralDeduct).toFixed(2)+'元）':'')+'</span></div>':'')+
+    (amt!==''?'<div class="rowline"><span>金额</span><span style="color:#e53935;font-weight:700">'+money(amt)+(p.newcust?'（已含新客-'+Number(p.discount||0).toFixed(2)+'元）':(p.hasWeight&&!p.weightTotal?'（预估）':''))+(p.referralDeduct?'（已含推广抵扣-'+Number(p.referralDeduct).toFixed(2)+'元）':'')+'</span></div>':'')+
     (p.carrier?'<div class="rowline"><span>配送员</span><span style="color:#1565c0">🛵 '+esc(p.carrier)+'</span></div>':'')+
     '<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">'+
     (c.status==='new'?'<button class="btn" style="background:#238600;color:#fff" onclick="updateCloudStatus('+c.id+',\'已付款\')">✅ 标记已付款</button>':'')+
@@ -2229,7 +2229,7 @@ function copyCloudOrderText(id){
   var amt=(p.hasWeight?raw:roundHalf(raw)); var roundAmt=Math.round((raw-amt)*100)/100;
   var t='🍉 榨榨鲜果 外卖订单\n——————————————\n【订单号】'+(p.id||('云端#'+c.id))+'\n【下单时间】'+fmtLocal(p.created||'')+'\n【商品】\n'+
     (p.items||[]).map(function(it){ var dd=byId(it.id); var amt2=(it.per>0&&p.weights&&p.weights[it.id])?(it.per*p.weights[it.id]):(dd?estPrice(dd,it):it.price*it.qty); return '  '+it.name+((it.per>0&&p.weights&&p.weights[it.id])?('（称重'+p.weights[it.id]+'斤×'+it.per+'元/斤）'):((it.note&&it.note.indexOf('按')===0)?('（'+it.note+'）'):(' ×'+it.qty+(it.unit?' '+it.unit:''))))+'  '+money(amt2); }).join('\n')+
-    '\n——————————————\n'+(p.newcust?'【新客优惠】-'+Number(p.discount||0).toFixed(2)+'\n':'')+(p.referralDeduct?'【拉新抵现】-'+Number(p.referralDeduct).toFixed(2)+'\n':'')+(roundAmt>0?'【抹零】-'+money(roundAmt)+'\n':'')+'【应付合计】'+money(amt)+'\n【顾客】'+(p.name||'')+' '+(p.phone||'')+'\n【地址】'+(p.mode==='pickup'?'到店自提':(p.addr||''))+'\n【预送】'+(p.time||'')+'\n【状态】'+(c.status==='new'?'待处理':c.status);
+    '\n——————————————\n'+(p.newcust?'【新客优惠】-'+Number(p.discount||0).toFixed(2)+'\n':'')+(p.referralDeduct?'【推广抵扣】-'+Number(p.referralDeduct).toFixed(2)+'\n':'')+(roundAmt>0?'【抹零】-'+money(roundAmt)+'\n':'')+'【应付合计】'+money(amt)+'\n【顾客】'+(p.name||'')+' '+(p.phone||'')+'\n【地址】'+(p.mode==='pickup'?'到店自提':(p.addr||''))+'\n【预送】'+(p.time||'')+'\n【状态】'+(c.status==='new'?'待处理':c.status);
   window._lastText=t; copyText();
 }
 function queryCustomer(){
@@ -3142,7 +3142,7 @@ function ticketHTML(p, st, isDemo){
   if(fee>0) H+='<div style="font-size:11px;display:flex;justify-content:space-between"><span>配送费</span><span>'+fee.toFixed(2)+'</span></div>';
   if(halfSaving>0.009) H+='<div style="font-size:11px;display:flex;justify-content:space-between"><span>优惠（第二杯半价）</span><span>-'+halfSaving.toFixed(2)+'</span></div>';
   if(disc>0) H+='<div style="font-size:11px;display:flex;justify-content:space-between"><span>新客优惠</span><span>-'+disc.toFixed(2)+'</span></div>';
-  if(refd>0) H+='<div style="font-size:11px;display:flex;justify-content:space-between"><span>拉新抵现</span><span>-'+refd.toFixed(2)+'</span></div>';
+  if(refd>0) H+='<div style="font-size:11px;display:flex;justify-content:space-between"><span>推广抵扣</span><span>-'+refd.toFixed(2)+'</span></div>';
   if(roundAmt>0) H+='<div style="font-size:11px;display:flex;justify-content:space-between"><span>抹零</span><span>-'+Number(roundAmt).toFixed(2)+'</span></div>';
   H+='<div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:2px"><span style="font-size:12px;font-weight:700">实付金额</span><span style="font-size:15px;font-weight:800">¥'+Number(amt).toFixed(2)+'</span></div>';
   H+='<div style="margin:3px 0;border-top:1px solid #000"></div>';
