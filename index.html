@@ -3076,6 +3076,7 @@ function renderPrintAdmin(){
 /* 小票渲染（参考主流外卖样式）：p=订单, st=状态, isDemo=true 用示例明细
    布局：店名/序号居中 → 信息区(订单号/下单/送达/备注) → 商品四列(商品/单价/数量/价格) → 费用区(合计/配送/优惠/实付) → 收件区 */
 function ticketHTML(p, st, isDemo){
+  p=p||{};
   var demoItems=[{name:'雪梨（中）',price:3.5,qty:2,unit:'斤',per:3.5,note:'按斤2斤',id:'x'},{name:'红心猕猴桃',price:15,qty:1,unit:'斤',per:15,note:'按斤1斤',id:'y'},{name:'鲜榨西瓜汁',price:6.75,qty:2,unit:'杯',note:'第二杯半价',id:'z'}];
   var items=isDemo?demoItems:(p.items||[]);
   var wtMap={};
