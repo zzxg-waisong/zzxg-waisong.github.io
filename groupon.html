@@ -104,19 +104,17 @@ label{font-size:12.5px;color:#777;display:block;margin-top:12px;font-weight:600}
     <div id="myRecs"></div>
   </div>
   <div id="joinBox">
-    <div class="hd2" style="margin-top:14px;"><span class="ico">🛒</span>我要接龙（想买什么）</div>
+    <div class="hd2" style="margin-top:14px;"><span class="ico">🛒</span>参与本团</div>
+    <div id="jItemTip" style="font-size:13.5px;color:#4fa50a;font-weight:800;margin-bottom:6px;"></div>
     <input type="tel" id="jPhone" placeholder="手机号" maxlength="11">
-    <input type="text" id="jName" placeholder="商品名（如：红心猕猴桃）" maxlength="20">
     <div style="display:flex;gap:8px;">
-      <input type="number" id="jQty" placeholder="数量" min="0.5" step="0.5" style="flex:1">
-      <select id="jUnit" style="flex:1"><option>斤</option><option>个</option><option>盒</option><option>份</option><option>根</option><option>杯</option></select>
+      <input type="number" id="jQty" placeholder="份数" min="0.5" step="0.5" style="flex:1">
+      <select id="jUnit" style="flex:1"><option>份</option><option>斤</option><option>个</option><option>盒</option><option>根</option><option>杯</option></select>
     </div>
-    <div id="jDepBox" class="hidden" style="background:#fff7e6;border:1px solid #ffd591;border-radius:10px;padding:10px;margin:8px 0;font-size:13px;color:#ad6800;">
-      <div style="font-weight:700;">💰 本团需预付定金 <span id="jDepAmt" style="color:#c62828;">¥0</span>/份</div>
-      <div class="muted" style="margin:4px 0;">到店取货时支付定金+尾款，请按时取货。</div>
-      <label style="display:flex;gap:6px;align-items:center;margin-top:6px;"><input type="checkbox" id="jDepAgree" style="width:auto;"> 我已了解并同意预付定金</label>
+    <div id="jDepTip" class="hidden" style="background:#fff7e6;border:1px solid #ffd591;border-radius:10px;padding:10px;margin:8px 0;font-size:13px;color:#ad6800;">
+      本团定金 <span id="jDepAmt" style="color:#c62828;font-weight:800;">¥0</span>/份，接龙确定后扫本店收款码支付；尾款到店取货时支付。
     </div>
-    <button class="btn btn-p" onclick="doJoin()">提交接龙</button>
+    <button class="btn btn-p" onclick="doJoin()">参与本团</button>
     <div class="okbar" id="okbar"></div>
     <div class="errbar" id="errbar"></div>
   </div>
@@ -170,6 +168,7 @@ function showDetail(){
   api('groupon_list',{}).then(function(arr){
     var s=null; (arr||[]).forEach(function(x){ if(x.id===curSession) s=x; });
     if(!s){ document.getElementById('dCard').innerHTML='<div class="card empty"><div class="eico">🤔</div>团购不存在</div>'; return; }
+    window._sessTitle=s.title;
     document.getElementById('dJoinNote').classList.toggle('hidden', s.status!=='open');
     document.getElementById('dQuoteNote').classList.toggle('hidden', s.status!=='quoted'||s.unit_price!=null);
     document.getElementById('dConfirmNote').classList.toggle('hidden', s.status!=='quoted'||s.unit_price==null);
@@ -178,9 +177,9 @@ function showDetail(){
     loadPlanCust();
     var join=document.getElementById('joinBox');
     join.style.display = (s.status==='open')?'block':'none';
-    var depBox=document.getElementById('jDepBox');
-    if(Number(s.deposit)>0){ depBox.style.display='block'; document.getElementById('jDepAmt').textContent='¥'+fmtN(s.deposit); document.getElementById('jDepAgree').checked=false; }
-    else { depBox.style.display='none'; }
+    var depTip=document.getElementById('jDepTip');
+    if(Number(s.deposit)>0){ depTip.style.display='block'; document.getElementById('jDepAmt').textContent='¥'+fmtN(s.deposit); }
+    else { depTip.style.display='none'; }
     var img=s.cover?'<img src="'+esc(s.cover)+'" style="width:100%;max-height:160px;object-fit:cover;border-radius:12px;margin-bottom:10px;cursor:zoom-in;" onclick="event.stopPropagation();document.getElementById(\'bigImg\').src=this.src;document.getElementById(\'bigView\').style.display=\'flex\';" onerror="this.style.display=\'none\'">':'';
     document.getElementById('dCard').innerHTML=
       '<div class="card">'+img+
@@ -195,6 +194,7 @@ function showDetail(){
       '<div class="row"><span>截止时间</span><b>'+fmtT(s.deadline)+'</b></div>'+
       (Number(s.deposit)>0?'<div class="row"><span>每份预定金</span><span class="price" style="color:#c62828;">¥'+fmtN(s.deposit)+'</span></div>':'')+
       (s.note?'<div class="row" style="align-items:flex-start;"><span>说明</span><b style="text-align:right;font-weight:600;">'+esc(s.note)+'</b></div>':'')+
+      (s.pickup_time?'<div class="row"><span>取货时间</span><b style="color:#238600;">'+esc(s.pickup_time)+'</b></div>':'')+
       (s.unit_price!=null?'<div class="row"><span>团购单价</span><span class="price">¥'+fmtN(s.unit_price)+'</span></div>':'')+
       (s.status==='quoted'?'<div class="row"><span>确认截止</span><b>'+fmtT(s.confirm_deadline)+'</b></div>':'')+
       '</div>';
@@ -211,20 +211,18 @@ function showDetail(){
 }
 function doJoin(){
   var phone=document.getElementById('jPhone').value.trim();
-  var name=document.getElementById('jName').value.trim();
   var qty=document.getElementById('jQty').value;
   var unit=document.getElementById('jUnit').value;
+  var name=window._joinItem||'';
   okbar(false,''); errbar(false,'');
   if(!/^1\d{10}$/.test(phone)){ errbar(true,'请填写正确的11位手机号'); return; }
-  if(!name){ errbar(true,'请填写想买的商品名'); return; }
-  if(!qty||Number(qty)<=0){ errbar(true,'请填写数量'); return; }
-  var depBox=document.getElementById('jDepBox');
-  if(depBox.style.display==='block' && !document.getElementById('jDepAgree').checked){ errbar(true,'请先勾选：我已了解并同意预付定金'); return; }
+  if(!name){ errbar(true,'本团暂未设置商品，请联系老板'); return; }
+  if(!qty||Number(qty)<=0){ errbar(true,'请填写份数'); return; }
   api('groupon_join',{p_session_id:curSession,p_phone:phone,p_item_name:name,p_qty:Number(qty),p_unit:unit}).then(function(r){
     if(r.ok){
-      var tip='✅ 接龙成功！已参与本团。';
-      if(r.deposit&&Number(r.deposit)>0) tip+=' 本团定金 ¥'+fmtN(r.deposit)+'/份，请到店取货时支付。';
-      okbar(true,tip); document.getElementById('jPhone').value=''; document.getElementById('jName').value=''; document.getElementById('jQty').value=''; document.getElementById('jDepAgree').checked=false; showDetail();
+      var tip='✅ 已参与本团（'+name+' '+fmtN(qty)+unit+'）。';
+      if(r.deposit&&Number(r.deposit)>0) tip+=' 本团定金 ¥'+fmtN(r.deposit)+'/份，接龙确定后扫本店收款码支付。';
+      okbar(true,tip); document.getElementById('jPhone').value=''; document.getElementById('jQty').value=''; showDetail();
     }
     else errbar(true,r.msg||'提交失败');
   }).catch(function(){ errbar(true,'网络异常，请重试'); });
@@ -250,7 +248,15 @@ function loadMy(){
       if(Number(rec.deposit)>0 && rec.status!=='withdrawn' && rec.status!=='cancelled'){
         var depAmt=Number(rec.deposit)*Number(rec.qty||0);
         var tail=sess.unit_price!=null?(Number(sess.unit_price)*Number(rec.qty||0)-depAmt):null;
-        dep='<div style="font-size:12px;color:#ad6800;margin-top:2px;">定金 ¥'+fmtN(depAmt)+(rec.deposit_paid?'（已收）':'（未收）')+(tail!=null?' · 尾款 ¥'+fmtN(tail)+'（到店付）':'')+'</div>';
+        if(rec.status==='confirmed'){
+          dep='<div style="font-size:12px;color:#ad6800;margin-top:2px;">定金 ¥'+fmtN(depAmt)+(rec.deposit_paid?'（已收）':'（未收）· 扫下方本店收款码支付')+(tail!=null?' · 尾款 ¥'+fmtN(tail)+'（到店付）':'')+'</div>'+
+            ((rec.deposit_paid?'':'<div style="margin-top:8px;"><img src="'+esc(sess.pay_qr)+'" style="width:150px;height:150px;object-fit:contain;border-radius:10px;background:#fff;border:1px solid rgba(0,0,0,.08);" onerror="this.outerHTML=\'<div style=&quot;font-size:12px;color:#bbb;padding:6px 0;&quot;>收款码未配置，到店扫码支付</div>\'"></div>'+
+            '<div style="font-size:11.5px;color:#888;margin-top:4px;">扫本店收款码支付定金 ¥'+fmtN(depAmt)+'，尾款到店取货时支付</div>'))+
+            (sess.pickup_time?'<div style="font-size:12px;color:#238600;margin-top:4px;">取货时间：'+esc(sess.pickup_time)+'</div>':'');
+        } else {
+          dep='<div style="font-size:12px;color:#ad6800;margin-top:2px;">本团定金 ¥'+fmtN(depAmt)+'，接龙确定后扫本店收款码支付'+(tail!=null?' · 尾款 ¥'+fmtN(tail)+'（到店付）':'')+'</div>'+
+            (sess.pickup_time?'<div style="font-size:12px;color:#238600;margin-top:2px;">取货时间：'+esc(sess.pickup_time)+'</div>':'');
+        }
       }
       var wbtn='';
       if((rec.status==='joined'||rec.status==='confirmed')&&(sess.status==='open'||sess.status==='quoted'))
@@ -292,7 +298,13 @@ function doWithdraw(phone){
 function doConfirm(phone){
   if(!confirm('确认按团购单价购买？确认后老板将按此进货，请按时取货。')) return;
   api('groupon_confirm',{p_session_id:curSession,p_phone:phone}).then(function(r){
-    if(r.ok){ okbar(true,'✅ 已确认！等老板进货，到货后请来取。'); loadMy(); }
+    if(r.ok){
+      var tip='✅ 已确认！';
+      if(Number(r.deposit)>0) tip+=' 请扫本店收款码支付定金 ¥'+(Number(r.deposit)*Number(document.getElementById('jQty').value||1))+'（见下方我的记录）。';
+      else tip+=' 等老板进货，到货后请来取。';
+      if(r.pickup_time) tip+=' 取货时间：'+r.pickup_time;
+      okbar(true,tip); loadMy();
+    }
     else errbar(true,r.msg||'确认失败');
   }).catch(function(){ errbar(true,'网络异常，请重试'); });
 }
@@ -300,6 +312,7 @@ function okbar(on,t){ var e=document.getElementById('okbar'); e.style.display=on
 function errbar(on,t){ var e=document.getElementById('errbar'); e.style.display=on?'block':'none'; e.textContent=t; }
 /* ===== 应季水果库（顾客端） ===== */
 var PLAN_ARR=[];
+function sessTitle(){ return window._sessTitle||''; }
 function parseWindows(str){
   var wins=[];
   if(!str) return wins;
@@ -367,6 +380,9 @@ function loadPlanCust(){
   api('groupon_plan_list',{p_session_id:curSession}).then(function(arr){
     arr=Array.isArray(arr)?arr:[];
     PLAN_ARR=arr;
+    var jit=document.getElementById('jItemTip');
+    if(arr.length){ window._joinItem=arr[0].name; if(jit) jit.textContent='本团商品：'+arr[0].name; }
+    else { window._joinItem=''; if(jit) jit.textContent='本团商品：'+sessTitle(); }
     if(!arr.length){ box.innerHTML=''; return; }
     var m=new Date().getMonth()+1;
     box.innerHTML='<div class="card"><div class="hd2"><span class="ico">🍎</span>团购方案 <span class="muted" style="font-weight:400;">（老板精选 '+arr.length+' 种应季水果）</span></div>'+
@@ -380,16 +396,16 @@ function loadPlanCust(){
             '<div style="margin-top:4px;"><span class="badge '+tm.c+'" style="font-size:10px;padding:2px 8px;">'+tm.t+'·按'+m+'月</span>'+
             (f.price_ref?' <span class="muted">参考价 '+esc(f.price_ref)+'</span>':'')+'</div></div>'+
           '</div>'+
-          '<button class="btn btn-p" style="width:auto;margin:0 0 0 8px;padding:8px 12px;font-size:12.5px;flex:none;" onclick="pickPlanFruit('+i+')">跟团接龙</button>'+
+          '<button class="btn btn-p" style="width:auto;margin:0 0 0 8px;padding:8px 12px;font-size:12.5px;flex:none;" onclick="pickPlanFruit('+i+')">参与本团</button>'+
         '</div>';
       }).join('')+'</div>';
   }).catch(function(){ box.innerHTML=''; });
 }
 function pickPlanFruit(i){
   var f=PLAN_ARR[i]; if(!f) return;
-  document.getElementById('jName').value=f.name;
-  document.getElementById('joinBox').scrollIntoView({behavior:'smooth',block:'center'});
-  document.getElementById('jName').focus();
+  window._joinItem=f.name;
+  document.getElementById('jItemTip').textContent='本团商品：'+f.name;
+  document.getElementById('jPhone').focus();
 }
 showList();
 </script>
