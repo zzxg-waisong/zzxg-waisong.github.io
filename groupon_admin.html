@@ -137,13 +137,17 @@ th{color:#666;font-weight:700;font-size:12px;background:rgba(255,255,255,.4);-we
       <input id="oDeposit" type="number" min="0" step="0.5" placeholder="如：5" value="0">
       <label>接龙截止时间</label>
       <input id="oDeadline" type="datetime-local">
+      <label>取货时间（显示给顾客）</label>
+      <input id="oPickup" placeholder="如：10月12日 下午3-6点" maxlength="40">
+      <label>定金收款码图片 URL（填一次自动记住，下次开团自动带出）</label>
+      <input id="oPayQr" placeholder="https://… 微信/支付宝收款码图片链接">
       <button class="btn btn-p" style="width:100%;margin-top:14px;padding:13px;" onclick="doOpen()">🚀 发布团购</button>
       <div class="okbar" id="okbar"></div>
       <div class="errbar" id="errbar"></div>
     </div>
 
     <div class="card" id="fruitLib">
-      <div class="hd2"><span class="ico">🍓</span>应季水果库 <span class="muted" id="flCount" style="font-weight:400;"></span></div>
+      <div class="hd2"><span class="ico">🍓</span>本团商品（从水果库单选） <span class="muted" id="flCount" style="font-weight:400;"></span></div>
       <div style="position:relative">
         <input id="flKw" placeholder="🔍 搜索水果名 / 别名（输入即弹选项）" oninput="flSearch(this.value)" autocomplete="off">
         <div id="flSuggest" style="position:absolute;top:100%;left:0;right:0;z-index:99;background:rgba(255,255,255,.94);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border:1px solid rgba(0,0,0,.08);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.14);display:none;max-height:300px;overflow:auto;"></div>
@@ -274,6 +278,7 @@ function showDetail(){
         '<div class="stat"><b>'+fmtN(s.target_qty)+'</b><span>目标份数</span></div>'+
       '</div>'+
       '<div class="row"><span>截止时间</span><b>'+fmtT(s.deadline)+'</b></div>'+
+      (s.pickup_time?'<div class="row"><span>取货时间</span><b style="color:#238600;">'+esc(s.pickup_time)+'</b></div>':'')+
       (s.per_limit>0?'<div class="row"><span>每人限购</span><b>'+fmtN(s.per_limit)+' 份</b></div>':'')+
       (Number(s.deposit)>0?'<div class="row"><span>每份预定金</span><span class="price" style="color:#c62828;">¥'+fmtN(s.deposit)+'</span></div>':'')+
       (s.note?'<div class="row" style="align-items:flex-start;"><span>说明</span><b style="text-align:right;font-weight:600;">'+esc(s.note)+'</b></div>':'')+
@@ -364,8 +369,10 @@ function doOpen(){
   if(dep===''||Number(dep)<0){ errbar(true,'预定金不能为负'); return; }
   api('groupon_open',{p_admin:pwd(),p_title:t,p_target_qty:Number(g),p_deadline:new Date(d).toISOString(),
     p_cover:document.getElementById('oCover').value.trim(),p_note:document.getElementById('oNote').value.trim(),
-    p_per_limit:Number(document.getElementById('oLimit').value)||0,p_deposit:Number(dep)||0}).then(function(r){
-    if(r.ok){ okbar(true,'✅ 团购已发布！'); document.getElementById('oTitle').value=''; document.getElementById('oTarget').value=''; document.getElementById('oCover').value=''; document.getElementById('oNote').value=''; document.getElementById('oLimit').value='0'; document.getElementById('oDeposit').value='0'; showList(); loadSessions(); }
+    p_per_limit:Number(document.getElementById('oLimit').value)||0,p_deposit:Number(dep)||0,
+    p_pickup_time:document.getElementById('oPickup').value.trim(),
+    p_pay_qr:document.getElementById('oPayQr').value.trim()}).then(function(r){
+    if(r.ok){ okbar(true,'✅ 团购已发布！'); document.getElementById('oTitle').value=''; document.getElementById('oTarget').value=''; document.getElementById('oCover').value=''; document.getElementById('oNote').value=''; document.getElementById('oLimit').value='0'; document.getElementById('oDeposit').value='0'; document.getElementById('oPickup').value=''; showList(); loadSessions(); }
     else errbar(true,r.msg||'发布失败');
   }).catch(function(){ errbar(true,'网络异常'); });
 }
@@ -606,8 +613,8 @@ function renderFruits(){
       img='<div class="flPh">待换图</div>';
     }
     var tk=tasteOf(f,seasonM), tm=TASTE_META[tk];
-    var act='<label style="display:flex;align-items:center;gap:5px;margin-top:8px;font-size:12px;color:#666;font-weight:600;"><input type="checkbox" style="width:auto;margin:0;" '+(selIds.indexOf(f.id)>=0?'checked':'')+' onchange="flCheck('+f.id+',this.checked)">选入方案</label>';
-    if(added) act='<button class="btn btn-r" style="padding:5px 10px;font-size:12px;margin:8px 0 0;" onclick="doPlanRemove('+f.id+')">移除</button>';
+    var act='<label style="display:flex;align-items:center;gap:5px;margin-top:8px;font-size:12px;color:#666;font-weight:600;"><input type="radio" name="flPick" style="width:auto;margin:0;" '+(selIds.indexOf(f.id)>=0?'checked':'')+' onchange="flCheck('+f.id+',this.checked)">设为本团商品</label>';
+    if(added) act='<button class="btn btn-r" style="padding:5px 10px;font-size:12px;margin:8px 0 0;" onclick="doPlanRemove('+f.id+')">移除本团商品</button>';
     return '<div class="flCard">'+
       (added?'<span class="flAdded">已加入✓</span>':'')+img+
       '<div style="font-size:14px;font-weight:800;">'+esc(f.name)+'</div>'+
@@ -623,9 +630,9 @@ function renderFruits(){
 }
 function flCheck(id,on){
   id=Number(id);
-  var i=selIds.indexOf(id);
-  if(on && i<0) selIds.push(id);
-  if(!on && i>=0) selIds.splice(i,1);
+  if(on){ selIds=[id]; }
+  else { var i=selIds.indexOf(id); if(i>=0) selIds.splice(i,1); }
+  renderFruits();
   updateFlBar();
 }
 function updateFlBar(){
@@ -634,6 +641,7 @@ function updateFlBar(){
   bar.style.display='flex';
   document.getElementById('flSelN').textContent='已选 '+selIds.length+' 种';
   document.getElementById('flAddBtn').disabled=(!planSessionId)||(!selIds.length);
+  document.getElementById('flAddBtn').textContent='设为本团商品';
 }
 function flSessionChange(v){ planSessionId=v?Number(v):null; loadPlan(); }
 function loadPlan(){
@@ -650,7 +658,7 @@ function doPlanAdd(){
   api('groupon_plan_add',{p_admin:pwd(),p_session_id:planSessionId,p_fruit_ids:selIds}).then(function(r){
     if(r&&r.ok){
       var n=(r.added!=null)?r.added:selIds.length;
-      flToast('已加入 '+n+' 种到团购方案');
+      flToast('已设为本团商品：'+n+' 种');
       selIds=[];
       loadPlan();
     } else { flToast((r&&r.msg)||('加入失败')); }
@@ -664,6 +672,9 @@ function doPlanRemove(fid){
   }).catch(function(){ flToast('网络异常'); });
 }
 function initFruitLib(){
+  api('groupon_shop_cfg',{}).then(function(r){
+    if(r&&r.pay_qr){ document.getElementById('oPayQr').value=r.pay_qr; }
+  }).catch(function(){});
   api('groupon_fruits_list',{}).then(function(arr){
     FRUITS=Array.isArray(arr)?arr:[];
     flBuildOrigins();
