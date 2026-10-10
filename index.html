@@ -3066,9 +3066,70 @@ function renderPrintAdmin(){
   var html='<div class="panel"><h3>58 热敏打印机</h3><div class="card">'+
     '<p style="font-size:13px;color:#555;line-height:1.7">请在打印窗口中选择 58 热敏打印机（如 <b>DL-581P(NEW)</b>，USB 连接，驱动正常）。推荐使用<b>“浏览器打印”</b>方式：走 Windows 驱动、中文显示正常。若小票纸张显示不全，请在 Windows“打印机首选项”中把纸张设为 58×210mm 左右。</p>'+
     '<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">'+
+    '<button class="btn" onclick="previewTicket()">👁 预览小票样式</button>'+
     '<button class="btn" onclick="browserPrint()">🖨 打印测试小票</button>'+
     '<button class="btn orange" onclick="testPrint()">USB 直连打印（备用）</button></div></div></div>';
   return html;
+}
+function previewTicket(){
+  // 优先用最近一单预览，无订单时用示例（样式与打印代理一致：58mm 热敏）
+  var p=null, st='new';
+  if(typeof cloudOrders!=='undefined' && Array.isArray(cloudOrders)){
+    for(var i=cloudOrders.length-1;i>=0;i--){ var c=cloudOrders[i]; if(c.status!=='deleted'){ p=c.payload||{}; st=c.status; break; } }
+  }
+  var _now=new Date();
+  var seq=('0'+(_now.getMonth()+1)).slice(-2)+('0'+_now.getDate()).slice(-2)+' '+('0'+_now.getHours()).slice(-2)+':'+('0'+_now.getMinutes()).slice(-2)+' #'+(p?'?':'1');
+  var demoLines=[
+    '雪梨（中） x2斤（3.5元/斤） ¥7.00',
+    '红心猕猴桃 x1斤（15元/斤） ¥15.00',
+    '鲜榨西瓜汁 第二杯半价 x2杯 ¥13.50'
+  ];
+  var lines=[], amt='¥35.50', note='', cust='示例顾客 13800000000', addr='到店自提', dtime='尽快送达', paid=false;
+  if(p){
+    lines=(p.items||[]).map(function(it){
+      var sub=0, qt='';
+      var wt=(p.weights&&p.weights[it.id]!=null)?Number(p.weights[it.id]):null;
+      var jm=String(it.note||'').match(/(?:按斤|称重)([\d.]+)斤/);
+      var gm=String(it.note||'').match(/按根([\d.]+)元/);
+      var ga=String(it.note||'').match(/按金额([\d.]+)元/);
+      if(it.per>0 && wt!=null){ sub=it.per*wt; qt='x'+wt+'斤（'+it.per+'元/斤）'; }
+      else if(it.per>0 && jm){ sub=it.per*parseFloat(jm[1]); qt='x'+jm[1]+'斤（'+it.per+'元/斤）'; }
+      else if(gm){ sub=parseFloat(gm[1]); qt=it.note; }
+      else if(ga){ sub=parseFloat(ga[1]); qt=it.note; }
+      else { sub=it.price*it.qty; qt='x'+(it.qty!=null?it.qty:'')+(it.unit?it.unit:''); }
+      return (it.name||'')+' '+qt+' ¥'+sub.toFixed(2);
+    });
+    var raw=(p.payTotal!=null)?Number(p.payTotal):((p.weightTotal!=null&&p.weightTotal?Number(p.weightTotal):(p.total!=null?Number(p.total):0))-(p.newcust&&p.discount!=null?Number(p.discount):0)-(p.referralDeduct?Number(p.referralDeduct):0));
+    amt='¥'+Number((p.hasWeight?raw:roundHalf(raw))).toFixed(2);
+    note=(p.remark&&!/^https?:\/\/|\.github\.io|\.edgeone\.dev|uri\.amap\.com/i.test(String(p.remark)))?String(p.remark):'';
+    cust=(p.name||'')+' '+(p.phone||'');
+    addr=(p.mode==='pickup'?'到店自提':(p.addr||''));
+    dtime=(p.time||'');
+    paid=(st==='已付款');
+  } else { lines=demoLines; }
+  var rows=lines.map(function(l){ return '<div>'+l+'</div>'; }).join('');
+  var div='<div style="position:fixed;inset:0;background:rgba(12,22,12,.34);-webkit-backdrop-filter:blur(12px) saturate(160%);backdrop-filter:blur(12px) saturate(160%);z-index:9999;display:flex;align-items:center;justify-content:center;padding:14px" onclick="if(event.target===this)this.remove()">'
+    +'<div style="background:rgba(255,255,255,.35);border-radius:22px;-webkit-backdrop-filter:blur(46px) saturate(210%);backdrop-filter:blur(46px) saturate(210%);border:1px solid rgba(255,255,255,.9);box-shadow:0 14px 44px rgba(0,0,0,.13);padding:18px;width:92%;max-width:430px;max-height:88vh;overflow:auto">'
+    +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><b>58 热敏小票 · 打印预览</b><button class="btn" onclick="this.closest(\'div\').parentElement.parentElement.remove()">关闭</button></div>'
+    +'<div style="font-size:12px;color:#888;margin-bottom:12px">'+ (p?('以下为最近一单（#'+(p.id||'')+'）的小票打印样式，实际宽度以打印机为准，可用「打印测试小票」验证纸张。'):'当前没有订单，以下为示例小票样式。实际内容以订单为准。') +'</div>'
+    +'<div style="background:#fff;width:244px;margin:0 auto;padding:10px 7px;border:1px dashed #bbb;border-radius:2px;font-family:SimSun,\'SimSun-ExtB\',monospace;font-size:12px;line-height:1.5;color:#000;letter-spacing:0">'
+    +'<div style="text-align:center;font-size:16px;font-weight:700">榨榨鲜果</div>'
+    +'<div style="text-align:center;font-size:10px;color:#333">新鲜水果 · 鲜果现榨</div>'
+    +'<div style="text-align:center">'+seq+'</div>'
+    +'<div style="white-space:nowrap;overflow:hidden">——————————————</div>'
+    +rows
+    +(note?('<div style="color:#333">备注：'+note+'</div>'):'')
+    +'<div style="white-space:nowrap;overflow:hidden">——————————————</div>'
+    +(paid?'<div style="text-align:center;font-weight:700;color:#333">已付款</div>':'')
+    +'<div style="text-align:right;font-size:14px;font-weight:700">应付合计 '+amt+'</div>'
+    +'<div style="white-space:nowrap;overflow:hidden">——————————————</div>'
+    +'<div>顾客：'+cust+'</div>'
+    +'<div>'+(addr==='到店自提'?'取餐方式：到店自提':'地址：'+addr)+'</div>'
+    +(dtime?'<div>预送时间：'+dtime+'</div>':'')
+    +'<div>下单时间：'+nowStr()+'</div>'
+    +'<div style="text-align:center;color:#333">谢谢惠顾，欢迎再次光临</div>'
+    +'</div></div></div>';
+  var m=document.createElement('div'); m.innerHTML=div; document.body.appendChild(m);
 }
 async function testPrint(){
   if(!navigator.serial){ alert('当前浏览器不支持 Web Serial，请用 Chrome/Edge'); return; }
