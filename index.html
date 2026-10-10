@@ -3096,6 +3096,17 @@ function ticketHTML(p, st, isDemo){
     return {name:it.name||'', unitPrice:unitPrice, qtyTxt:qtyTxt, sub:sub};
   });
   var subtotal=rows.reduce(function(s,r){return s+r.sub;},0);
+  var halfSaving=0;
+  items.forEach(function(it){
+    if(it.halfOf && !it.per){
+      var orig=null;
+      for(var k=0;k<items.length;k++){ if(String(items[k].id)===String(it.halfOf)){ orig=items[k]; break; } }
+      var ou=orig?((orig.per>0)?Number(orig.per):Number(orig.price)):0;
+      var hu=(it.per>0)?Number(it.per):Number(it.price);
+      halfSaving += (ou-hu)*(it.qty||1);
+    }
+  });
+  if(halfSaving<0) halfSaving=0;
   var raw=(p.payTotal!=null)?Number(p.payTotal):((p.weightTotal!=null&&p.weightTotal?Number(p.weightTotal):(p.total!=null?Number(p.total):subtotal))-(p.newcust&&p.discount!=null?Number(p.discount):0)-(p.referralDeduct?Number(p.referralDeduct):0));
   var amt=(p.hasWeight?raw:roundHalf(raw));
   var roundAmt=Math.round((raw-amt)*100)/100;
@@ -3128,8 +3139,9 @@ function ticketHTML(p, st, isDemo){
   H+='<div style="margin:3px 0;border-top:1px solid #000"></div>';
   H+='<div style="font-size:11px;display:flex;justify-content:space-between"><span>合计</span><span>'+Number(subtotal).toFixed(2)+'</span></div>';
   if(fee>0) H+='<div style="font-size:11px;display:flex;justify-content:space-between"><span>配送费</span><span>'+fee.toFixed(2)+'</span></div>';
+  if(halfSaving>0.009) H+='<div style="font-size:11px;display:flex;justify-content:space-between"><span>优惠（第二杯半价）</span><span>-'+halfSaving.toFixed(2)+'</span></div>';
   if(disc>0) H+='<div style="font-size:11px;display:flex;justify-content:space-between"><span>新客优惠</span><span>-'+disc.toFixed(2)+'</span></div>';
-  if(refd>0) H+='<div style="font-size:11px;display:flex;justify-content:space-between"><span>推广抵扣</span><span>-'+refd.toFixed(2)+'</span></div>';
+  if(refd>0) H+='<div style="font-size:11px;display:flex;justify-content:space-between"><span>拉新抵现</span><span>-'+refd.toFixed(2)+'</span></div>';
   if(roundAmt>0) H+='<div style="font-size:11px;display:flex;justify-content:space-between"><span>抹零</span><span>-'+Number(roundAmt).toFixed(2)+'</span></div>';
   H+='<div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:2px"><span style="font-size:12px;font-weight:700">实付金额</span><span style="font-size:15px;font-weight:800">¥'+Number(amt).toFixed(2)+'</span></div>';
   H+='<div style="margin:3px 0;border-top:1px solid #000"></div>';
