@@ -33,6 +33,11 @@ body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;bac
 .ticker .tk span{margin:0 18px;font-weight:500}
 @keyframes tick{0%{transform:translateX(0)}100%{transform:translateX(-100%)}}
 .cats{display:flex;gap:9px;background:rgba(255,255,255,.28);-webkit-backdrop-filter:blur(30px) saturate(200%);backdrop-filter:blur(30px) saturate(200%);padding:11px 14px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid rgba(255,255,255,.6)}
+.searchbar{display:flex;align-items:center;gap:8px;margin:10px 14px 2px;padding:9px 12px;background:rgba(255,255,255,.42);-webkit-backdrop-filter:blur(30px) saturate(200%);backdrop-filter:blur(30px) saturate(200%);border:1px solid rgba(255,255,255,.75);border-radius:14px;box-shadow:0 4px 18px rgba(0,0,0,.05),inset 0 1px 0 rgba(255,255,255,.85)}
+.searchbar .sico{font-size:14px;color:#888}
+.searchbar input{flex:1;border:none;outline:none;background:transparent;font-size:14px;color:#333;min-width:0}
+.searchbar .sclear{border:none;background:rgba(0,0,0,.06);color:#888;border-radius:50%;width:20px;height:20px;line-height:20px;font-size:12px;cursor:pointer;padding:0;flex:none}
+.searchbar input::-webkit-input-placeholder{color:#aaa}
 .cats::-webkit-scrollbar{display:none}
 .cat{flex:0 0 auto;padding:8px 19px;border-radius:22px;background:rgba(255,255,255,.38);-webkit-backdrop-filter:blur(22px) saturate(190%);backdrop-filter:blur(22px) saturate(190%);font-size:14px;color:#5a5a5a;cursor:pointer;transition:all .18s cubic-bezier(.34,1.3,.64,1);font-weight:500;border:1px solid rgba(255,255,255,.85);box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 2px 8px rgba(0,0,0,.03)}
 .cat:active{transform:scale(.94)}
@@ -199,6 +204,7 @@ button:active{transform:scale(.95);-webkit-transform:scale(.95)}
         <button class="admin-entry" style="color:#00897b" onclick="openMyOrders()">📋 订单</button>
         <button class="admin-entry" style="color:#e65100" onclick="openPromo()">🎁 优惠</button>
         <button class="admin-entry" style="color:#1565c0" onclick="openDeliverLogin()">🛵 配送</button>
+        <button class="admin-entry" style="color:#8e24aa" onclick="openFeedback()">📕 意见</button>
       </div>
     </div>
   </div>
@@ -210,6 +216,7 @@ button:active{transform:scale(.95);-webkit-transform:scale(.95)}
     <span id="tk5">超10 公里 不配送</span>✦
     <span>店址：城厢镇朝阳路 16 号附 1 号</span>✦
   </div></div>
+  <div class="searchbar"><span class="sico">🔍</span><input id="kw" placeholder="搜索水果 / 商品名" value="" oninput="onSearch(this.value)"><button class="sclear" onclick="document.getElementById('kw').value='';onSearch('')">✕</button></div>
   <div class="cats" id="cats"></div>
   </div>
   <div class="list" id="dishList"></div>
@@ -219,6 +226,8 @@ button:active{transform:scale(.95);-webkit-transform:scale(.95)}
     <button class="btn" id="btnCart" onclick="openDrawer()">查看购物车</button>
   </div>
 </div>
+
+<button id="gotopBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})" style="display:none;position:fixed;right:14px;bottom:92px;z-index:9990;background:rgba(255,255,255,.55);-webkit-backdrop-filter:blur(26px) saturate(190%);backdrop-filter:blur(26px) saturate(190%);border:1px solid rgba(255,255,255,.85);box-shadow:0 8px 26px rgba(0,0,0,.15),inset 0 1px 0 rgba(255,255,255,.9);color:#238600;border-radius:28px;padding:11px 15px;font-size:13px;font-weight:800;cursor:pointer;line-height:1">⬆ 到顶</button>
 
 <!-- 购物车抽屉 -->
 <div class="drawer" id="drawer" onclick="if(event.target===this)closeDrawer()">
@@ -604,7 +613,13 @@ function renderCats(){
   cs.forEach(function(c){ html+='<div class="cat'+(c===curCat?' on':'')+'" onclick="setCat(\''+c+'\')">'+catLabel(c)+'</div>'; });
   box.innerHTML=html;
 }
-function setCat(c){ curCat=c; renderCats(); renderDishes(); }
+function setCat(c){ curCat=c; var kw=document.getElementById('kw'); if(kw){ kw.value=''; } window._kw=''; renderCats(); renderDishes(); }
+function onSearch(v){
+  window._kw=String(v||'').trim();
+  curCat='';
+  renderCats();
+  renderDishes();
+}
 
 function baseName(name){ return String(name||'').replace(/（.*?）/g,'').replace(/\(.*?\)/g,'').trim(); }
 function groupSort(list){
@@ -615,7 +630,13 @@ function groupSort(list){
 function renderDishes(){
   var box=document.getElementById('dishList'); var html='';
   if(curCat==='半价') html+='<div style="margin-bottom:10px;text-align:center"><button class="btn" style="background:#fff;color:#666;border:1px solid #ddd;width:90%;max-width:280px" onclick="backFromHalf()">↩ 不加了，返回结算</button></div>';
-  var list = dishes.filter(function(d){ return d.cat===curCat && d.on; });
+  var list;
+  var _kw=window._kw||'';
+  if(_kw){
+    list=dishes.filter(function(d){ return d.on && (String(d.name).indexOf(_kw)>=0 || String(d.orig||'').indexOf(_kw)>=0 || baseName(d.name).indexOf(_kw)>=0); });
+  } else {
+    list=dishes.filter(function(d){ return d.cat===curCat && d.on; });
+  }
   if(dishSort==='priceAsc') list.sort(function(a,b){return a.price-b.price;});
   else if(dishSort==='priceDesc') list.sort(function(a,b){return b.price-a.price;});
   else list=(function(){
@@ -638,7 +659,7 @@ function renderDishes(){
       (d.cat==='半价'?(canAddHalf(d)?'<button class="btn" style="background:#fb8c00" onclick="addToCart(\''+d.id+'\')">加入购物车</button>':'<button class="btn" style="background:#ccc;cursor:not-allowed;color:#999" onclick="alert(\'需选一杯价格相同或更高的原价果汁解锁~\')">原价果汁解锁</button>'):(d.cat==='礼盒'?(d.stock!=null&&d.stock<=0?'<button class="btn" style="background:#ccc;cursor:not-allowed;color:#999" disabled>已售罄</button>':'<button class="btn" style="background:#fb8c00" onclick="giftAdd(\''+d.id+'\')">加入购物车</button>'):'<button class="btn" onclick="addToCart(\''+d.id+'\')">加入购物车</button>'))+
       '</div></div>';
   });
-  box.innerHTML=html || (cats().length? '<div style="text-align:center;color:#999;padding:40px">该分类暂无商品</div>' : (window._menuLoaded? '<div style="text-align:center;color:#999;padding:40px">🍉 菜单暂未上架，敬请期待</div>' : '<div style="text-align:center;color:#999;padding:40px">⏳ 正在加载菜单…</div>'));
+  box.innerHTML=html || (_kw? '<div style="text-align:center;color:#999;padding:40px">没有找到「'+esc(_kw)+'」相关商品，换个词试试</div>' : (cats().length? '<div style="text-align:center;color:#999;padding:40px">该分类暂无商品</div>' : (window._menuLoaded? '<div style="text-align:center;color:#999;padding:40px">🍉 菜单暂未上架，敬请期待</div>' : '<div style="text-align:center;color:#999;padding:40px">⏳ 正在加载菜单…</div>')));
 }
 function showGiftDlg(id){
   var d=byId(id); if(!d) return;
@@ -1647,6 +1668,30 @@ function showPay(order){
   document.getElementById('payModal').classList.add('show');
 }
 function openPromo(){ document.getElementById('promoModal').classList.add('show'); document.getElementById('promoRes').innerHTML=''; }
+(function(){ var b=document.getElementById('gotopBtn'); if(!b) return; function t(){ b.style.display=(window.scrollY>420)?'block':'none'; } window.addEventListener('scroll',t,{passive:true}); t(); })();
+function openFeedback(){
+  var old=document.getElementById('fbModal'); if(old) old.remove();
+  var box=document.createElement('div'); box.id='fbModal'; box.className='modal show';
+  box.style.cssText='display:flex;align-items:center;justify-content:center;z-index:9999';
+  box.onclick=function(e){ if(e.target===box) box.remove(); };
+  box.innerHTML='<div style="background:rgba(255,255,255,.30);border-radius:22px;-webkit-backdrop-filter:blur(46px) saturate(210%);backdrop-filter:blur(46px) saturate(210%);border:1px solid rgba(255,255,255,.9);box-shadow:0 14px 44px rgba(0,0,0,.13),inset 0 1px 0 rgba(255,255,255,.85);padding:20px;width:90%;max-width:400px;box-sizing:border-box">'+
+    '<h3 style="margin:0 0 4px">📕 意见簿</h3>'+
+    '<div style="font-size:12px;color:#888;margin-bottom:12px">想吃什么、哪里不满意、任何建议都可以告诉我</div>'+
+    '<input id="fbPhone" placeholder="手机号（选填，便于回复）" style="width:100%;box-sizing:border-box;background:rgba(255,255,255,.55);border:1px solid rgba(255,255,255,.65);border-radius:8px;padding:9px 10px;font-size:13px;margin-bottom:10px">'+
+    '<textarea id="fbContent" placeholder="写下你的意见 / 建议…" style="width:100%;box-sizing:border-box;height:96px;background:rgba(255,255,255,.55);border:1px solid rgba(255,255,255,.65);border-radius:8px;padding:9px 10px;font-size:13px;resize:none;margin-bottom:14px"></textarea>'+
+    '<div style="display:flex;gap:8px"><button class="btn" style="flex:1;background:#fb8c00" onclick="fbSubmit()">提交意见</button>'+
+    '<button class="btn gray" style="flex:1" onclick="document.getElementById(\'fbModal\').remove()">关闭</button></div></div>';
+  document.body.appendChild(box);
+}
+function fbSubmit(){
+  var c=document.getElementById('fbContent').value.trim();
+  if(!c){ alert('请先写下你的意见'); return; }
+  var p=document.getElementById('fbPhone').value.trim();
+  fetch(SB_URL+'/rest/v1/rpc/feedback_add',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({p_phone:p,p_content:c})})
+    .then(function(r){return r.json();})
+    .then(function(j){ if(j&&j.ok){ alert('✅ 已收到你的意见，谢谢！'); var m=document.getElementById('fbModal'); if(m) m.remove(); } else alert((j&&j.msg)||'提交失败'); })
+    .catch(function(){ alert('网络异常，请稍后再试'); });
+}
 function closePromo(){ var m=document.getElementById('promoModal'); if(m) m.classList.remove('show'); }
 function checkPromo(){
   var ph=(document.getElementById('promoPhone').value||'').trim();
@@ -1893,7 +1938,7 @@ function renderAdmin(){
       }
     });
   }
-  var tabs=[['orders','📋 订单'],['dishes','🍉 菜品'],['pay','💳 收款码'],['shop','🏠 店铺'],['print','🖨 打印'],['qr','🔗 点单码'],['ref','🤝 拉新'],['deliver','🛵 配送'],['groupon','🛒 团购'],['set','⚙ 设置']];
+  var tabs=[['orders','📋 订单'],['dishes','🍉 菜品'],['pay','💳 收款码'],['shop','🏠 店铺'],['print','🖨 打印'],['qr','🔗 点单码'],['ref','🤝 拉新'],['deliver','🛵 配送'],['groupon','🛒 团购'],['fb','📕 意见'],['set','⚙ 设置']];
   var html=''; var cur=adminTab||'orders';
   tabs.forEach(function(t){ html+='<button class="'+(cur===t[0]?'on':'')+'" onclick="adminTab=\''+t[0]+'\';renderAdmin()">'+t[1]+'</button>'; });
   document.getElementById('adminTabs').innerHTML=html;
@@ -1908,9 +1953,36 @@ function renderAdmin(){
   else if(cur==='ref') panel.innerHTML=renderReferralAdmin();
   else if(cur==='deliver') panel.innerHTML=renderDeliverAdmin();
   else if(cur==='groupon'){ location.href='groupon_admin.html?autologin=1'; return; }
+  else if(cur==='fb'){ panel.innerHTML='<div style="padding:2px 0 10px;font-weight:800;font-size:15px">📕 意见簿 <small style="font-weight:400;color:#888">（顾客提交的意见 / 建议）</small></div><div id="fbList" style="font-size:13px">加载中…</div>'; loadFbAdmin(); }
   else if(cur==='set') panel.innerHTML=renderSetAdmin();
 }
 var adminTab='orders';
+
+function loadFbAdmin(){
+  var pwd=clpwd(); var el=document.getElementById('fbList');
+  if(!pwd){ if(el) el.innerHTML='请先在「店铺 → 云端密码」设置云端密码后查看'; return; }
+  fetch(SB_URL+'/rest/v1/rpc/feedback_list',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({p_admin:pwd})})
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      var e=document.getElementById('fbList'); if(!e) return;
+      if(!Array.isArray(j)||!j.length){ e.innerHTML='<div style="color:#999;padding:18px 0;text-align:center">暂无意见</div>'; return; }
+      e.innerHTML=j.map(function(f){
+        return '<div style="background:rgba(255,255,255,.45);-webkit-backdrop-filter:blur(18px) saturate(180%);backdrop-filter:blur(18px) saturate(180%);border:1px solid rgba(255,255,255,.7);border-radius:12px;padding:10px 12px;margin-bottom:8px">'+
+          '<div style="font-weight:700">'+esc(f.phone||'匿名')+' <span style="font-weight:400;color:#888;font-size:12px">'+esc(String(f.created_at||'').replace('T',' ').slice(0,16))+'</span></div>'+
+          '<div style="margin:6px 0 8px;line-height:1.6">'+esc(f.content)+'</div>'+
+          '<button class="btn" style="background:#c62828;color:#fff;font-size:12px;padding:4px 12px" onclick="fbDel('+f.id+')">删除</button></div>';
+      }).join('');
+    })
+    .catch(function(){ var e=document.getElementById('fbList'); if(e) e.innerHTML='<div style="color:#c62828">加载失败，请检查网络</div>'; });
+}
+function fbDel(id){
+  if(!confirm('删除这条意见？')) return;
+  var pwd=clpwd(); if(!pwd) return;
+  fetch(SB_URL+'/rest/v1/rpc/feedback_del',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({p_admin:pwd,p_id:id})})
+    .then(function(r){ return r.json(); })
+    .then(function(j){ if(j&&j.ok){ loadFbAdmin(); } else alert((j&&j.msg)||'删除失败'); })
+    .catch(function(){ alert('网络异常，请重试'); });
+}
 
 function placeCloudOrder(o, refInfo){
   if(!window.SB_URL) return;
