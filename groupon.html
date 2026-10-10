@@ -235,11 +235,12 @@ function loadMy(){
   api('groupon_my',{p_session_id:curSession,p_phone:phone}).then(function(r){
     var el=document.getElementById('myRecs');
     if(!Array.isArray(r)||!r.length){ el.innerHTML='<div class="myrec" style="color:#999;">该手机号在本团暂无记录</div>'; return; }
-    var sess=r[r.length-1]._session||{};
-    var wd=(r[r.length-1]._withdraw)||{count30:0,ban_days:0};
+    var sessObj=null, wdObj={count30:0,ban_days:0};
+    r.forEach(function(rec){ if(rec._session) sessObj=rec._session; if(rec._withdraw) wdObj=rec._withdraw; });
+    var sess=sessObj||{}; var wd=wdObj;
     window._wd=wd;
     el.innerHTML=r.map(function(rec){
-      if(rec._session) return '';
+      if(rec._session||rec._withdraw) return '';
       var st={joined:'已参与·待确认',confirmed:'已确认',picked:'已取货',withdrawn:'已退出',cancelled:'团已取消',missed:'未取货'}[rec.status]||rec.status;
       var btn='';
       if(rec.status==='joined'&&sess.status==='quoted'&&sess.unit_price!=null)
