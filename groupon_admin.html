@@ -255,7 +255,10 @@ function showList(){
       '<div class="row" style="padding-top:2px;"><span class="muted">'+s.people+' 人参与'+(s.per_limit>0?' · 每人限购 '+fmtN(s.per_limit)+' 份':'')+'</span><span class="muted">截止 '+fmtT(s.deadline)+'</span></div>'+
       (Number(s.deposit)>0?'<div class="row" style="padding-top:0;"><span class="muted">预定金</span><span class="price" style="color:#c62828;">¥'+fmtN(s.deposit)+'/份</span></div>':'')+
       (s.unit_price!=null?'<div class="row" style="padding-top:0;"><span class="muted">单价</span><span class="price">¥'+fmtN(s.unit_price)+'</span></div>':'')+
-      '<button class="btn btn-p" style="width:100%;margin-top:8px;" onclick="openDetail('+s.id+')">查看 / 操作</button></div>';
+      '<div style="display:flex;gap:8px;margin-top:8px;">'+
+      '<button class="btn btn-p" style="flex:1;" onclick="openDetail('+s.id+')">查看 / 操作</button>'+
+      (s.status==='arrived'?'<button class="btn btn-g" style="flex:1;" onclick="scanQuick('+s.id+')">扫码核销</button>':'')+
+      '</div></div>';
     }).join('');
   }).catch(function(){ document.getElementById('list').innerHTML='<div class="card empty"><div class="eico">📡</div>加载失败，请检查网络</div>'; });
 }
@@ -727,6 +730,10 @@ if(isAdmin()){
 </script>
 <script>
 var _hq=null;
+function scanQuick(id){
+  cur=id;
+  openScan();
+}
 function openScan(){
   document.getElementById('scanBox').style.display='flex';
   document.getElementById('scanInput').value='';
