@@ -724,7 +724,10 @@ function openScan(){
     _hq.start({facingMode:'environment'},{fps:10,qrbox:240},function(t){
       try{_hq.stop();}catch(e){}
       handleScan(t);
-    },function(){});
+    },function(){}).catch(function(){
+      var rr=document.getElementById('qr-reader');
+      rr.innerHTML='<div style="padding:34px 12px;text-align:center;color:#aaa;font-size:13.5px;">无法打开摄像头（需 HTTPS 与摄像头权限）<br>请使用下方手动输入核销</div>';
+    });
   }catch(e){
     var rr=document.getElementById('qr-reader');
     rr.innerHTML='<div style="padding:34px 12px;text-align:center;color:#aaa;font-size:13.5px;">无法打开摄像头（需 HTTPS 与摄像头权限）<br>请使用下方手动输入核销</div>';
