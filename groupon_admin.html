@@ -777,7 +777,7 @@ function scanManual(){
 function doScanPick(sid,rid){
   if(sid&&sid!==cur){ errbar(true,'该核销码不属于当前团购'); return; }
   api('groupon_pick_by_id',{p_admin:pwd(),p_session_id:cur,p_request_id:rid}).then(function(r){
-    if(r&&r.ok){ okbar(true,'已核销：'+r.item+' × '+fmtN(r.qty)+' '+r.unit+'（'+r.phone+'）'); closeScan(); showDetail(); }
+    if(r&&r.ok){ okbar(true,'已核销：'+r.item+' × '+fmtN(r.qty)+' '+r.unit+'（'+r.phone+'）'+(Number(r.deposit_amt)>0?' · 定金 ¥'+fmtN(r.deposit_amt)+' 已记录收取':'')); closeScan(); showDetail(); }
     else errbar(true,(r&&r.msg)||'核销失败');
   }).catch(function(){ errbar(true,'网络异常，请重试'); });
 }
