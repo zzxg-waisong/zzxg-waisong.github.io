@@ -203,6 +203,7 @@ th{color:#666;font-weight:700;font-size:12px;background:rgba(255,255,255,.4);-we
   <button id="flAddBtn" onclick="doPlanAdd()">一键加入团购方案</button>
 </div>
 <div id="toast"></div>
+<script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script>
 var SB_URL='https://aenrwtwhhuqzmbxsjump.supabase.co';
 var SB_KEY='sb_publishable_TYMADeCoaKMsnJ7INuHnfQ_n9yKIHkl';
@@ -309,7 +310,7 @@ function showDetail(){
     var depTotal=depQty.reduce(function(a,x){return a+Number(x.qty||0);},0)*dep0;
     var depPaid=depQty.filter(function(x){return x.deposit_paid;}).reduce(function(a,x){return a+Number(x.qty||0);},0)*dep0;
     var cfQty=r.filter(function(x){return x.status==='confirmed';});
-    el.innerHTML='<div class="card"><div class="hd2"><span class="ico">📋</span>参与明细 <span class="muted" style="font-weight:400;">('+r.length+' 条 · 已核销 '+pickedN+')</span></div>'+
+    el.innerHTML='<div class="card"><div class="hd2"><span class="ico">📋</span>参与明细 <span class="muted" style="font-weight:400;">('+r.length+' 条 · 已核销 '+pickedN+')</span><button onclick="openScan()" style="margin-left:auto;padding:5px 12px;font-size:12.5px;font-weight:700;border:none;border-radius:12px;background:linear-gradient(135deg,#238600,#4fa50a);color:#fff;box-shadow:0 3px 10px rgba(35,134,0,.3);cursor:pointer;">扫码核销</button></div>'+
       (dep0>0?'<div style="display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 2px;font-size:12.5px;">'+
         '<span class="st s-confirmed">应收定金 ¥'+fmtN(depTotal)+'</span>'+
         '<span class="st s-picked">已收 ¥'+fmtN(depPaid)+'</span>'+
@@ -693,11 +694,72 @@ if(isAdmin()){
   document.getElementById('main').classList.add('hidden');
 }
 </script>
+<div id="scanBox" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:99998;background:rgba(0,0,0,.55);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:16px;">
+  <div style="width:100%;max-width:420px;background:rgba(255,255,255,.96);border-radius:22px;padding:16px;box-shadow:0 16px 50px rgba(0,0,0,.35);">
+    <div style="display:flex;justify-content:space-between;align-items:center;font-weight:800;font-size:16px;color:#1b5e20;">
+      <span>📷 扫码核销</span>
+      <span onclick="closeScan()" style="cursor:pointer;font-size:22px;color:#888;line-height:1;">×</span>
+    </div>
+    <div id="qr-reader" style="margin:12px 0 4px;border-radius:14px;overflow:hidden;background:#0b0b0b;"></div>
+    <div style="text-align:center;font-size:12.5px;color:#888;margin-bottom:10px;">对准顾客出示的取货二维码，自动核销</div>
+    <div style="display:flex;gap:8px;">
+      <input id="scanInput" placeholder="摄像头不可用时，粘贴二维码内容或核销码" style="flex:1;border:1px solid rgba(0,0,0,.14);border-radius:12px;padding:10px 12px;font-size:13.5px;background:#f7faf5;">
+      <button onclick="scanManual()" style="padding:10px 18px;font-size:13.5px;font-weight:700;border:none;border-radius:12px;background:linear-gradient(135deg,#238600,#4fa50a);color:#fff;cursor:pointer;">核销</button>
+    </div>
+  </div>
+</div>
 <button id="backTopBtn" onclick="backTop()" style="position:fixed;right:18px;bottom:22px;z-index:9999;background:rgba(255,255,255,.6);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.75);border-radius:50px;padding:10px 16px;font-size:14px;font-weight:700;color:#238600;box-shadow:0 6px 18px rgba(0,0,0,.18);cursor:pointer;display:none;">⬆ 到顶</button>
 <script>
   var btb=document.getElementById('backTopBtn');
   function backTop(){ window.scrollTo({top:0,behavior:'smooth'}); }
   window.addEventListener('scroll',function(){ btb.style.display=(window.scrollY>600)?'block':'none'; },{passive:true});
+</script>
+<script>
+var _hq=null;
+function openScan(){
+  document.getElementById('scanBox').style.display='flex';
+  document.getElementById('scanInput').value='';
+  try{
+    _hq=new Html5Qrcode('qr-reader');
+    _hq.start({facingMode:'environment'},{fps:10,qrbox:240},function(t){
+      try{_hq.stop();}catch(e){}
+      handleScan(t);
+    },function(){});
+  }catch(e){
+    var rr=document.getElementById('qr-reader');
+    rr.innerHTML='<div style="padding:34px 12px;text-align:center;color:#aaa;font-size:13.5px;">无法打开摄像头（需 HTTPS 与摄像头权限）<br>请使用下方手动输入核销</div>';
+  }
+}
+function closeScan(){
+  document.getElementById('scanBox').style.display='none';
+  if(_hq){ try{_hq.stop();}catch(e){} _hq=null; }
+}
+function parseScan(t){
+  var s=String(t||'').trim();
+  var m=s.match(/^ZZGP\|(\d+)\|(\d+)$/);
+  if(m) return {sid:Number(m[1]),rid:Number(m[2])};
+  var n=Number(s);
+  if(s&&!isNaN(n)) return {rid:n};
+  return null;
+}
+function handleScan(t){
+  var p=parseScan(t);
+  if(!p){ errbar(true,'无法识别的核销码，请重新扫描或手动输入'); return; }
+  doScanPick(p.sid||cur,p.rid);
+}
+function scanManual(){
+  var t=document.getElementById('scanInput').value.trim();
+  var p=parseScan(t);
+  if(!p){ errbar(true,'无法识别的核销码，请粘贴完整二维码内容'); return; }
+  doScanPick(p.sid||cur,p.rid);
+}
+function doScanPick(sid,rid){
+  if(sid&&sid!==cur){ errbar(true,'该核销码不属于当前团购'); return; }
+  api('groupon_pick_by_id',{p_admin:pwd(),p_session_id:cur,p_request_id:rid}).then(function(r){
+    if(r&&r.ok){ okbar(true,'已核销：'+r.item+' × '+fmtN(r.qty)+' '+r.unit+'（'+r.phone+'）'); closeScan(); showDetail(); }
+    else errbar(true,(r&&r.msg)||'核销失败');
+  }).catch(function(){ errbar(true,'网络异常，请重试'); });
+}
 </script>
 <script>
 /* 下拉刷新：页面顶部下拉超过阈值即重新加载（横向滑动不触发，防误触） */
