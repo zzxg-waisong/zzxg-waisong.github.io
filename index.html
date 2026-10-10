@@ -3118,8 +3118,9 @@ function ticketHTML(p, st, isDemo){
     var rm=String(p.remark||'').trim();
     if(rm && !/^https?:\/\/|\.github\.io|\.edgeone\.dev|uri\.amap\.com/i.test(rm)) H+='<div style="font-size:11px">备注：'+E(rm)+'</div>';
   }
+  H+='<div style="border-top:1px solid #000;margin:3px 0"></div>';
   H+='<table style="width:100%;border-collapse:collapse;font-size:11px;margin:4px 0">';
-  H+='<tr><td style="text-align:left;font-weight:700">商品</td><td style="text-align:right;font-weight:700">单价</td><td style="text-align:right;font-weight:700">数量</td><td style="text-align:right;font-weight:700">价格</td></tr>';
+  H+='<tr style="border-bottom:1px solid #000"><td style="text-align:left;font-weight:700;padding-bottom:2px">商品</td><td style="text-align:right;font-weight:700;padding-bottom:2px">单价</td><td style="text-align:right;font-weight:700;padding-bottom:2px">数量</td><td style="text-align:right;font-weight:700;padding-bottom:2px">价格</td></tr>';
   rows.forEach(function(r){
     H+='<tr><td style="text-align:left">'+E(r.name)+'</td><td style="text-align:right">'+Number(r.unitPrice).toFixed(2)+'</td><td style="text-align:right">'+E(r.qtyTxt)+'</td><td style="text-align:right">'+Number(r.sub).toFixed(2)+'</td></tr>';
   });
@@ -3135,7 +3136,8 @@ function ticketHTML(p, st, isDemo){
   H+='<div style="font-size:11px">'+(p.mode==='pickup'?'取餐方式：到店自提':'地址：'+E(p.addr||''))+'</div>';
   H+='<div style="font-size:11px">姓名：'+E(p.name||'')+'</div>';
   H+='<div style="font-size:11px">电话：'+E(p.phone||'')+'</div>';
-  H+='<div style="text-align:center;font-size:10px;color:#333;margin-top:4px">谢谢惠顾，欢迎再次光临</div>';
+  H+='<div style="border-top:1px solid #000;margin:4px 0"></div>';
+  H+='<div style="text-align:center;font-size:10px;color:#333;margin-top:2px">谢谢惠顾，欢迎再次光临</div>';
   return H;
 }
 function previewTicket(){
