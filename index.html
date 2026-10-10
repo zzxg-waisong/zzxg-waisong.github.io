@@ -556,7 +556,7 @@ var curCat = '水果'; var adminDishCat = '水果'; var dishSort = 'default';
 var curOrder = null;
 
 /* ==================== 通用 ==================== */
-function money(n){ return '¥'+Number(n).toFixed(2); }
+function money(n){ n=Number(n); if(!isFinite(n)) n=0; return '¥'+n.toFixed(2); }
 function roundHalf(x){
   var f=x-Math.floor(x);
   if(f<0.5) return Math.floor(x);
@@ -2166,24 +2166,25 @@ function renderCloudOrder(c){
 /* 小票打印（通用）：p=订单payload/本地订单对象, status=当前状态
    称重商品按实际斤数显示数量（weights 优先，note 按斤兜底），金额与购物车/云端一致 */
 function printTicket(p, status){
+  var num=function(x){ x=Number(x); return isFinite(x)?x:0; };
   var lines=[], detailArr=[];
   (p.items||[]).forEach(function(it){
-    var sub=0, qtyTxt='', qtyUnit='份', unitPrice=(it.per>0)?Number(it.per):Number(it.price);
-    var wt=(p.weights&&p.weights[it.id]!=null)?Number(p.weights[it.id]):null;
+    var sub=0, qtyTxt='', qtyUnit='份', unitPrice=num(it.per>0?it.per:it.price);
+    var wt=(p.weights&&p.weights[it.id]!=null)?num(p.weights[it.id]):null;
     var jm=String(it.note||'').match(/(?:按斤|称重)([\d.]+)斤/);
     var gm=String(it.note||'').match(/按根([\d.]+)元/);
     var ga=String(it.note||'').match(/按金额([\d.]+)元/);
-    if(it.per>0 && wt!=null){ sub=it.per*wt; qtyTxt='x'+wt+'斤（'+it.per+'元/斤）'; qtyUnit='斤'; }
-    else if(it.per>0 && jm){ sub=it.per*parseFloat(jm[1]); qtyTxt='x'+jm[1]+'斤（'+it.per+'元/斤）'; qtyUnit='斤'; }
-    else if(gm){ sub=parseFloat(gm[1]); qtyTxt=it.note; qtyUnit='根'; }
-    else if(ga){ sub=parseFloat(ga[1]); qtyTxt=it.note; qtyUnit='份'; }
-    else { sub=it.price*it.qty; qtyTxt='x'+(it.qty!=null?it.qty:'')+(it.unit?it.unit:''); qtyUnit=it.unit||'份'; }
-    lines.push((it.name||'')+' '+qtyTxt+' ¥'+sub.toFixed(2));
+    if(it.per>0 && wt!=null){ sub=num(it.per)*num(wt); qtyTxt='x'+num(wt)+'斤（'+num(it.per)+'元/斤）'; qtyUnit='斤'; }
+    else if(it.per>0 && jm){ sub=num(it.per)*num(jm[1]); qtyTxt='x'+num(jm[1])+'斤（'+num(it.per)+'元/斤）'; qtyUnit='斤'; }
+    else if(gm){ sub=num(gm[1]); qtyTxt=it.note; qtyUnit='根'; }
+    else if(ga){ sub=num(ga[1]); qtyTxt=it.note; qtyUnit='份'; }
+    else { sub=num(it.price)*num(it.qty); qtyTxt='x'+((it.qty!=null&&isFinite(num(it.qty))&&num(it.qty)>0)?num(it.qty):'')+(it.unit?it.unit:''); qtyUnit=it.unit||'份'; }
+    lines.push((it.name||'')+' '+qtyTxt+' ¥'+num(sub).toFixed(2));
     detailArr.push({name:it.name||'', unitPrice:unitPrice, qtyTxt:qtyTxt, qtyUnit:qtyUnit, subtotal:sub});
   });
   var note='';
   if(p.remark){ var rm=String(p.remark).trim(); if(rm && !/^https?:\/\/|\.github\.io|\.edgeone\.dev|uri\.amap\.com/i.test(rm)) note=rm; }
-  var raw=(p.payTotal!=null)?Number(p.payTotal):((p.weightTotal!=null&&p.weightTotal?Number(p.weightTotal):(p.total!=null?Number(p.total):0))-(p.newcust&&p.discount!=null?Number(p.discount):0)-(p.referralDeduct?Number(p.referralDeduct):0));
+  var raw=(p.payTotal!=null)?num(p.payTotal):((p.weightTotal!=null&&p.weightTotal?num(p.weightTotal):(p.total!=null?num(p.total):0))-(p.newcust&&p.discount!=null?num(p.discount):0)-(p.referralDeduct?num(p.referralDeduct):0));
   var amt=(p.hasWeight?raw:roundHalf(raw));
   var roundAmt=Math.round((raw-amt)*100)/100;
   var paid=(status==='已付款');
@@ -3079,21 +3080,22 @@ function ticketHTML(p, st, isDemo){
   p=p||{};
   var demoItems=[{name:'雪梨（中）',price:3.5,qty:2,unit:'斤',per:3.5,note:'按斤2斤',id:'x'},{name:'红心猕猴桃',price:15,qty:1,unit:'斤',per:15,note:'按斤1斤',id:'y'},{name:'鲜榨西瓜汁',price:13.5,qty:1,unit:'杯',cat:'果汁',id:'z'},{name:'鲜榨西瓜汁（第二杯半价）',price:6.75,qty:1,unit:'杯',cat:'半价',halfOf:'z',id:'h_z'}];
   var items=isDemo?demoItems:(p.items||[]);
+  var num=function(x){ x=Number(x); return isFinite(x)?x:0; };
   var wtMap={};
   if(p.weights){ for(var k in p.weights) wtMap[k]=p.weights[k]; }
   var rows=items.map(function(it){
     var nm=String(it.name||'').replace(/第二杯半价/g,'半价杯');
-    var unitPrice=(it.per>0)?Number(it.per):Number(it.price);
+    var unitPrice=num(it.per>0?it.per:it.price);
     var sub=0, qtyTxt='';
-    var wt=(wtMap[it.id]!=null)?Number(wtMap[it.id]):null;
+    var wt=(wtMap[it.id]!=null)?num(wtMap[it.id]):null;
     var jm=String(it.note||'').match(/(?:按斤|称重)([\d.]+)斤/);
     var gm=String(it.note||'').match(/按根([\d.]+)元/);
     var ga=String(it.note||'').match(/按金额([\d.]+)元/);
-    if(it.per>0 && wt!=null){ sub=it.per*wt; qtyTxt=wt+'/斤'; }
-    else if(it.per>0 && jm){ sub=it.per*parseFloat(jm[1]); qtyTxt=jm[1]+'/斤'; }
-    else if(gm){ sub=parseFloat(gm[1]); qtyTxt='1/根'; }
-    else if(ga){ sub=parseFloat(ga[1]); qtyTxt='1/份'; }
-    else { sub=it.price*it.qty; qtyTxt=(it.qty!=null?it.qty:'1')+'/'+(it.unit||'份'); }
+    if(it.per>0 && wt!=null){ sub=num(it.per)*num(wt); qtyTxt=num(wt)+'/斤'; }
+    else if(it.per>0 && jm){ sub=num(it.per)*num(jm[1]); qtyTxt=num(jm[1])+'/斤'; }
+    else if(gm){ sub=num(gm[1]); qtyTxt='1/根'; }
+    else if(ga){ sub=num(ga[1]); qtyTxt='1/份'; }
+    else { sub=num(it.price)*num(it.qty); qtyTxt=(num(it.qty)>0?num(it.qty):1)+'/'+(it.unit||'份'); }
     return {name:nm, unitPrice:unitPrice, qtyTxt:qtyTxt, sub:sub};
   });
   var subtotal=rows.reduce(function(s,r){return s+r.sub;},0);
@@ -3102,18 +3104,18 @@ function ticketHTML(p, st, isDemo){
     if(it.halfOf && !it.per){
       var orig=null;
       for(var k=0;k<items.length;k++){ if(String(items[k].id)===String(it.halfOf)){ orig=items[k]; break; } }
-      var ou=orig?((orig.per>0)?Number(orig.per):Number(orig.price)):0;
-      var hu=(it.per>0)?Number(it.per):Number(it.price);
-      halfSaving += (ou-hu)*(it.qty||1);
+      var ou=orig?num(orig.per>0?orig.per:orig.price):0;
+      var hu=num(it.per>0?it.per:it.price);
+      halfSaving += (ou-hu)*(num(it.qty)||1);
     }
   });
   if(halfSaving<0) halfSaving=0;
-  var raw=(p.payTotal!=null)?Number(p.payTotal):((p.weightTotal!=null&&p.weightTotal?Number(p.weightTotal):(p.total!=null?Number(p.total):subtotal))-(p.newcust&&p.discount!=null?Number(p.discount):0)-(p.referralDeduct?Number(p.referralDeduct):0));
+  var raw=(p.payTotal!=null)?num(p.payTotal):((p.weightTotal!=null&&p.weightTotal?num(p.weightTotal):(p.total!=null?num(p.total):subtotal))-(p.newcust&&p.discount!=null?num(p.discount):0)-(p.referralDeduct?num(p.referralDeduct):0));
   var amt=(p.hasWeight?raw:roundHalf(raw));
   var roundAmt=Math.round((raw-amt)*100)/100;
-  var fee=(p.deliveryFee!=null)?Number(p.deliveryFee):0;
-  var disc=(p.newcust&&p.discount!=null)?Number(p.discount):0;
-  var refd=p.referralDeduct?Number(p.referralDeduct):0;
+  var fee=(p.deliveryFee!=null)?num(p.deliveryFee):0;
+  var disc=(p.newcust&&p.discount!=null)?num(p.discount):0;
+  var refd=p.referralDeduct?num(p.referralDeduct):0;
   var paid=(st==='已付款');
   var seq=''; try{ seq=String(p.id||''); }catch(e){}
   var E=function(s){ return String(s==null?'':s); };
@@ -3134,11 +3136,11 @@ function ticketHTML(p, st, isDemo){
   H+='<table style="width:100%;border-collapse:collapse;font-size:11px;margin:4px 0">';
   H+='<tr style="border-bottom:1px solid #000"><td style="text-align:left;font-weight:700;padding-bottom:2px">商品</td><td style="text-align:right;font-weight:700;padding-bottom:2px">单价</td><td style="text-align:right;font-weight:700;padding-bottom:2px">数量</td><td style="text-align:right;font-weight:700;padding-bottom:2px">价格</td></tr>';
   rows.forEach(function(r){
-    H+='<tr><td style="text-align:left">'+E(r.name)+'</td><td style="text-align:right">'+Number(r.unitPrice).toFixed(2)+'</td><td style="text-align:right">'+E(r.qtyTxt)+'</td><td style="text-align:right">'+Number(r.sub).toFixed(2)+'</td></tr>';
+    H+='<tr><td style="text-align:left">'+E(r.name)+'</td><td style="text-align:right">'+num(r.unitPrice).toFixed(2)+'</td><td style="text-align:right">'+E(r.qtyTxt)+'</td><td style="text-align:right">'+num(r.sub).toFixed(2)+'</td></tr>';
   });
   H+='</table>';
   H+='<div style="margin:3px 0;border-top:1px solid #000"></div>';
-  H+='<div style="font-size:11px;display:flex;justify-content:space-between"><span>合计</span><span>'+Number(subtotal).toFixed(2)+'</span></div>';
+  H+='<div style="font-size:11px;display:flex;justify-content:space-between"><span>合计</span><span>'+num(subtotal).toFixed(2)+'</span></div>';
   if(fee>0) H+='<div style="font-size:11px;display:flex;justify-content:space-between"><span>配送费</span><span>'+fee.toFixed(2)+'</span></div>';
   if(halfSaving>0.009) H+='<div style="font-size:11px;display:flex;justify-content:space-between"><span>优惠（第二杯半价）</span><span>-'+halfSaving.toFixed(2)+'</span></div>';
   if(disc>0) H+='<div style="font-size:11px;display:flex;justify-content:space-between"><span>新客优惠</span><span>-'+disc.toFixed(2)+'</span></div>';
