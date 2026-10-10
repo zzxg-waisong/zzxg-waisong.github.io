@@ -3082,6 +3082,7 @@ function ticketHTML(p, st, isDemo){
   var wtMap={};
   if(p.weights){ for(var k in p.weights) wtMap[k]=p.weights[k]; }
   var rows=items.map(function(it){
+    var nm=String(it.name||'').replace(/第二杯半价/g,'半价杯');
     var unitPrice=(it.per>0)?Number(it.per):Number(it.price);
     var sub=0, qtyTxt='';
     var wt=(wtMap[it.id]!=null)?Number(wtMap[it.id]):null;
@@ -3093,7 +3094,7 @@ function ticketHTML(p, st, isDemo){
     else if(gm){ sub=parseFloat(gm[1]); qtyTxt='1/根'; }
     else if(ga){ sub=parseFloat(ga[1]); qtyTxt='1/份'; }
     else { sub=it.price*it.qty; qtyTxt=(it.qty!=null?it.qty:'1')+'/'+(it.unit||'份'); }
-    return {name:it.name||'', unitPrice:unitPrice, qtyTxt:qtyTxt, sub:sub};
+    return {name:nm, unitPrice:unitPrice, qtyTxt:qtyTxt, sub:sub};
   });
   var subtotal=rows.reduce(function(s,r){return s+r.sub;},0);
   var halfSaving=0;
@@ -3119,7 +3120,7 @@ function ticketHTML(p, st, isDemo){
   var H='';
   H+='<div style="text-align:center;font-size:15px;font-weight:800">榨榨鲜果</div>';
   H+='<div style="text-align:center;font-size:10px;color:#333">新鲜水果 · 鲜果现榨</div>';
-  H+='<div style="text-align:center;font-size:11px;color:#333">'+(isDemo?'1010 10:07 #1':('#'+E(seq)))+'</div>';
+  H+='<div style="text-align:center;font-size:11px;color:#333">'+(isDemo?'2026-10-10 10:07 #1':(E(fmtLocal(p.created||''))+' #'+E(seq)))+'</div>';
   H+='<div style="text-align:center;font-size:11px">'+(paid?'--已付款--':'--待处理--')+'</div>';
   H+='<div style="margin:4px 0;border-top:1px solid #000"></div>';
   if(!isDemo){
