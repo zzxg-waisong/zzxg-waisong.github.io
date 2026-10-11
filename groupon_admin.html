@@ -736,7 +736,11 @@ function scanQuick(id){
 }
 function openScan(){
   document.getElementById('scanBox').style.display='flex';
-  document.getElementById('scanInput').value='';
+  var si=document.getElementById('scanInput');
+  si.value='';
+  si.style.border='1px solid rgba(0,0,0,.14)';
+  si.style.background='#f7faf5';
+  setTimeout(function(){ si.focus(); si.select(); },150);
   try{
     _hq=new Html5Qrcode('qr-reader');
     _hq.start({facingMode:'environment'},{fps:10,qrbox:240},function(t){
@@ -775,12 +779,61 @@ function scanManual(){
   doScanPick(p.sid||cur,p.rid);
 }
 function doScanPick(sid,rid){
-  if(sid&&sid!==cur){ errbar(true,'该核销码不属于当前团购'); return; }
+  if(sid&&sid!==cur){ beepErr(); errbar(true,'该核销码不属于当前团购'); scanFailFlash(); return; }
   api('groupon_pick_by_id',{p_admin:pwd(),p_session_id:cur,p_request_id:rid}).then(function(r){
-    if(r&&r.ok){ okbar(true,'已核销：'+r.item+' × '+fmtN(r.qty)+' '+r.unit+'（'+r.phone+'）'+(Number(r.deposit_amt)>0?' · 定金 ¥'+fmtN(r.deposit_amt)+' 已记录收取':'')); closeScan(); showDetail(); }
-    else errbar(true,(r&&r.msg)||'核销失败');
-  }).catch(function(){ errbar(true,'网络异常，请重试'); });
+    if(r&&r.ok){ beepOk(); errbar(false,''); okbar(true,'已核销：'+r.item+' × '+fmtN(r.qty)+' '+r.unit+'（'+r.phone+'）'+(Number(r.deposit_amt)>0?' · 定金 ¥'+fmtN(r.deposit_amt)+' 已记录收取':'')); closeScan(); showDetail(); }
+    else { beepErr(); scanFailFlash(); errbar(true,(r&&r.msg)||'核销失败'); }
+  }).catch(function(){ beepErr(); scanFailFlash(); errbar(true,'网络异常，请重试'); });
 }
+/* 扫码盒适配：提示音 + 失败红框闪烁 + 自动回车核销 */
+var _beepCtx=null;
+function beep(seq){
+  try{
+    if(!_beepCtx){ _beepCtx=new (window.AudioContext||window.webkitAudioContext)(); }
+    var t0=_beepCtx.currentTime;
+    seq.forEach(function(s){
+      var o=_beepCtx.createOscillator(), g=_beepCtx.createGain();
+      o.type='sine'; o.frequency.value=s.f;
+      g.gain.setValueAtTime(0.0001,t0+s.t);
+      g.gain.exponentialRampToValueAtTime(s.v||0.25,t0+s.t+0.015);
+      g.gain.exponentialRampToValueAtTime(0.0001,t0+s.t+s.d);
+      o.connect(g); g.connect(_beepCtx.destination);
+      o.start(t0+s.t); o.stop(t0+s.t+s.d+0.02);
+    });
+  }catch(e){}
+}
+function beepOk(){ beep([{t:0,f:880,d:0.12,v:0.22},{t:0.14,f:1175,d:0.2,v:0.22}]); }
+function beepErr(){ beep([{t:0,f:220,d:0.22,v:0.25}]); }
+function scanFailFlash(){
+  var si=document.getElementById('scanInput');
+  if(!si) return;
+  si.style.border='2px solid #e53935';
+  si.style.background='#fff0f0';
+  setTimeout(function(){
+    si.value=''; si.style.border='1px solid rgba(0,0,0,.14)'; si.style.background='#f7faf5';
+    si.focus(); si.select();
+  },1200);
+}
+(function(){
+  function bindScanEnter(){
+    var si=document.getElementById('scanInput');
+    if(!si) return;
+    si.addEventListener('keydown',function(e){
+      if(e.key==='Enter'||e.keyCode===13){
+        e.preventDefault();
+        if(document.getElementById('scanBox').style.display==='flex') scanManual();
+      }
+    });
+    si.addEventListener('input',function(){
+      // 扫码盒若未配置回车后缀：内容已完整（ZZGP格式或末尾带换行）也自动核销
+      var v=si.value;
+      if(/ZZGP\|\d+\|\d+$/.test(v)||/\n$/.test(v)) scanManual();
+    });
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',bindScanEnter);
+  else bindScanEnter();
+})();
+
 </script>
 <script>
 /* 下拉刷新：页面顶部下拉超过阈值即重新加载（横向滑动不触发，防误触） */
