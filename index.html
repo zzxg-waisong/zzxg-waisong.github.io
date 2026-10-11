@@ -207,6 +207,11 @@ button:active{transform:scale(.95);-webkit-transform:scale(.95)}
   .pc-actions .pc-chip{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.4);color:#fff;font-size:14px;font-weight:700;border-radius:999px;padding:8px 14px;white-space:nowrap;box-shadow:inset 0 1px 0 rgba(255,255,255,.25)}
   .pc-actions button{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.4);color:#fff;font-size:15px;font-weight:700;border-radius:999px;padding:9px 15px;cursor:pointer;transition:all .15s;white-space:nowrap}
   .pc-actions button:hover{background:rgba(255,255,255,.32)}
+  .pc-actions .pc-winbtn{background:rgba(255,255,255,.2)}
+  .pc-actions .pc-winbtns{display:inline-flex;align-items:center;gap:6px;background:rgba(0,0,0,.14);border-radius:12px;padding:4px}
+  .pc-actions .pc-winbtns button{background:transparent;border:none;color:#fff;font-size:16px;font-weight:800;width:40px;height:40px;padding:0;border-radius:9px;line-height:1}
+  .pc-actions .pc-winbtns button:hover{background:rgba(255,255,255,.25)}
+  .pc-actions .pc-winbtns button:last-child:hover{background:rgba(229,57,53,.85)}
   /* 移动端顶栏/按钮在 PC 下隐藏，避免重复 */
   .shop-head .topbar{display:none}
   .catrow .kwbtn{display:none}
@@ -250,7 +255,7 @@ button:active{transform:scale(.95);-webkit-transform:scale(.95)}
   <!-- PC端顶栏（宽屏≥1024px 显示，布局参考单机版，配色用外卖系统；手机端不显示不受影响） -->
   <div id="pcTop" style="display:none">
     <div class="pc-brand">
-      <div class="pc-logo">🍉</div>
+      <div class="pc-logo" onclick="document.getElementById('loginModal').classList.add('show')" style="cursor:pointer" title="商家登录">🍉</div>
       <div class="pc-bt">
         <div class="pc-bn">榨榨鲜果</div>
         <div class="pc-bs">新鲜水果 · 鲜果现榨 · 不加糖 · 无科技</div>
@@ -263,12 +268,18 @@ button:active{transform:scale(.95);-webkit-transform:scale(.95)}
     </div>
     <div class="pc-actions">
       <span id="pcBanner" class="pc-chip">🟢 营业中</span>
+      <button id="pcGotoLocal" class="pc-winbtn" style="display:none" onclick="gotoLocalApp()">🏪 店内点单</button>
       <button onclick="openMyAccount()">👤 我的</button>
       <button onclick="location.href='groupon.html'">🛒 团购</button>
       <button onclick="openMyOrders()">📋 订单</button>
       <button onclick="openPromo()">🎁 优惠</button>
       <button onclick="openDeliverLogin()">🛵 配送</button>
       <button onclick="openFeedback()">📕 意见</button>
+      <span class="pc-winbtns" style="display:none">
+        <button id="pcWinMin" onclick="winOp('minimize')" title="最小化">—</button>
+        <button id="pcWinMax" onclick="winOp('toggleMaximize')" title="窗口化/全屏">▢</button>
+        <button id="pcWinClose" onclick="winOp('close')" title="退出">✕</button>
+      </span>
     </div>
   </div>
   <div class="topbar">
@@ -764,6 +775,20 @@ function pcMode(m){
   for(var i=0;i<bs.length;i++){ bs[i].className=(bs[i].getAttribute('data-m')===m)?'on':''; }
   if(m==='pickup' && window._delivery) window._delivery={dist:0,fee:0,mode:'pickup'};
 }
+/* 桌面壳（Electron合成版）：返回店内单机点单 + 窗口控制；普通网页无此能力自动隐藏 */
+function gotoLocalApp(){ if(window.electronAPI && window.electronAPI.gotoLocal) window.electronAPI.gotoLocal(); }
+function winOp(op){
+  if(!window.electronAPI) return;
+  if(op==='minimize') window.electronAPI.minimize();
+  else if(op==='toggleMaximize') window.electronAPI.toggleMaximize();
+  else if(op==='close') window.electronAPI.close();
+}
+(function(){
+  if(window.electronAPI && (window.electronAPI.gotoLocal||window.electronAPI.minimize)){
+    var a=document.getElementById('pcGotoLocal'); if(a) a.style.display='';
+    var b=document.querySelector('.pc-winbtns'); if(b) b.style.display='inline-flex';
+  }
+})();
 function renderKwRes(){
   var box=document.getElementById('kwRes'); if(!box) return;  var _kw=window._kw||'';
   var list=_kw?dishes.filter(function(d){ return d.on && (String(d.name).indexOf(_kw)>=0 || String(d.orig||'').indexOf(_kw)>=0 || baseName(d.name).indexOf(_kw)>=0); }):[];
