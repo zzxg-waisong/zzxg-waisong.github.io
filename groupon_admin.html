@@ -112,12 +112,12 @@ th{color:#666;font-weight:700;font-size:12px;background:rgba(255,255,255,.4);-we
 </style>
 </head>
 <body>
-<div id="top"><span class="back" onclick="location.href='index.html?autologin=1#/admin'">‹</span><span class="title">🍉 团购接龙管理</span><span class="right"></span></div>
+<div id="top"><span class="back" onclick="location.href='index.html#/admin'">‹</span><span class="title">🍉 团购接龙管理</span><span class="right"></span></div>
 <div class="pad">
   <div id="login" class="card">
     <div class="hd2"><span class="ico">🔒</span>需要登录老板后台</div>
     <div style="font-size:13px;color:#999;margin-top:8px;">请从「老板后台 → 团购管理」进入，或回到首页重新登录。</div>
-    <button class="btn btn-p" style="width:100%;margin-top:12px;" onclick="location.href='index.html?autologin=1#/admin'">去登录</button>
+    <button class="btn btn-p" style="width:100%;margin-top:12px;" onclick="location.href='index.html#/admin'">去登录</button>
   </div>
 
   <div id="main" class="hidden">
@@ -216,8 +216,8 @@ var cur=null; var timer=null; var filt='all';
 function api(fn,body){
   return fetch(SB_URL+'/rest/v1/rpc/'+fn,{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify(body||{})}).then(function(r){return r.json();});
 }
-function isAdmin(){ return (location.href.indexOf('autologin=1')>=0)&&localStorage.getItem(LS_SESSION)==='1'; }
-function pwd(){ try{ return localStorage.getItem('fruit_cloud_pwd')||'1986shenhu'; }catch(e){ return '1986shenhu'; } }
+function isAdmin(){ return localStorage.getItem(LS_SESSION)==='1'; }
+function pwd(){ try{ return localStorage.getItem('fruit_cloud_pwd')||''; }catch(e){ return ''; } }
 function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function stName(s){ return {open:'接龙中',quoted:'待确认',delivering:'进货中',arrived:'可取货',ended:'已结束',cancelled:'已取消'}[s]||s; }
 function stCls(s){ return {open:'b-open',quoted:'b-quoted',delivering:'b-delivering',arrived:'b-arrived',ended:'b-ended',cancelled:'b-cancelled'}[s]||'b-ended'; }
