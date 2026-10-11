@@ -2131,7 +2131,7 @@ function renderAdmin(){
     renderPrintAdmin(); makeQr(qUrl); }
   else if(cur==='ref') panel.innerHTML=renderReferralAdmin();
   else if(cur==='deliver') panel.innerHTML=renderDeliverAdmin();
-  else if(cur==='groupon'){ location.href='groupon_admin.html'; return; }
+  else if(cur==='groupon'){ var _gh=window.innerWidth>=1024?'calc(100vh - 240px)':'calc(100vh - 170px)'; panel.innerHTML='<iframe id="gpFrame" src="groupon_admin.html?v=emb'+Date.now()+'&autologin=1&embed=1" style="width:100%;height:'+_gh+';border:none;border-radius:18px;background:rgba(255,255,255,.25)"></iframe>'; }
   else if(cur==='set'){ panel.innerHTML=renderSetAdmin()+
     '<div class="panel"><h3>📕 意见簿 <small style="font-weight:400;color:#888">（顾客提交的意见 / 建议）</small></div><div id="fbList" style="font-size:13px">加载中…</div></div>'; loadFbAdmin(); }
 }
