@@ -201,6 +201,7 @@ button:active{transform:scale(.95);-webkit-transform:scale(.95)}
     <div>
       <p>新鲜水果 · 鲜果现榨 · 不加糖 · 无科技</p>
       <div style="display:flex;gap:6px;margin-top:7px;flex-wrap:nowrap">
+        <button class="admin-entry" style="color:#37474f" onclick="openMyAccount()">👤 我的</button>
         <button class="admin-entry" style="color:#6a1b9a" onclick="location.href='groupon.html'">🛒 团购</button>
         <button class="admin-entry" style="color:#00897b" onclick="openMyOrders()">📋 订单</button>
         <button class="admin-entry" style="color:#e65100" onclick="openPromo()">🎁 优惠</button>
@@ -345,6 +346,15 @@ button:active{transform:scale(.95);-webkit-transform:scale(.95)}
       <button class="btn" onclick="loadMyOrders()">查询</button>
     </div>
     <div id="myOrdersRes" style="margin-top:12px;font-size:14px;line-height:1.8"></div>
+  </div>
+</div>
+
+<!-- 我的（顾客账号中心：手机号+查询密码）弹窗 -->
+<div class="modal" id="myAccountModal">
+  <div class="box" style="max-width:520px;position:relative">
+    <button title="关闭" style="position:absolute;top:10px;right:10px;width:32px;height:32px;border:none;background:#f0f0f0;border-radius:50%;font-size:16px;color:#888;cursor:pointer;z-index:5;line-height:1" onclick="closeModal('myAccountModal')">✕</button>
+    <div id="myAcctHead" style="text-align:center;margin:4px 0 12px;font-size:17px;font-weight:700">👤 我的</div>
+    <div id="myAcctBody"></div>
   </div>
 </div>
 
@@ -3060,6 +3070,203 @@ function openMyOrders(){
   showModal('myOrdersModal');
   loadMyOrders();
 }
+/* ================= 我的（顾客账号中心：手机号+查询密码PIN） ================= */
+function myAcctSt(){ return { phone: localStorage.getItem('zz_my_phone')||'', pin: localStorage.getItem('zz_my_pin')||'' }; }
+function myRpc(fn, body){
+  return fetch(SB_URL+'/rest/v1/rpc/'+fn,{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify(body)})
+    .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); });
+}
+function openMyAccount(){
+  document.getElementById('myAccountModal').classList.add('show');
+  var a=myAcctSt();
+  if(a.phone && a.pin) myAcctHome(); else myAcctLogin();
+}
+function myAcctMsgEl(){ return document.getElementById('myAcctMsg'); }
+function myAcctLogin(){
+  var a=myAcctSt();
+  document.getElementById('myAcctHead').textContent='👤 我的';
+  document.getElementById('myAcctBody').innerHTML=
+    '<div id="myAcctMsg"></div>'+
+    '<div style="display:flex;gap:8px;margin-top:4px"><input id="myAcctPhone" type="tel" maxlength="11" placeholder="输入点单手机号" value="'+esc(a.phone)+'" style="flex:1;border:1px solid #ddd;border-radius:8px;padding:10px;font-size:15px"></div>'+
+    '<div style="display:flex;gap:8px;margin-top:8px"><input id="myAcctPin" type="password" maxlength="6" inputmode="numeric" placeholder="查询密码（4~6位数字）" style="flex:1;border:1px solid #ddd;border-radius:8px;padding:10px;font-size:15px"></div>'+
+    '<button class="btn" style="width:100%;padding:12px;font-size:15px;margin-top:10px" onclick="myAcctDoLogin()">登 录</button>'+
+    '<div style="display:flex;gap:8px;margin-top:10px">'+
+      '<button class="btn gray" style="flex:1" onclick="myAcctSetup()">首次使用 · 设置密码</button>'+
+      '<button class="btn gray" style="flex:1" onclick="myAcctForgot()">忘记密码</button>'+
+    '</div>'+
+    '<div style="font-size:12px;color:#999;margin-top:12px;line-height:1.7">🔒 凭手机号+查询密码，查看自己的订单、余额、团购、意见。首次使用先「设置密码」；忘记密码请联系店主获取验证码自助重置。</div>';
+}
+function myAcctSetup(){
+  var a=myAcctSt();
+  document.getElementById('myAcctHead').textContent='🔑 设置查询密码';
+  document.getElementById('myAcctBody').innerHTML=
+    '<div id="myAcctMsg"></div>'+
+    '<div style="font-size:13px;color:#666;margin:2px 0 8px">设置后即可用手机号+密码查看自己的订单/余额/团购/意见</div>'+
+    '<div style="display:flex;gap:8px"><input id="myAcctPhone" type="tel" maxlength="11" placeholder="输入点单手机号" value="'+esc(a.phone)+'" style="flex:1;border:1px solid #ddd;border-radius:8px;padding:10px;font-size:15px"></div>'+
+    '<div style="display:flex;gap:8px;margin-top:8px"><input id="myAcctPin" type="password" maxlength="6" inputmode="numeric" placeholder="设置查询密码（4~6位数字）" style="flex:1;border:1px solid #ddd;border-radius:8px;padding:10px;font-size:15px"></div>'+
+    '<div style="display:flex;gap:8px;margin-top:8px"><input id="myAcctPin2" type="password" maxlength="6" inputmode="numeric" placeholder="再次输入确认" style="flex:1;border:1px solid #ddd;border-radius:8px;padding:10px;font-size:15px"></div>'+
+    '<button class="btn" style="width:100%;padding:12px;font-size:15px;margin-top:10px" onclick="myAcctDoSetup()">设 置</button>'+
+    '<div style="display:flex;gap:8px;margin-top:10px"><button class="btn gray" style="flex:1" onclick="myAcctLogin()">返回登录</button><button class="btn gray" style="flex:1" onclick="myAcctForgot()">忘记密码</button></div>';
+}
+function myAcctForgot(){
+  var a=myAcctSt();
+  document.getElementById('myAcctHead').textContent='🔁 重置查询密码';
+  document.getElementById('myAcctBody').innerHTML=
+    '<div id="myAcctMsg"></div>'+
+    '<div style="font-size:13px;color:#666;margin:2px 0 8px">向店主索取一次性验证码（10分钟内有效），然后自行设置新密码</div>'+
+    '<div style="display:flex;gap:8px"><input id="myAcctPhone" type="tel" maxlength="11" placeholder="输入点单手机号" value="'+esc(a.phone)+'" style="flex:1;border:1px solid #ddd;border-radius:8px;padding:10px;font-size:15px"></div>'+
+    '<div style="display:flex;gap:8px;margin-top:8px"><input id="myAcctCode" type="text" maxlength="6" placeholder="验证码（问店主）" style="flex:1;border:1px solid #ddd;border-radius:8px;padding:10px;font-size:15px"></div>'+
+    '<div style="display:flex;gap:8px;margin-top:8px"><input id="myAcctPin" type="password" maxlength="6" inputmode="numeric" placeholder="新查询密码（4~6位数字）" style="flex:1;border:1px solid #ddd;border-radius:8px;padding:10px;font-size:15px"></div>'+
+    '<button class="btn" style="width:100%;padding:12px;font-size:15px;margin-top:10px" onclick="myAcctDoReset()">重置密码</button>'+
+    '<div style="display:flex;gap:8px;margin-top:10px"><button class="btn gray" style="flex:1" onclick="myAcctLogin()">返回登录</button></div>';
+}
+function myAcctDoLogin(){
+  var msg=myAcctMsgEl(); if(!msg) return;
+  var phone=document.getElementById('myAcctPhone').value.trim();
+  var pin=document.getElementById('myAcctPin').value.trim();
+  if(!/^1\d{10}$/.test(phone)){ msg.innerHTML='<div style="color:#e65100;font-size:13px">请输入正确的11位手机号</div>'; return; }
+  if(!/^\d{4,6}$/.test(pin)){ msg.innerHTML='<div style="color:#e65100;font-size:13px">查询密码为4~6位数字</div>'; return; }
+  msg.innerHTML='<div style="color:#999;font-size:13px">验证中…</div>';
+  myRpc('my_orders',{p_phone:phone,p_pin:pin}).then(function(r){
+    if(r && r.ok===false){ msg.innerHTML='<div style="color:#e65100;font-size:13px">'+esc(r.msg||'登录失败')+'</div>'; return; }
+    localStorage.setItem('zz_my_phone',phone); localStorage.setItem('zz_my_pin',pin);
+    myAcctHome();
+  }).catch(function(){ msg.innerHTML='<div style="color:#e65100;font-size:13px">网络异常，请稍后再试</div>'; });
+}
+function myAcctDoSetup(){
+  var msg=myAcctMsgEl(); if(!msg) return;
+  var phone=document.getElementById('myAcctPhone').value.trim();
+  var pin=document.getElementById('myAcctPin').value.trim();
+  var pin2=document.getElementById('myAcctPin2').value.trim();
+  if(!/^1\d{10}$/.test(phone)){ msg.innerHTML='<div style="color:#e65100;font-size:13px">请输入正确的11位手机号</div>'; return; }
+  if(!/^\d{4,6}$/.test(pin)){ msg.innerHTML='<div style="color:#e65100;font-size:13px">查询密码为4~6位数字</div>'; return; }
+  if(pin!==pin2){ msg.innerHTML='<div style="color:#e65100;font-size:13px">两次输入的密码不一致</div>'; return; }
+  msg.innerHTML='<div style="color:#999;font-size:13px">提交中…</div>';
+  myRpc('my_pin_set',{p_phone:phone,p_pin:pin}).then(function(r){
+    if(r.ok){ alert('设置成功，请用新密码登录'); myAcctLogin(); }
+    else msg.innerHTML='<div style="color:#e65100;font-size:13px">'+esc(r.msg||'设置失败')+'</div>';
+  }).catch(function(){ msg.innerHTML='<div style="color:#e65100;font-size:13px">网络异常，请稍后再试</div>'; });
+}
+function myAcctDoReset(){
+  var msg=myAcctMsgEl(); if(!msg) return;
+  var phone=document.getElementById('myAcctPhone').value.trim();
+  var code=document.getElementById('myAcctCode').value.trim();
+  var pin=document.getElementById('myAcctPin').value.trim();
+  if(!/^1\d{10}$/.test(phone)){ msg.innerHTML='<div style="color:#e65100;font-size:13px">请输入正确的11位手机号</div>'; return; }
+  if(!/^\d{4,6}$/.test(pin)){ msg.innerHTML='<div style="color:#e65100;font-size:13px">新密码为4~6位数字</div>'; return; }
+  msg.innerHTML='<div style="color:#999;font-size:13px">提交中…</div>';
+  myRpc('my_pin_reset',{p_phone:phone,p_code:code,p_new_pin:pin}).then(function(r){
+    if(r.ok){ alert('密码已重置，请用新密码登录'); localStorage.removeItem('zz_my_phone'); localStorage.removeItem('zz_my_pin'); myAcctLogin(); }
+    else msg.innerHTML='<div style="color:#e65100;font-size:13px">'+esc(r.msg||'重置失败')+'</div>';
+  }).catch(function(){ msg.innerHTML='<div style="color:#e65100;font-size:13px">网络异常，请稍后再试</div>'; });
+}
+function myAcctLogout(){
+  localStorage.removeItem('zz_my_phone'); localStorage.removeItem('zz_my_pin');
+  myAcctLogin();
+}
+function myAcctHome(){
+  var a=myAcctSt();
+  document.getElementById('myAcctHead').textContent='👤 我的 · '+a.phone;
+  document.getElementById('myAcctBody').innerHTML=
+    '<div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">'+
+      '<button class="btn" id="myAcctTabOrders" onclick="myAcctTab(\'orders\')">📋 订单</button>'+
+      '<button class="btn gray" id="myAcctTabBalances" onclick="myAcctTab(\'balances\')">💰 余额</button>'+
+      '<button class="btn gray" id="myAcctTabGroupon" onclick="myAcctTab(\'groupon\')">🛒 团购</button>'+
+      '<button class="btn gray" id="myAcctTabFeedback" onclick="myAcctTab(\'feedback\')">📕 意见</button>'+
+      '<button class="btn red" style="margin-left:auto" onclick="myAcctLogout()">退出</button>'+
+    '</div>'+
+    '<div id="myAcctContent" style="font-size:14px;line-height:1.8"><div style="color:#999">加载中…</div></div>';
+  myAcctTab('orders');
+}
+function myAcctTab(t){
+  ['orders','balances','groupon','feedback'].forEach(function(k){
+    var el=document.getElementById('myAcctTab'+k.charAt(0).toUpperCase()+k.slice(1));
+    if(el) el.className=(k===t)?'btn':'btn gray';
+  });
+  var c=document.getElementById('myAcctContent');
+  var a=myAcctSt();
+  if(t==='orders'){
+    c.innerHTML='<div style="color:#999">加载中…</div>';
+    myRpc('my_orders',{p_phone:a.phone,p_pin:a.pin}).then(function(r){
+      if(r && r.ok===false){ c.innerHTML='<div style="color:#e65100">'+esc(r.msg||'查询失败')+'</div>'; return; }
+      c.innerHTML=myAcctRenderOrders(r);
+    }).catch(function(){ c.innerHTML='<div style="color:#999">网络异常，请稍后再试</div>'; });
+  } else if(t==='balances'){
+    c.innerHTML='<div style="color:#999">加载中…</div>';
+    myRpc('my_balances',{p_phone:a.phone,p_pin:a.pin}).then(function(r){ c.innerHTML=myAcctRenderBalances(r); })
+      .catch(function(){ c.innerHTML='<div style="color:#999">网络异常，请稍后再试</div>'; });
+  } else if(t==='groupon'){
+    c.innerHTML='<div style="color:#999">加载中…</div>';
+    myRpc('my_groupon',{p_phone:a.phone,p_pin:a.pin}).then(function(r){
+      if(r && r.ok===false){ c.innerHTML='<div style="color:#e65100">'+esc(r.msg||'查询失败')+'</div>'; return; }
+      c.innerHTML=myAcctRenderGroupon(r);
+    }).catch(function(){ c.innerHTML='<div style="color:#999">网络异常，请稍后再试</div>'; });
+  } else {
+    c.innerHTML='<div style="color:#999">加载中…</div>';
+    myRpc('my_feedback',{p_phone:a.phone,p_pin:a.pin}).then(function(r){
+      if(r && r.ok===false){ c.innerHTML='<div style="color:#e65100">'+esc(r.msg||'查询失败')+'</div>'; return; }
+      c.innerHTML=myAcctRenderFeedback(r);
+    }).catch(function(){ c.innerHTML='<div style="color:#999">网络异常，请稍后再试</div>'; });
+  }
+}
+function myAcctRenderOrders(arr){
+  if(!Array.isArray(arr) || !arr.length) return '<div style="color:#999;text-align:center;padding:16px">暂无订单记录</div>';
+  return arr.map(function(o){
+    var p=o.payload||{};
+    var items=(p.items||[]).map(function(it){
+      var s=it.name||'', q=null;
+      if(p.weights && p.weights[it.id]!=null) q=parseFloat(p.weights[it.id]);
+      else if(it.qty!=null) q=it.qty;
+      if(q!=null) s+=' x'+q+(it.unit?it.unit:'');
+      return s;
+    }).join('、')||'';
+    var st=o.status==='new'?'待处理':(o.status||'');
+    var created=fmtLocal(o.created_at||'');
+    var total=parseFloat(p.payTotal!=null?p.payTotal:p.total)||0;
+    return '<div class="card" style="margin-bottom:10px;border-radius:8px">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center"><b>订单 '+(p.no||('#ID'+o.id))+'</b><span class="badge '+(st==='已送达'||st==='已完成'?'off':'paid')+'">'+esc(st)+'</span></div>'+
+      '<div style="font-size:12px;color:#888;margin:4px 0">'+esc(created)+' · '+(p.mode==='pickup'?'到店自提':'外送')+' · ¥'+total.toFixed(2)+'</div>'+
+      (items?'<div style="font-size:13px;color:#555">'+esc(items)+'</div>':'')+
+      '</div>';
+  }).join('');
+}
+function myAcctRenderBalances(b){
+  if(!b || b.ok===false) return '<div style="color:#e65100">'+(b&&b.msg?esc(b.msg):'查询失败')+'</div>';
+  return '<div class="card" style="margin-bottom:10px;border-radius:8px">'+
+    '<div style="display:flex;justify-content:space-between;align-items:center"><span>💰 推广钱包（返利）</span><b style="color:#e65100">¥'+(+b.wallet).toFixed(2)+'</b></div>'+
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px"><span>🎁 新客余额</span><b style="color:#e65100">¥'+(+b.newcust).toFixed(2)+'</b></div>'+
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px"><span>🤝 我的介绍人</span><b>'+(b.referrer?esc(b.referrer):'无')+'</b></div>'+
+    '</div>';
+}
+function myAcctRenderGroupon(arr){
+  if(!Array.isArray(arr) || !arr.length) return '<div style="color:#999;text-align:center;padding:16px">暂无团购记录</div>';
+  return arr.map(function(g){
+    var stMap={'joined':'已接龙','confirmed':'已确认','picked':'已取货','withdrawn':'已退团'};
+    var st=stMap[g.status]||g.status||'';
+    var dep=g.deposit_paid?'已付定金':'未付定金';
+    var total=parseFloat(g.deposit)||0;
+    return '<div class="card" style="margin-bottom:10px;border-radius:8px">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center"><b>'+esc(g.title||('团购#'+g.session_id))+'</b><span class="badge paid">'+esc(st)+'</span></div>'+
+      '<div style="font-size:13px;color:#555;margin-top:4px">'+esc(g.item_name||'')+(g.qty!=null?' x'+g.qty+(g.unit||''):'')+'</div>'+
+      '<div style="font-size:12px;color:#888;margin-top:4px">'+
+        (g.pickup_time?'📦 取货时间：'+esc(g.pickup_time)+'<br>':'')+
+        '💳 定金：'+(total>0?'¥'+total.toFixed(2)+' · ':'')+dep+
+        (g.withdrawn_at?' · 退团于 '+esc(fmtLocal(g.withdrawn_at)):'')+
+        '</div>'+
+      (g.pay_qr?'<div style="font-size:12px;color:#e65100;margin-top:4px">尾款请扫团购收款码支付</div>':'')+
+      '</div>';
+  }).join('');
+}
+function myAcctRenderFeedback(arr){
+  if(!Array.isArray(arr) || !arr.length) return '<div style="color:#999;text-align:center;padding:16px">暂无意见记录</div>';
+  return arr.map(function(f){
+    return '<div class="card" style="margin-bottom:10px;border-radius:8px">'+
+      '<div style="font-size:13px;color:#555">'+esc(f.content||'')+'</div>'+
+      '<div style="font-size:12px;color:#888;margin-top:4px">'+esc(fmtLocal(f.created_at||''))+'</div>'+
+      '</div>';
+  }).join('');
+}
+
 function loadMyOrders(){
   var phone=document.getElementById('myOrderPhone').value.trim();
   var res=document.getElementById('myOrdersRes');
@@ -3636,8 +3843,27 @@ function renderSetAdmin(){
     '<div class="rowline"><span>新订单自动刷新+语音提醒</span><span><button class="btn '+(autoAlarm?'':'gray')+'" onclick="toggleAlarm()">'+(autoAlarm?'✅ 开':'❌ 关')+'</button></span></div>'+
     '<div class="rowline"><span>语音音量</span><span><input type="range" min="0" max="200" step="10" value="'+(parseInt(localStorage.getItem('zz_voice_vol')||'100',10))+'" oninput="setVoiceVol(this.value)" style="width:110px;vertical-align:middle"> <b id="vv">'+(parseInt(localStorage.getItem('zz_voice_vol')||'100',10))+'</b></span></div>'+
     '<div class="rowline"><span>试听语音</span><span><button class="btn" onclick="speakNewOrder(1)">🔊 试听</button></span></div>'+
-    '<button class="btn red" style="width:100%;margin-top:8px" onclick="resetData()">重置全部数据（恢复默认）</button></div></div>';
+    '<button class="btn red" style="width:100%;margin-top:8px" onclick="resetData()">重置全部数据（恢复默认）</button></div>'+
+    '<div class="card" style="margin-top:12px"><h3>👤 顾客密码管理</h3>'+
+    '<div style="font-size:12px;color:#888;margin:2px 0 8px">顾客忘记查询密码时：输入手机号生成一次性验证码（10分钟有效）并告诉顾客，顾客在「我的」里自行重置，店主无需代设。</div>'+
+    '<div style="display:flex;gap:8px"><input id="pinAdminPhone" type="tel" maxlength="11" placeholder="顾客手机号" style="flex:1;border:1px solid #ddd;border-radius:8px;padding:9px;font-size:14px"><button class="btn" onclick="pinGenCode()">生成验证码</button></div>'+
+    '<div id="pinAdminRes" style="font-size:13px;margin-top:8px;line-height:1.8"></div>'+
+    '</div></div>';
   return html;
+}
+function pinGenCode(){
+  var phone=(document.getElementById('pinAdminPhone').value||'').trim();
+  var res=document.getElementById('pinAdminRes');
+  if(!res) return;
+  if(!/^1\d{10}$/.test(phone)){ res.innerHTML='<span style="color:#e65100">请输入正确的11位手机号</span>'; return; }
+  res.innerHTML='<span style="color:#999">生成中…</span>';
+  fetch(SB_URL+'/rest/v1/rpc/my_pin_gencode',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({p_phone:phone,p_admin:clpwd()})})
+    .then(function(r){ return r.json(); })
+    .then(function(r){
+      if(r.ok){ res.innerHTML='<span style="color:#238600;font-weight:700">验证码：'+esc(r.code)+'</span> <span style="color:#888">（10分钟内有效，一次性）</span>'; }
+      else res.innerHTML='<span style="color:#e65100">'+esc(r.msg||'生成失败')+'</span>';
+    })
+    .catch(function(){ res.innerHTML='<span style="color:#e65100">网络异常，请稍后再试</span>'; });
 }
 function resetData(){
   if(confirm('确认清空本机订单/配置/购物车？菜单以云端为准不受影响。')){ localStorage.removeItem(LS_ORDERS); localStorage.removeItem(LS_PAY); localStorage.removeItem(LS_SHOP); localStorage.removeItem('fruit_cart'); location.reload(); }
