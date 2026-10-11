@@ -2205,14 +2205,20 @@ function fetchCloudOrders(silent){
         }
         j.forEach(function(c){ cloudSeen[c.id]=1; });
         try{ localStorage.setItem('zz_cloud_seen',JSON.stringify(cloudSeen)); }catch(e){}
+        if(window.electronAPI && window.electronAPI.syncCloudSeen){ try{ window.electronAPI.syncCloudSeen(Object.keys(cloudSeen)); }catch(e){} } // 电脑端：合并进主进程基线，防重复提示
         cloudOrders=j;
         markOnline();
         maybeResyncShop();
         var pc={}; j.forEach(function(cc){ var ph=String(((cc.payload||{}).phone)||'').trim(); if(ph) pc[ph]=(pc[ph]||0)+1; }); cloudPhoneCount=pc;
         if(silent && fresh.length===0){ renderCloudB(); return; }
         if(fresh.length>0){
-          // 语音：每单播一次（多单顺序各播一次，不再重复重播）
-          if(autoAlarm){ fresh.forEach(function(fid){ speakNewOrder(fid); }); }
+          // 电脑端应用内：交主进程统一广播提示音（避免双音）；浏览器/手机：本页自己播语音
+          if(window.electronAPI && window.electronAPI.notifyCloudOrders){
+            try{ window.electronAPI.notifyCloudOrders(fresh); }catch(e){}
+          } else {
+            // 语音：每单播一次（多单顺序各播一次，不再重复重播）
+            if(autoAlarm){ fresh.forEach(function(fid){ speakNewOrder(fid); }); }
+          }
           // 直接出单：新单到达自动打印小票（本地打印代理，静默出票；老板收款后再点接单，点接单不再重复出票）
           fresh.forEach(function(fid){ try{ printCloudOrder(fid); }catch(e){} });
         }
@@ -2278,6 +2284,36 @@ function speakNewOrder(id){
     alarmOrder=(id==null?0:id);
     _vqPlay('https://zzxg-waisong.github.io/voice_new_order.wav', parseInt(localStorage.getItem('zz_voice_vol')||'100',10)/100);
   }catch(e){}
+}
+/* ===== 电脑端全局来单提示（应用内收到主进程广播时播放，浏览器/手机端自动忽略）===== */
+function playOrderTone(){
+  try{
+    var AC=window.AudioContext||window.webkitAudioContext; if(!AC) return;
+    if(!window.__toneCtx) window.__toneCtx=new AC();
+    var ctx=window.__toneCtx; if(ctx.state==='suspended') ctx.resume();
+    var t0=ctx.currentTime+0.02;
+    [[880,0],[1174.66,.18],[880,.36]].forEach(function(pair){
+      var o=ctx.createOscillator(), g=ctx.createGain();
+      o.type='sine'; o.frequency.value=pair[0];
+      g.gain.setValueAtTime(0.0001,t0+pair[1]);
+      g.gain.exponentialRampToValueAtTime(0.45,t0+pair[1]+0.03);
+      g.gain.exponentialRampToValueAtTime(0.0001,t0+pair[1]+0.25);
+      o.connect(g); g.connect(ctx.destination);
+      o.start(t0+pair[1]); o.stop(t0+pair[1]+0.3);
+    });
+  }catch(e){}
+}
+function showOrderToast(n){
+  try{
+    var d=document.createElement('div');
+    d.style='position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:999999;background:linear-gradient(135deg,#238600,#4fa50a);color:#fff;border-radius:14px;padding:12px 24px;font-size:16px;font-weight:800;box-shadow:0 8px 30px rgba(35,134,0,.35);display:flex;align-items:center;gap:8px;pointer-events:none';
+    d.innerHTML='🔔 新来单'+(n>1?' ×'+n:'');
+    document.body.appendChild(d);
+    setTimeout(function(){ d.style.transition='opacity .4s'; d.style.opacity='0'; setTimeout(function(){ d.remove(); },400); },2600);
+  }catch(e){}
+}
+if(window.electronAPI && window.electronAPI.onOrderTone){
+  window.electronAPI.onOrderTone(function(d){ playOrderTone(); showOrderToast((d&&d.count)||1); });
 }
 function showVoiceBlockTip(){
   _voiceBlocked=true; renderVoiceState();
@@ -3491,6 +3527,7 @@ function saveCloudPwd(){
   var v=document.getElementById('cloudPwd').value.trim();
   if(!v){ alert('请输入云端密码'); return; }
   localStorage.setItem(LS_CLOUDPWD, v);
+  if(window.electronAPI && window.electronAPI.reportCloudPwd){ try{ window.electronAPI.reportCloudPwd(v); }catch(e){} } // 电脑端：同步给主进程，开机后任何界面都能提示来单
   var tip=document.getElementById('cloudPwdTip'); if(tip) tip.style.display='none';
   alert('云端密码已保存到本机。云端订单/菜单同步将使用该密码。\n\n提示：若密码填错，云端操作会被拒绝；正确密码请向豆包确认。');
 }
