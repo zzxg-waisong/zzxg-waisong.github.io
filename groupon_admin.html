@@ -698,6 +698,7 @@ function loadSessions(){
     loadPlan();
   }).catch(function(){});
 }
+if(location.search.indexOf('embed=1')>=0){ var _tp=document.getElementById('top'); if(_tp){ _tp.style.display='none'; } }
 if(isAdmin()){
   document.getElementById('login').classList.add('hidden');
   document.getElementById('main').classList.remove('hidden');
