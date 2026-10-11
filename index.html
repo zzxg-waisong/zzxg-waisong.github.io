@@ -569,7 +569,7 @@ setTimeout(function(){ refreshShopStatus(); }, 400); // 打开页面立即拉取
 var orders = load(LS_ORDERS, []);
 var payCfg = load(LS_PAY, {payUrl:'收款码.png', wxUrl:'微信二维码.png'});
 var shopCfg = load(LS_SHOP, {address:'', amapKey:'17e56cae3aca57e9862453d89791043c', shopLat:'30.856438', shopLng:'104.323828', jskey:'0d47ebe194506326a62c092365563bf4', jscode:'edf199ba7acbb15a4b446f525976876c'});
-var adminOk = (location.href.indexOf('autologin=1')>=0 && localStorage.getItem(LS_SESSION)==='1');
+var adminOk = (localStorage.getItem(LS_SESSION)==='1');
 var cloudCfg = load(LS_CLOUD, {token:'', repo:'zzxg-waisong/zzxg-waisong.github.io'});
 var cart = load('fruit_cart', {});   // id -> {qty,note}（刷新不丢）
 var curCat = '水果'; var adminDishCat = '水果'; var dishSort = 'default';
@@ -588,7 +588,7 @@ function nowStr(){ var d=new Date(); function p(x){return (x<10?'0':'')+x;}
 /* ==================== 路由 ==================== */
 function route(){
   var h=location.hash||'#/';
-  if(h.indexOf('#/admin')===0){ if(location.href.indexOf('autologin=1')<0){ location.hash='#/'; return; } showAdmin(); }
+  if(h.indexOf('#/admin')===0){ showAdmin(); }
   else if(h.indexOf('#/deliver')===0){ if(!deliverLogged){ location.hash='#/'; return; } showDeliverView(); }
   else { if(location.href.indexOf('autologin=1')<0) stopCloudTimer(); hideDeliverView(); showCustomer(); }
 }
@@ -1135,9 +1135,9 @@ function startUnifiedTicker(){
   }, 5000);
 }
 startUnifiedTicker();
-// 电脑端快捷方式打开：无论在哪个界面，都在后台轮询云端订单+语音提醒
-if(location.href.indexOf('autologin=1')>=0){
-  adminOk=true; localStorage.setItem('zz_merchant','1'); localStorage.setItem('LS_SESSION','1');
+// 电脑端快捷方式打开：本机已登录过（session 有效）时直接进后台并轮询；未登录设备仅弹登录框
+if(location.href.indexOf('autologin=1')>=0 && localStorage.getItem(LS_SESSION)==='1'){
+  adminOk=true; localStorage.setItem('zz_merchant','1');
   try{ startCloudTimer(); }catch(e){}
   document.addEventListener('visibilitychange', function(){
     if(!document.hidden) fetchCloudOrders(true);
@@ -1912,9 +1912,6 @@ function sendWechat(){ copyText(); }
 function showAdmin(){
   document.getElementById('customer').classList.add('hidden');
   document.getElementById('admin').classList.remove('hidden');
-  if(!adminOk && location.href.indexOf('autologin=1')>=0){
-    adminOk=true; localStorage.setItem(LS_SESSION,'1'); localStorage.setItem('zz_merchant','1');
-  }
   if(!adminOk){ document.getElementById('loginModal').classList.add('show'); return; }
   document.getElementById('loginModal').classList.remove('show');
   loadAdminShopStatus();
@@ -1925,7 +1922,13 @@ function showAdmin(){
 function backToShop(){ if(location.href.indexOf('autologin=1')<0) stopCloudTimer(); if(location.hash!=='#/'){ location.hash='#/'; } var c=document.getElementById('customer'); if(c) c.classList.remove('hidden'); var a=document.getElementById('admin'); if(a) a.classList.add('hidden'); }
 function adminLogin(){
   var pwd=document.getElementById('adminPwd').value;
-  var stored=localStorage.getItem(LS_PWD)||'1986shenhu';
+  var stored=localStorage.getItem(LS_PWD);
+  if(!stored){ // 首次使用：把本次输入设为后台密码（此后本机用该密码登录）
+    if(!pwd){ alert('请先设置后台登录密码'); return; }
+    if(pwd.length<4){ alert('密码至少 4 位'); return; }
+    localStorage.setItem(LS_PWD,pwd);
+    stored=pwd;
+  }
   if(pwd===stored){
     adminOk=true;
     localStorage.setItem(LS_SESSION,'1');
@@ -1984,7 +1987,7 @@ function renderAdmin(){
     renderPrintAdmin(); makeQr(qUrl); }
   else if(cur==='ref') panel.innerHTML=renderReferralAdmin();
   else if(cur==='deliver') panel.innerHTML=renderDeliverAdmin();
-  else if(cur==='groupon'){ location.href='groupon_admin.html?autologin=1'; return; }
+  else if(cur==='groupon'){ location.href='groupon_admin.html'; return; }
   else if(cur==='set'){ panel.innerHTML=renderSetAdmin()+
     '<div class="panel"><h3>📕 意见簿 <small style="font-weight:400;color:#888">（顾客提交的意见 / 建议）</small></div><div id="fbList" style="font-size:13px">加载中…</div></div>'; loadFbAdmin(); }
 }
@@ -3641,7 +3644,6 @@ function resetData(){
 }
 
 /* 初始化 */
-if(location.href.indexOf('autologin=1')<0 && location.hash.indexOf('#/admin')===0){ location.hash='#/'; }
 route();
 </script>
 <script>
