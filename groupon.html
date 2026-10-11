@@ -430,6 +430,36 @@ showList();
   },{passive:true});
   document.addEventListener('touchend',function(){ if(!pulling) return; pulling=false; if(tip){ tip.style.display='none'; } if(!horiz && dist>80){ location.reload(); } },{passive:true});
 })();
+/* ===== 电脑端全局来单提示（应用内收到主进程广播时播放，浏览器/手机端自动忽略）===== */
+function playOrderTone(){
+  try{
+    var AC=window.AudioContext||window.webkitAudioContext; if(!AC) return;
+    if(!window.__toneCtx) window.__toneCtx=new AC();
+    var ctx=window.__toneCtx; if(ctx.state==='suspended') ctx.resume();
+    var t0=ctx.currentTime+0.02;
+    [[880,0],[1174.66,.18],[880,.36]].forEach(function(pair){
+      var o=ctx.createOscillator(), g=ctx.createGain();
+      o.type='sine'; o.frequency.value=pair[0];
+      g.gain.setValueAtTime(0.0001,t0+pair[1]);
+      g.gain.exponentialRampToValueAtTime(0.45,t0+pair[1]+0.03);
+      g.gain.exponentialRampToValueAtTime(0.0001,t0+pair[1]+0.25);
+      o.connect(g); g.connect(ctx.destination);
+      o.start(t0+pair[1]); o.stop(t0+pair[1]+0.3);
+    });
+  }catch(e){}
+}
+function showOrderToast(n){
+  try{
+    var d=document.createElement('div');
+    d.style='position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:999999;background:linear-gradient(135deg,#238600,#4fa50a);color:#fff;border-radius:14px;padding:12px 24px;font-size:16px;font-weight:800;box-shadow:0 8px 30px rgba(35,134,0,.35);display:flex;align-items:center;gap:8px;pointer-events:none';
+    d.innerHTML='🔔 新来单'+(n>1?' ×'+n:'');
+    document.body.appendChild(d);
+    setTimeout(function(){ d.style.transition='opacity .4s'; d.style.opacity='0'; setTimeout(function(){ d.remove(); },400); },2600);
+  }catch(e){}
+}
+if(window.electronAPI && window.electronAPI.onOrderTone){
+  window.electronAPI.onOrderTone(function(d){ playOrderTone(); showOrderToast((d&&d.count)||1); });
+}
 </script>
 
 </body>
