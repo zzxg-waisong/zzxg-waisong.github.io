@@ -244,6 +244,26 @@ button:active{transform:scale(.95);-webkit-transform:scale(.95)}
   .cartbar .btn{font-size:17px;padding:12px 34px;border-radius:14px}
   /* 抽屉/弹窗 PC 放大 */
   .modal .box{max-width:520px}
+  /* —— 商家后台 PC 适配（触摸屏友好，手机端不受影响） —— */
+  #admin .panel{max-width:1720px;padding:24px 34px}
+  .admin-tabs{overflow-x:visible}
+  .admin-tabs button{flex:1 1 0;min-height:58px;padding:18px 8px;font-size:16.5px;border-radius:0}
+  .admin-top{padding:16px 26px}
+  .admin-top .topline h2{font-size:21px}
+  .admin-top .ops .btn{min-height:52px;padding:10px 6px;font-size:14.5px;border-radius:14px}
+  #adminPanel input,#adminPanel select,#adminPanel textarea{font-size:16px;padding:12px 14px;border-radius:12px;min-height:48px}
+  #adminPanel label{font-size:15px;margin-bottom:6px}
+  #adminPanel .btn{min-height:48px;font-size:15.5px;padding:11px 22px;border-radius:12px}
+  #adminPanel .card{border-radius:20px;padding:16px}
+  #adminPanel h3{font-size:18px}
+  #adminPanel .rowline{font-size:14.5px;margin:6px 0}
+  #adminPanel .form{max-width:920px}
+  .ogrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(540px,1fr));gap:14px;align-items:start}
+  .ogrid .card{margin-bottom:0}
+  .ogrid .card h3{font-size:16px}
+  .dgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(420px,1fr));gap:14px;align-items:stretch}
+  .dgrid .dcard{margin-bottom:0;height:auto}
+  .modal .box{max-width:760px;padding:26px}
 }
 </style>
 </head>
@@ -2605,7 +2625,7 @@ function renderOrders(){
       '<button class="btn" style="background:#f57c00;color:#fff;font-size:12px;padding:5px 12px;flex-shrink:0;white-space:nowrap" onclick="queryCustomer()">查询近3月</button>'+
       '<span id="custQResult" style="font-size:13px;color:#333">'+(window._custQResult||'')+'</span>'+
     '</div>'+
-    aliveCloud.slice(0, window.cloudVisibleCount||5).map(renderCloudOrder).join('')+
+    '<div class="ogrid">'+aliveCloud.slice(0, window.cloudVisibleCount||5).map(renderCloudOrder).join('')+'</div>'+
     (aliveCloud.length > (window.cloudVisibleCount||5) ? '<button class="btn" style="width:100%;margin-top:8px" onclick="loadMoreCloudOrders()">加载更多（还有'+(aliveCloud.length-(window.cloudVisibleCount||5))+'单）</button>' : '')+
     '</div>';
   return html;
@@ -2636,8 +2656,9 @@ function renderDishesAdmin(){
     '<div id="cloudStatus" style="font-size:12px;color:#666;margin-top:8px"></div></div>'+
     (isHalf?'<p style="font-size:12px;color:#fb8c00;margin-bottom:10px">本分类由「现榨果汁」自动同步生成，价格自动为半价，无需手动编辑。</p>':(isOff?'<p style="font-size:12px;color:#e65100;margin-bottom:10px">已下架商品仅在后台可见，顾客端不会显示。点「重新上架」后自动同步云端，顾客端约1分钟内恢复显示。</p>':'<p style="font-size:12px;color:#888;margin-bottom:10px">新增/编辑/删除/改价/改单位都会自动保存本地并同步云端，顾客端约1分钟内自动更新。断网时改的先存本地，恢复网络后点上方「⬆️ 上传全部到云端」一次，全部改动一起传上去。</p>'));
   var sortedDishes = isOff ? dishes.filter(function(d){ return d.on===false && d.cat!=='半价'; }).slice().sort(function(a,b){ return a.price-b.price; }) : dishes.filter(function(d){ return d.cat===adminDishCat && d.on!==false; }).slice().sort(function(a,b){ return a.price-b.price; });
+  var dcards='';
   sortedDishes.forEach(function(d){
-    html+='<div class="card"><div style="display:flex;justify-content:space-between;align-items:center">'+
+    dcards+='<div class="card dcard"><div style="display:flex;justify-content:space-between;align-items:center">'+
       '<div>'+(d.img?'<img src="'+esc(thumbUrl(d.img))+'?v='+IMG_VER+'" style="width:44px;height:44px;object-fit:cover;border-radius:6px;vertical-align:middle;margin-right:8px">':'')+'<b>'+esc(d.name)+'</b> <span class="badge '+(d.on?'':'off')+'">'+(d.on?'上架':'下架')+'</span>'+
       '<div style="font-size:12px;color:#888;margin-top:3px">'+esc(catLabel(d.cat))+' · '+money(d.price)+' / '+esc(d.unit||'份')+(d.orig?' · 原价'+money(d.orig):'')+(d.per?' · 称重'+d.per+'元/斤':'')+(d.stock!=null?' · 库存'+d.stock:'')+'</div></div>'+
       (isHalf?'<span style="font-size:11px;color:#fb8c00;font-weight:600">自动同步</span>':
@@ -2647,6 +2668,7 @@ function renderDishesAdmin(){
       '<button class="btn red" style="font-size:12px;padding:4px 10px" onclick="delDish(\''+d.id+'\')">删除</button></div>'))+
     '</div></div>';
   });
+  html+='<div class="dgrid">'+dcards+'</div>';
   return html+'</div>';
 }
 function editDish(id){
