@@ -549,14 +549,8 @@ button:active{transform:scale(.95);-webkit-transform:scale(.95)}
 var LS_DISHES='fruit_dishes', LS_ORDERS='fruit_orders', LS_PWD='fruit_admin_pwd',
     LS_PAY='fruit_pay', LS_SHOP='fruit_shop', LS_SESSION='fruit_admin_ok', LS_CLOUD='fruit_cloud', LS_DELIVER='fruit_deliver';
 var SB_URL='https://aenrwtwhhuqzmbxsjump.supabase.co', SB_KEY='sb_publishable_TYMADeCoaKMsnJ7INuHnfQ_n9yKIHkl', LS_CLOUDPWD='fruit_cloud_pwd', LS_MENU_PENDING='fruit_menu_pending';
-function clpwd(){ // 云端操作密码：从本机取，未设置时引导一次（绝不使用出厂默认值）
-  var v=localStorage.getItem(LS_CLOUDPWD);
-  if(!v){
-    if(!window._clpwdWarned){ window._clpwdWarned=true;
-      alert('云端密码未设置：请在后台「店铺设置」→「云端密码」填写（向豆包获取），否则云端订单/菜单同步不可用。'); }
-    return '';
-  }
-  return v;
+function clpwd(){ // 云端操作密码：从本机取，未设置时返回空（不弹窗打扰），后台「店铺设置」面板会提示配置
+  return localStorage.getItem(LS_CLOUDPWD)||'';
 }
 var cloudOrders=[]; // 顾客手机下单的云端订单
 var cloudPhoneCount={}; // 手机号出现次数
@@ -2898,6 +2892,7 @@ function renderShopAdmin(){
     '<label>高德 JS API Key（地图选点用）</label><input id="jsKey" value="'+esc(shopCfg.jskey||'')+'" placeholder="控制台 → 创建应用 → 添加Key → 服务平台选【Web端(JS API)】">'+
     '<label>安全密钥 securityJsCode（与 JS API Key 配套）</label><input id="jsCode" value="'+esc(shopCfg.jscode||'')+'" placeholder="添加Key时系统生成的安全密钥">'+
     '<label>修改后台密码</label><div style="display:flex;gap:8px"><input id="newPwd" placeholder="新密码（留空则不修改）"><button class="btn" onclick="changePwd()">修改密码</button></div>'+
+    '<div id="cloudPwdTip" style="display:'+(localStorage.getItem(LS_CLOUDPWD)?'none':'block')+';background:rgba(255,152,0,.16);border:1px solid rgba(255,152,0,.5);color:#b26a00;border-radius:12px;padding:9px 12px;font-size:13px;line-height:1.6;margin-bottom:10px">⚠️ 云端密码未设置：云端订单/菜单同步暂不可用。请向豆包获取云端密码后填写保存（本机保存一次即可，以后不再提示）。</div>'+
     '<label>云端密码（云端订单/菜单同步用，向豆包获取后填写，本机保存一次即可）</label><div style="display:flex;gap:8px"><input id="cloudPwd" value="'+esc(localStorage.getItem(LS_CLOUDPWD)||'')+'" placeholder="云端操作密码"><button class="btn" onclick="saveCloudPwd()">保存云端密码</button></div>'+
     '<div style="margin-top:14px;border-top:1px dashed rgba(35,134,0,.25);padding-top:10px">'+
     '<div style="font-size:14px;font-weight:700;color:#238600;margin-bottom:6px">营业时间（每天自动开/关店）</div>'+
@@ -3496,6 +3491,7 @@ function saveCloudPwd(){
   var v=document.getElementById('cloudPwd').value.trim();
   if(!v){ alert('请输入云端密码'); return; }
   localStorage.setItem(LS_CLOUDPWD, v);
+  var tip=document.getElementById('cloudPwdTip'); if(tip) tip.style.display='none';
   alert('云端密码已保存到本机。云端订单/菜单同步将使用该密码。\n\n提示：若密码填错，云端操作会被拒绝；正确密码请向豆包确认。');
 }
 
