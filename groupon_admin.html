@@ -278,10 +278,13 @@ function showList(){
     }).join('');
   }).catch(function(){ document.getElementById('list').innerHTML='<div class="card empty"><div class="eico">📡</div>加载失败，请检查网络</div>'; });
 }
+var _detailKeep=false;
 function openDetail(id){
-  cur=id; showDetail(); clearInterval(timer); timer=setInterval(showDetail,60000);
+  cur=id; _detailKeep=false; showDetail(); clearInterval(timer);
+  timer=setInterval(function(){ _detailKeep=true; showDetail(); },60000);
 }
 function showDetail(){
+  var _sy=window.scrollY||0;
   document.getElementById('main').classList.add('hidden');
   document.getElementById('detail').classList.remove('hidden');
   api('groupon_list',{}).then(function(arr){
@@ -354,7 +357,7 @@ function showDetail(){
         }
         return '<tr><td>'+esc(x.phone)+'</td><td>'+esc(x.item_name)+'</td><td>'+fmtN(x.qty)+' '+esc(x.unit)+'</td><td><span class="st '+sc+'">'+st+'</span></td><td style="white-space:nowrap;">'+dp+'</td><td style="white-space:nowrap;">'+wd+'</td></tr>';
       }).join('')+'</table></div>';
-  }).catch(function(){});
+  }).then(function(){ if(_detailKeep) window.scrollTo(0,_sy); }).catch(function(){ if(_detailKeep) window.scrollTo(0,_sy); });
 }
 function markDeposit(id, paid){
   api('groupon_mark_deposit',{p_admin:pwd(),p_request_id:id,p_paid:paid}).then(function(r){
