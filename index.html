@@ -242,6 +242,8 @@ button:active{transform:scale(.95);-webkit-transform:scale(.95)}
   /* 购物车底栏 PC 版 */
   .cartbar{max-width:1720px;left:50%;transform:translateX(-50%);right:auto;bottom:18px;border-radius:20px;background:rgba(255,255,255,.72);-webkit-backdrop-filter:blur(34px) saturate(210%);backdrop-filter:blur(34px) saturate(210%);border:1px solid rgba(255,255,255,.95);box-shadow:0 10px 40px rgba(35,134,0,.2),inset 0 1px 0 rgba(255,255,255,.9)}
   .cartbar .btn{font-size:17px;padding:12px 34px;border-radius:14px}
+  /* 配送工作台 PC 放宽（手机端不受影响） */
+  #deliverBody{max-width:1200px}
   /* 抽屉/弹窗 PC 放大 */
   .modal .box{max-width:520px}
   /* —— 商家后台 PC 适配（触摸屏友好，手机端不受影响） —— */
@@ -733,7 +735,7 @@ function catLabel(c){ return c==='水果'?'新鲜水果':(c==='果汁'?'现榨�
 function syncHalfPrice(){
   dishes = dishes.filter(function(d){ return d.cat!=='半价'; });
   dishes.filter(function(d){ return d.cat==='果汁' && d.on; }).forEach(function(d){
-    dishes.push({id:'h_'+d.id, name:d.name+'（第二杯半价）', price:Math.round(d.price*0.5*10)/10, unit:'杯', cat:'半价', on:true, img:d.img, per:0, halfOf:d.id});
+    dishes.push({id:'h_'+d.id, name:d.name+'（半价杯）', price:Math.round(d.price*0.5*10)/10, unit:'杯', cat:'半价', on:true, img:d.img, per:0, halfOf:d.id});
   });
 }
 function renderCats(){
