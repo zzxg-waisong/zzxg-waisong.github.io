@@ -41,6 +41,10 @@ body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;bac
 .row b{font-size:15px}
 .muted{color:#999;font-size:12px}
 .price{color:#e53935;font-weight:800;font-size:17px}
+.sec-title{font-size:13px;font-weight:800;color:#3c7a1f;margin:6px 2px 10px;letter-spacing:.5px;display:flex;align-items:center;gap:6px}
+.sec-title::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(79,165,10,.35),transparent)}
+.go-btn{display:block;width:100%;border:none;border-radius:12px;padding:11px;font-size:15px;font-weight:800;cursor:pointer;margin-top:12px;background:linear-gradient(135deg,#5cb816,#4fa50a);color:#fff;box-shadow:0 3px 10px rgba(79,165,10,.25)}
+.go-btn:active{transform:scale(.97)}
 .btn{display:block;width:100%;border:none;border-radius:14px;padding:12px;font-size:15px;font-weight:800;cursor:pointer;margin-top:10px;transition:transform .2s cubic-bezier(.34,1.56,.64,1),box-shadow .15s,opacity .12s;box-shadow:0 3px 10px rgba(0,0,0,.1),inset 0 1px 0 rgba(255,255,255,.18)}
 .btn:active{transform:scale(.96);box-shadow:0 0 0 10px rgba(79,165,10,.12)}
 .btn-p{background:linear-gradient(135deg,#238600,#4fa50a);color:#fff}
@@ -140,7 +144,10 @@ function showList(){
   api('groupon_list',{}).then(function(arr){
     var el=document.getElementById('list');
     if(!Array.isArray(arr)||!arr.length){ el.innerHTML='<div class="card empty"><div class="eico">🍃</div>暂无团购活动<br><span style="font-size:12px;color:#bbb;">等老板开团后再来参与吧</span></div>'; return; }
-    el.innerHTML=arr.map(function(s){
+    var opens=[],others=[];
+    arr.forEach(function(s){ (s.status==='open'?opens:others).push(s); });
+    opens.sort(function(a,b){ return new Date(a.deadline||0)-new Date(b.deadline||0); });
+    function card(s){
       var ph='';
       if(s.status==='open') ph='<span class="muted">截止 '+fmtT(s.deadline)+'</span>';
       else if(s.status==='quoted') ph='<span class="muted">'+(s.unit_price?('单价 ¥'+fmtN(s.unit_price)):'等待老板报价')+'</span>';
@@ -148,14 +155,19 @@ function showList(){
       else if(s.status==='delivering') ph='<span class="muted">老板进货中</span>';
       var img=s.cover?'<img loading="lazy" src="'+esc(s.cover)+'" style="width:100%;max-height:120px;object-fit:cover;border-radius:12px;margin-bottom:10px;" onerror="this.style.display=\'none\'">':'';
       var pct=Math.min(100,Math.round(s.joined_qty/s.target_qty*100));
+      var btn=(s.status==='open')?'<button class="go-btn" onclick="event.stopPropagation();openDetail('+s.id+')">去接龙</button>':'';
       return '<div class="card" onclick="openDetail('+s.id+')" style="cursor:pointer;">'+img+
         '<div class="row"><b>'+esc(s.title)+'</b><span class="badge '+stCls(s.status)+'">'+stName(s.status)+'</span></div>'+
         '<div style="display:flex;gap:8px;align-items:center;margin:10px 0 4px;">'+
           '<div style="flex:1;height:10px;background:#f0f4ee;border-radius:8px;overflow:hidden;"><div style="height:100%;width:'+pct+'%;background:linear-gradient(90deg,#4fa50a,#8bc34a);border-radius:8px;transition:width .5s;"></div></div>'+
           '<span style="font-size:12.5px;font-weight:800;color:#4fa50a;">'+fmtN(s.joined_qty)+'/'+fmtN(s.target_qty)+'</span>'+
         '</div>'+
-        '<div class="row" style="padding-top:0;">'+ph+(Number(s.deposit)>0?'<span class="price" style="color:#c62828;font-size:12px;">定金 ¥'+fmtN(s.deposit)+'/份</span>':'')+'<span class="muted">'+s.people+' 人参与</span></div></div>';
-    }).join('');
+        '<div class="row" style="padding-top:0;">'+ph+(Number(s.deposit)>0?'<span class="price" style="color:#c62828;font-size:12px;">定金 ¥'+fmtN(s.deposit)+'/份</span>':'')+'<span class="muted">'+s.people+' 人参与</span></div>'+btn+'</div>';
+    }
+    var html='';
+    if(opens.length) html+='<div class="sec-title">🔥 已开团 · 接龙中</div>'+opens.map(card).join('');
+    if(others.length) html+='<div class="sec-title">📦 其他团购</div>'+others.map(card).join('');
+    el.innerHTML=html;
   }).catch(function(){ document.getElementById('list').innerHTML='<div class="card empty"><div class="eico">📡</div>加载失败，请检查网络</div>'; });
 }
 function openDetail(id){
