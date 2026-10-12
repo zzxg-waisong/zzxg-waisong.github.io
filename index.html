@@ -2106,6 +2106,14 @@ function fmtLocal(s){
   return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes());
 }
 function renderAdmin(){
+  // 团购 iframe 已在面板中时，后台 5 秒轮询不再重建 iframe（保持滚动位置，避免下拉被拉回顶部）
+  if((adminTab||'orders')==='groupon'){
+    var _pf=document.getElementById('gpFrame');
+    if(_pf && document.getElementById('adminPanel') && document.getElementById('adminPanel').contains(_pf)){
+      renderMenuPendingBar();
+      return;
+    }
+  }
   renderVoiceState();
   // 计算今日营业额（按成都本地日期；已送达=已卖出同样计入）
   var _d=new Date();
