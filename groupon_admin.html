@@ -256,6 +256,14 @@ function showList(){
       '<div class="stat"><b>'+people+'</b><span>累计参与人次</span></div>'+
       '<div class="stat"><b>'+qty+'</b><span>累计接龙份数</span></div>';
     var list=arr.filter(function(s){ return filt==='all'||s.status===filt; });
+    if(filt==='all'){
+      list.sort(function(a,b){
+        var pa=(a.status==='open')?0:1, pb=(b.status==='open')?0:1;
+        if(pa!==pb) return pa-pb;
+        if(a.status==='open'&&b.status==='open') return new Date(a.deadline||0)-new Date(b.deadline||0);
+        return 0;
+      });
+    }
     var el=document.getElementById('list');
     if(!list.length){ el.innerHTML='<div class="card empty"><div class="eico">🍃</div>当前筛选下没有团购</div>'; return; }
     el.innerHTML=list.map(function(s){
