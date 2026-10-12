@@ -263,6 +263,11 @@ button:active{transform:scale(.95);-webkit-transform:scale(.95)}
   .ogrid .card h3{font-size:16px}
   .dgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(420px,1fr));gap:14px;align-items:stretch}
   .dgrid .dcard{margin-bottom:0;height:auto}
+  /* 后台版块 PC 两列：店铺/拉新/设置 一屏尽量看全，二维码独占一列 */
+  .pc2col{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start}
+  .pc2col>.pc-col>.panel,.pc2col>.pc-col .panel{margin-bottom:14px}
+  .pc2col .panel{min-width:0}
+  .pc2col .form{max-width:none}
   .modal .box{max-width:760px;padding:26px}
 }
 </style>
@@ -2126,14 +2131,18 @@ function renderAdmin(){
   var panel=document.getElementById('adminPanel');
   if(cur==='orders') panel.innerHTML=renderOrders();
   else if(cur==='dishes') panel.innerHTML=renderDishesAdmin();
-  else if(cur==='shop'){ var qUrl=location.origin+location.pathname; panel.innerHTML=renderShopAdmin()+renderPayAdmin()+
+  else if(cur==='shop'){ var qUrl=location.origin+location.pathname;
+    var _payBlock=renderPayAdmin()+
     '<div class="panel"><h3>🔗 点单二维码</h3><div class="card" style="text-align:center"><p style="font-size:13px;color:#555;margin-bottom:10px">顾客扫码直接进入点单页（免登录）。</p><div id="qrBox"></div><p style="font-size:12px;color:#888;margin-top:8px">当前点单链接：<br>'+esc(qUrl)+'</p><button class="btn" style="margin-top:10px" onclick="downloadQr()">下载二维码图片</button></div></div>'+
-    renderPrintAdmin(); makeQr(qUrl); }
-  else if(cur==='ref') panel.innerHTML=renderReferralAdmin();
+    renderPrintAdmin();
+    panel.innerHTML=(window.innerWidth>=1024)?
+      '<div class="pc2col"><div class="pc-col">'+renderShopAdmin()+'</div><div class="pc-col">'+_payBlock+'</div></div>'
+      : renderShopAdmin()+_payBlock; makeQr(qUrl); }
+  else if(cur==='ref'){ panel.innerHTML=(window.innerWidth>=1024)?'<div class="pc2col">'+renderReferralAdmin()+'</div>':renderReferralAdmin(); }
   else if(cur==='deliver') panel.innerHTML=renderDeliverAdmin();
   else if(cur==='groupon'){ var _gh=window.innerWidth>=1024?'calc(100vh - 240px)':'calc(100vh - 170px)'; var _mh=window.innerWidth>=1024?560:440; panel.innerHTML='<iframe id="gpFrame" src="groupon_admin.html?v=emb'+Date.now()+'&autologin=1&embed=1" style="width:100%;height:'+_gh+';min-height:'+_mh+'px;border:none;border-radius:18px;background:rgba(255,255,255,.25)"></iframe>'; }
-  else if(cur==='set'){ panel.innerHTML=renderSetAdmin()+
-    '<div class="panel"><h3>📕 意见簿 <small style="font-weight:400;color:#888">（顾客提交的意见 / 建议）</small></div><div id="fbList" style="font-size:13px">加载中…</div></div>'; loadFbAdmin(); }
+  else if(cur==='set'){ var _fbPanel='<div class="panel"><h3>📕 意见簿 <small style="font-weight:400;color:#888">（顾客提交的意见 / 建议）</small></div><div id="fbList" style="font-size:13px">加载中…</div></div>';
+    panel.innerHTML=(window.innerWidth>=1024)?'<div class="pc2col"><div class="pc-col">'+renderSetAdmin()+'</div><div class="pc-col">'+_fbPanel+'</div></div>':renderSetAdmin()+_fbPanel; loadFbAdmin(); }
 }
 var adminTab='orders';
 
@@ -3854,7 +3863,8 @@ function closeRefPromo(kind){
   if(kind===2) localStorage.setItem('zz_ref_promo_off','1');
 }
 function renderReferralAdmin(){
-  var html='<div class="panel"><h3>🤝 拉新分成设置</h3><div class="card"><div class="form" style="padding:0">'+
+  var _isPc=window.innerWidth>=1024;
+  var _formPart='<div class="card"><div class="form" style="padding:0">'+
     '<div class="rowline"><span>功能开关</span><span><select id="refEn" style="border:1px solid #ddd;border-radius:6px;padding:6px"><option value="1">开启</option><option value="0">关闭</option></select></span></div>'+
     '<div class="rowline"><span>返点比例（%）</span><span><input id="refRate" type="number" step="0.5" min="0" style="width:70px;border:1px solid #ddd;border-radius:6px;padding:6px"></span></div>'+
     '<div class="rowline"><span>抵扣比例（%）</span><span><input id="refDeductRate" type="number" step="1" min="0" style="width:70px;border:1px solid #ddd;border-radius:6px;padding:6px"></span></div>'+
@@ -3863,13 +3873,19 @@ function renderReferralAdmin(){
     '<div style="font-size:12px;color:#888;margin:2px 0 6px;line-height:1.8">新客首单立减金额（默认 5 元）；填 0 即关闭新客立减活动。保存后云端三端同步。</div>'+
     '<div style="font-size:12px;color:#888;margin:6px 0;line-height:1.8">说明：朋友下单填您手机号 → 您得「返点比例」返利（次日到账）；您下单自动按「抵扣比例」抵扣，最高「单笔上限」元，不超钱包余额。</div>'+
     '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn" onclick="saveReferralCfg()">保存设置</button><button class="btn" onclick="openRefCfgWindow()">查询</button><span id="refSaveRes" style="font-size:13px;color:#238600;line-height:34px"></span></div>'+
-    '<div style="display:flex;gap:6px;margin:12px 0 4px;flex-wrap:wrap;align-items:center;background:#eef4fb;border:1px solid #d0e0f5;border-radius:8px;padding:8px">'+
+    '</div></div>';
+  var _addPart='<div class="card"><div class="form" style="padding:0">'+
+    '<div style="font-size:12px;color:#888;margin:2px 0 8px;line-height:1.8">给老客/新客手动加优惠额度（如加好友进群奖励）。</div>'+
+    '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;background:#eef4fb;border:1px solid #d0e0f5;border-radius:8px;padding:8px">'+
       '<b style="font-size:13px">🎁 加优惠额度</b>'+
       '<input id="addBalPhone" type="tel" maxlength="11" placeholder="手机号" value="'+esc(window._addBalPhone||'')+'" oninput="window._addBalPhone=this.value" style="flex:1;min-width:110px;border:1px solid #ddd;border-radius:6px;padding:6px;font-size:13px">'+
       '<input id="addBalAmt" type="number" min="0.5" step="0.5" placeholder="金额" value="'+esc(window._addBalAmt||'')+'" oninput="window._addBalAmt=this.value" style="width:64px;border:1px solid #ddd;border-radius:6px;padding:6px;font-size:13px">'+
       '<button class="btn" style="background:#ad1457;color:#fff;font-size:12px;padding:5px 12px" onclick="addBalance()">增加</button>'+
-    '</div>'+
     '</div></div></div>';
+  var html=_isPc?
+    '<div class="panel"><h3>🤝 拉新分成设置</h3>'+_formPart+'</div>'+
+    '<div class="panel"><h3>🎁 优惠额度</h3>'+_addPart+'</div>'
+    : '<div class="panel"><h3>🤝 拉新分成设置</h3>'+_formPart+_addPart+'</div>';
   fetch(SB_URL+'/rest/v1/rpc/get_referral_cfg',{method:'POST',headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:'{}'})
     .then(function(r){ return r.json(); })
     .then(function(j){
@@ -4012,18 +4028,22 @@ function saveRefMember(phone){
     }).catch(function(){ alert('保存失败：网络异常'); });
 }
 function renderSetAdmin(){
-  var html='<div class="panel"><h3>设置</h3><div class="card">'+
+  var _isPc=window.innerWidth>=1024;
+  var _mainCard='<div class="card">'+
     '<div class="rowline"><span>后台密码</span><span><a href="javascript:adminTab=\'shop\';renderAdmin()">去修改</a></span></div>'+
     '<div class="rowline"><span>数据存储</span><span>云端为主 · 本地断网自动同步</span></div>'+
     '<div class="rowline"><span>新订单自动刷新+语音提醒</span><span><button class="btn '+(autoAlarm?'':'gray')+'" onclick="toggleAlarm()">'+(autoAlarm?'✅ 开':'❌ 关')+'</button></span></div>'+
     '<div class="rowline"><span>语音音量</span><span><input type="range" min="0" max="200" step="10" value="'+(parseInt(localStorage.getItem('zz_voice_vol')||'100',10))+'" oninput="setVoiceVol(this.value)" style="width:110px;vertical-align:middle"> <b id="vv">'+(parseInt(localStorage.getItem('zz_voice_vol')||'100',10))+'</b></span></div>'+
     '<div class="rowline"><span>试听语音</span><span><button class="btn" onclick="speakNewOrder(1)">🔊 试听</button></span></div>'+
-    '<button class="btn red" style="width:100%;margin-top:8px" onclick="resetData()">重置全部数据（恢复默认）</button></div>'+
-    '<div class="card" style="margin-top:12px"><h3>👤 顾客密码管理</h3>'+
+    '<button class="btn red" style="width:100%;margin-top:8px" onclick="resetData()">重置全部数据（恢复默认）</button></div>';
+  var _pinCard='<div class="card" style="margin-top:'+(_isPc?'0':'12px')+'"><h3>👤 顾客密码管理</h3>'+
     '<div style="font-size:12px;color:#888;margin:2px 0 8px">顾客忘记查询密码时：输入手机号生成一次性验证码（10分钟有效）并告诉顾客，顾客在「我的」里自行重置，店主无需代设。</div>'+
     '<div style="display:flex;gap:8px"><input id="pinAdminPhone" type="tel" maxlength="11" placeholder="顾客手机号" style="flex:1;border:1px solid #ddd;border-radius:8px;padding:9px;font-size:14px"><button class="btn" onclick="pinGenCode()">生成验证码</button></div>'+
-    '<div id="pinAdminRes" style="font-size:13px;margin-top:8px;line-height:1.8"></div>'+
-    '</div></div>';
+    '<div id="pinAdminRes" style="font-size:13px;margin-top:8px;line-height:1.8"></div></div>';
+  var html=_isPc?
+    '<div class="panel"><h3>设置</h3>'+_mainCard+'</div>'+
+    '<div class="panel"><h3>👤 顾客密码管理</h3>'+_pinCard+'</div>'
+    : '<div class="panel"><h3>设置</h3>'+_mainCard+_pinCard+'</div>';
   return html;
 }
 function pinGenCode(){
