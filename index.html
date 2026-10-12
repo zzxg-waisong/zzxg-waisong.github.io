@@ -2225,6 +2225,16 @@ function placeCloudOrder(o, refInfo){
       }).catch(function(){});
   }catch(e){}
 }
+// 单机版接管探测：本机单机版(8901)接管提醒/出票时返回 true（30 秒缓存，避免频繁探测）
+var _agentCached=0, _agentChecked=0;
+function checkAgent(cb){
+  var n=Date.now();
+  if(_agentCached!==0 && (n-_agentChecked)<30000){ cb(_agentCached===1); return; }
+  fetch('http://localhost:8901/agent',{method:'GET'})
+    .then(function(r){ return r.json(); })
+    .then(function(j){ _agentCached=(j&&j.agent===1)?1:2; _agentChecked=n; cb(_agentCached===1); })
+    .catch(function(){ _agentCached=2; _agentChecked=n; cb(false); });
+}
 function fetchCloudOrders(silent){
   // 输入框聚焦时跳过刷新，避免输入被清掉
   var ae=document.activeElement;
@@ -2251,15 +2261,21 @@ function fetchCloudOrders(silent){
         var pc={}; j.forEach(function(cc){ var ph=String(((cc.payload||{}).phone)||'').trim(); if(ph) pc[ph]=(pc[ph]||0)+1; }); cloudPhoneCount=pc;
         if(silent && fresh.length===0){ renderCloudB(); return; }
         if(fresh.length>0){
-          // 电脑端应用内：交主进程统一广播提示音（避免双音）；浏览器/手机：本页自己播语音
-          if(window.electronAPI && window.electronAPI.notifyCloudOrders){
-            try{ window.electronAPI.notifyCloudOrders(fresh); }catch(e){}
-          } else {
-            // 语音：每单播一次（多单顺序各播一次，不再重复重播）
-            if(autoAlarm){ fresh.forEach(function(fid){ speakNewOrder(fid); }); }
-          }
-          // 直接出单：新单到达自动打印小票（本地打印代理，静默出票；老板收款后再点接单，点接单不再重复出票）
-          fresh.forEach(function(fid){ try{ printCloudOrder(fid); }catch(e){} });
+          // 本机单机版接管检测：若单机版(8901接管标志)在跑，提醒/出票由主进程负责，本页只刷新列表，避免双响双打
+          checkAgent(function(agentOn){
+            if(agentOn){ renderCloudB(); return; }
+            // 电脑端应用内：交主进程统一广播提示音（避免双音）；浏览器/手机：本页自己播语音
+            if(window.electronAPI && window.electronAPI.notifyCloudOrders){
+              try{ window.electronAPI.notifyCloudOrders(fresh); }catch(e){}
+            } else {
+              // 语音：每单播一次（多单顺序各播一次，不再重复重播）
+              if(autoAlarm){ fresh.forEach(function(fid){ speakNewOrder(fid); }); }
+            }
+            // 直接出单：新单到达自动打印小票（本地打印代理，静默出票；老板收款后再点接单，点接单不再重复出票）
+            fresh.forEach(function(fid){ try{ printCloudOrder(fid); }catch(e){} });
+            renderCloudB();
+          });
+          return;
         }
         renderCloudB();
       })
