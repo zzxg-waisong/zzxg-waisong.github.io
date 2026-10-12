@@ -218,6 +218,7 @@ function doJoin(){
   if(!/^1\d{10}$/.test(phone)){ errbar(true,'请填写正确的11位手机号'); return; }
   if(!name){ errbar(true,'本团暂未设置商品，请联系老板'); return; }
   if(!qty||Number(qty)<=0){ errbar(true,'请填写份数'); return; }
+  window._lastJoinQty=Number(qty);
   api('groupon_join',{p_session_id:curSession,p_phone:phone,p_item_name:name,p_qty:Number(qty),p_unit:unit}).then(function(r){
     if(r.ok){
       var tip='✅ 已参与本团（'+name+' '+fmtN(qty)+unit+'）。';
@@ -300,7 +301,8 @@ function doConfirm(phone){
   api('groupon_confirm',{p_session_id:curSession,p_phone:phone}).then(function(r){
     if(r.ok){
       var tip='✅ 已确认！';
-      if(Number(r.deposit)>0) tip+=' 请扫本店收款码支付定金 ¥'+(Number(r.deposit)*Number(document.getElementById('jQty').value||1))+'（见下方我的记录）。';
+      var _qty=Number(r.qty)||Number(window._lastJoinQty)||1;
+      if(Number(r.deposit)>0) tip+=' 请扫本店收款码支付定金 ¥'+(Number(r.deposit)*_qty)+'（见下方我的记录）。';
       else tip+=' 等老板进货，到货后请来取。';
       if(r.pickup_time) tip+=' 取货时间：'+r.pickup_time;
       okbar(true,tip); loadMy();
