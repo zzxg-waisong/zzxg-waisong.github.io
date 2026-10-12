@@ -2131,7 +2131,7 @@ function renderAdmin(){
     renderPrintAdmin(); makeQr(qUrl); }
   else if(cur==='ref') panel.innerHTML=renderReferralAdmin();
   else if(cur==='deliver') panel.innerHTML=renderDeliverAdmin();
-  else if(cur==='groupon'){ var _gh=window.innerWidth>=1024?'calc(100vh - 240px)':'calc(100vh - 170px)'; panel.innerHTML='<iframe id="gpFrame" src="groupon_admin.html?v=emb'+Date.now()+'&autologin=1&embed=1" style="width:100%;height:'+_gh+';border:none;border-radius:18px;background:rgba(255,255,255,.25)"></iframe>'; }
+  else if(cur==='groupon'){ var _gh=window.innerWidth>=1024?'calc(100vh - 240px)':'calc(100vh - 170px)'; var _mh=window.innerWidth>=1024?560:440; panel.innerHTML='<iframe id="gpFrame" src="groupon_admin.html?v=emb'+Date.now()+'&autologin=1&embed=1" style="width:100%;height:'+_gh+';min-height:'+_mh+'px;border:none;border-radius:18px;background:rgba(255,255,255,.25)"></iframe>'; }
   else if(cur==='set'){ panel.innerHTML=renderSetAdmin()+
     '<div class="panel"><h3>📕 意见簿 <small style="font-weight:400;color:#888">（顾客提交的意见 / 建议）</small></div><div id="fbList" style="font-size:13px">加载中…</div></div>'; loadFbAdmin(); }
 }
@@ -2608,7 +2608,7 @@ function renderOrders(){
   var pending=aliveCloud.filter(function(c){return c.status==='new'||c.status==='待称重'||c.status==='待付款';}).length;
   var localPending=orders.filter(function(o){return o.status==='待称重'||o.status==='待付款';}).length;
   var totalPending=pending+localPending;
-  var html='<div class="panel"><h3>订单列表（'+aliveCloud.length+' 单）</h3><button onclick="showDeletedOrders()" style="background:#999;color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:12px;float:right">已删订单</button>';
+  var html='<div class="panel"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><h3 style="margin:0">订单列表（'+aliveCloud.length+' 单）</h3><button onclick="showDeletedOrders()" style="background:#999;color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:12px">已删订单</button></div>';
   if(totalPending>0){
     html+='<div style="background:#ffebee;border:2px solid #e53935;border-radius:8px;padding:10px;text-align:center;margin-bottom:12px">'+
       '<span style="color:#e53935;font-weight:700;font-size:16px">🔔 待处理订单：'+totalPending+' 单</span></div>';
